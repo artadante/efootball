@@ -1,17 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PitchBackground } from './components/PitchBackground';
 import { LiquidBottomNav, TabType } from './components/LiquidBottomNav';
 import { ProfileButton } from './components/ProfileButton';
 import { 
-  Trophy, 
   Crown, 
   Flame, 
   Calendar, 
   Sparkles, 
   Smartphone, 
   X, 
-  Medal
+  Medal,
+  Cloud,
+  Database
 } from 'lucide-react';
+import { supabase, isSupabaseConfigured, DbStanding } from './lib/supabase';
 
 interface StandingRow {
   rank: number;
@@ -41,7 +43,7 @@ export const App: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [showPwaTip, setShowPwaTip] = useState(true);
 
-  // Friendly league mock data
+  // Friendly league standings state
   const [standings, setStandings] = useState<StandingRow[]>([
     { rank: 1, name: 'علی', played: 6, won: 5, drawn: 0, lost: 1, goalsFor: 14, goalsAgainst: 6, points: 15 },
     { rank: 2, name: 'رضا', played: 6, won: 4, drawn: 1, lost: 1, goalsFor: 12, goalsAgainst: 7, points: 13 },
@@ -55,6 +57,77 @@ export const App: React.FC = () => {
     { id: '2', player1: 'رضا', team1: 'منچسترسیتی', score1: 2, score2: 2, player2: 'آرش', team2: 'بارسلونا', date: '۲ روز پیش' },
     { id: '3', player1: 'علی', team1: 'اینتر', score1: 4, score2: 0, player2: 'سجاد', team2: 'بایرن مونیخ', date: '۳ روز پیش' },
   ]);
+
+  // Load from Supabase if configured
+  useEffect(() => {
+    const client = supabase;
+    if (!isSupabaseConfigured || !client) return;
+
+    const fetchLiveSupabaseData = async () => {
+      try {
+        // Fetch standings view
+        const { data: standingsData, error: standingsErr } = await client
+          .from('league_standings')
+          .select('*');
+
+        if (!standingsErr && standingsData && standingsData.length > 0) {
+          const mappedStandings: StandingRow[] = (standingsData as DbStanding[]).map((s, idx) => ({
+            rank: idx + 1,
+            name: s.player_name,
+            played: s.played,
+            won: s.won,
+            drawn: s.drawn,
+            lost: s.lost,
+            goalsFor: s.goals_for,
+            goalsAgainst: s.goals_against,
+            points: s.points,
+          }));
+          setStandings(mappedStandings);
+        }
+
+        // Fetch matches
+        const { data: matchesData, error: matchesErr } = await client
+          .from('matches')
+          .select('id, team1, team2, score1, score2, played_at, p1:player1_id(name), p2:player2_id(name)')
+          .order('played_at', { ascending: false });
+
+        if (!matchesErr && matchesData) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const mappedMatches: MatchRecord[] = matchesData.map((m: any) => ({
+            id: m.id,
+            player1: m.p1?.name || 'بازیکن ۱',
+            team1: m.team1,
+            score1: m.score1,
+            score2: m.score2,
+            player2: m.p2?.name || 'بازیکن ۲',
+            team2: m.team2,
+            date: new Date(m.played_at).toLocaleDateString('fa-IR'),
+          }));
+          setMatches(mappedMatches);
+        }
+      } catch (err) {
+        console.warn('Supabase fetch error, fallback to offline local state', err);
+      }
+    };
+
+    fetchLiveSupabaseData();
+
+    // Subscribe to realtime matches changes
+    const channel = client
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'matches' },
+        () => {
+          fetchLiveSupabaseData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      client.removeChannel(channel);
+    };
+  }, []);
 
   // Lucky wheel state
   const teamsWheel = [
@@ -77,27 +150,37 @@ export const App: React.FC = () => {
   const [s1, setS1] = useState(2);
   const [s2, setS2] = useState(1);
 
-  const handleSpinWheel = () => {
+  const handleSpinWheel = async () => {
     if (isSpinning) return;
     setIsSpinning(true);
     setSelectedWheelPrize(null);
 
-    const randomRotations = 5 + Math.floor(Math.random() * 5); // 5 to 9 rotations
+    const randomRotations = 5 + Math.floor(Math.random() * 5);
     const randomExtraDegrees = Math.floor(Math.random() * 360);
     const newAngle = wheelAngle + randomRotations * 360 + randomExtraDegrees;
 
     setWheelAngle(newAngle);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsSpinning(false);
       const normalizedDegree = (360 - (newAngle % 360)) % 360;
       const segmentSize = 360 / teamsWheel.length;
       const index = Math.floor(normalizedDegree / segmentSize);
-      setSelectedWheelPrize(teamsWheel[index]);
+      const chosen = teamsWheel[index];
+      setSelectedWheelPrize(chosen);
+
+      // Optional: record spin to Supabase if available
+      if (isSupabaseConfigured && supabase) {
+        try {
+          await supabase.from('wheel_spins').insert([{ prize: chosen }]);
+        } catch (e) {
+          console.warn('Failed recording wheel spin to Supabase', e);
+        }
+      }
     }, 3200);
   };
 
-  const handleCreateMatch = (e: React.FormEvent) => {
+  const handleCreateMatch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (p1 === p2) {
       alert('لطفاً دو بازیکن متفاوت انتخاب کنید.');
@@ -115,9 +198,9 @@ export const App: React.FC = () => {
       date: 'هم‌اکنون',
     };
 
+    // Client-side instant optimistic update
     setMatches([newRecord, ...matches]);
 
-    // Update standings simply
     setStandings(prev => {
       return prev.map(row => {
         if (row.name === p1) {
@@ -157,6 +240,27 @@ export const App: React.FC = () => {
     });
 
     setIsAddModalOpen(false);
+
+    // If Supabase is connected, write to Postgres
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: p1Data } = await supabase.from('players').select('id').eq('name', p1).single();
+        const { data: p2Data } = await supabase.from('players').select('id').eq('name', p2).single();
+
+        if (p1Data && p2Data) {
+          await supabase.from('matches').insert([{
+            player1_id: p1Data.id,
+            player2_id: p2Data.id,
+            team1: 'انتخابی',
+            team2: 'انتخابی',
+            score1: Number(s1),
+            score2: Number(s2),
+          }]);
+        }
+      } catch (err) {
+        console.error('Error inserting match into Supabase', err);
+      }
+    }
   };
 
   return (
@@ -183,9 +287,20 @@ export const App: React.FC = () => {
             </div>
           </div>
 
-          {/* League Icon Tag */}
-          <div className="w-10 h-10 rounded-full bg-emerald-950/60 border border-white/10 backdrop-blur-md flex items-center justify-center text-emerald-400 shadow-[0_0_12px_rgba(34,197,94,0.15)]">
-            <Trophy className="w-5 h-5 text-amber-400" />
+          {/* Cloud Database Status Indicator */}
+          <div 
+            title={isSupabaseConfigured ? 'متصل به پایگاه ابری Supabase' : 'حالت لوکال (آماده اتصال به Supabase)'}
+            className={`w-10 h-10 rounded-full border backdrop-blur-md flex items-center justify-center shadow-md transition-all ${
+              isSupabaseConfigured 
+                ? 'bg-emerald-950/80 border-emerald-400/40 text-emerald-400 shadow-[0_0_12px_rgba(34,197,94,0.25)]' 
+                : 'bg-emerald-950/60 border-white/10 text-zinc-400'
+            }`}
+          >
+            {isSupabaseConfigured ? (
+              <Cloud className="w-5 h-5 text-emerald-400 animate-pulse" />
+            ) : (
+              <Database className="w-4 h-4 text-zinc-400" />
+            )}
           </div>
         </header>
 
@@ -239,15 +354,17 @@ export const App: React.FC = () => {
                 <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-white/10 text-center text-xs">
                   <div>
                     <span className="text-zinc-400 block text-[11px]">تعداد دوستان</span>
-                    <span className="font-bold text-white text-sm">۵ نفر</span>
+                    <span className="font-bold text-white text-sm">{standings.length} نفر</span>
                   </div>
                   <div>
                     <span className="text-zinc-400 block text-[11px]">بازی انجام‌شده</span>
                     <span className="font-bold text-white text-sm">{matches.length} بازی</span>
                   </div>
                   <div>
-                    <span className="text-zinc-400 block text-[11px]">مجموع گل‌ها</span>
-                    <span className="font-bold text-emerald-400 text-sm">۴۶ گل</span>
+                    <span className="text-zinc-400 block text-[11px]">همگام‌سازی</span>
+                    <span className="font-bold text-emerald-400 text-sm">
+                      {isSupabaseConfigured ? 'ابری Realtime' : 'محلی'}
+                    </span>
                   </div>
                 </div>
               </div>
