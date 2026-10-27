@@ -175,7 +175,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                 )}
               </div>
               <p className="text-xs text-emerald-400 font-medium">
-                امتیاز eFootball: {rating} • {favoriteTeam}
+                امتیاز فوتبال من: {rating} • {favoriteTeam}
               </p>
 
               {/* View Personal Career Button if player is chosen */}
