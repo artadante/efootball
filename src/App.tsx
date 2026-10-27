@@ -377,6 +377,13 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
 
   // Helper to get player/team label by slot
   const getPlayerLabel = (slot: number) => {
+    if (slot === 0) {
+      return {
+        name: 'در انتظار صعود',
+        team: 'نامشخص',
+        isAssigned: false,
+      };
+    }
     const p = activeLeague?.players.find((pl) => pl.slot === slot);
     return {
       name: p?.name || `بازیکن ${slot}`,

@@ -25,8 +25,30 @@ export const MatchesView: React.FC<MatchesViewProps> = ({
   getPlayerLabel,
 }) => {
   const displayedMatches = activeLeague
-    ? activeLeague.matches.filter((m) => m.leg === legFilter)
+    ? (activeLeague.mode === 'cup'
+        ? activeLeague.matches
+        : activeLeague.matches.filter((m) => m.leg === legFilter))
     : [];
+
+  const getMatchRoundLabel = (m: (typeof displayedMatches)[0]) => {
+    if (!activeLeague || activeLeague.mode !== 'cup') {
+      return `هفته ${m.round}`;
+    }
+    const maxRound = Math.max(...activeLeague.matches.map((match) => match.round), 1);
+    if (m.id.includes('final') || m.round === maxRound) {
+      return 'فینال بزرگ مسابقات';
+    }
+    if (m.round === maxRound - 1) {
+      return 'مرحله نیمه‌نهایی';
+    }
+    if (m.round === maxRound - 2) {
+      return 'مرحله یک‌چهارم نهایی';
+    }
+    if (m.round === maxRound - 3) {
+      return 'مرحله یک‌هشتم نهایی';
+    }
+    return `مرحله ${m.round}`;
+  };
 
   return (
     <div className="space-y-2.5 animate-fadeIn my-auto w-full">
@@ -64,31 +86,41 @@ export const MatchesView: React.FC<MatchesViewProps> = ({
           </div>
         ) : (
           <>
-            {/* Leg Filter Tabs (نیم‌فصل ۱ / نیم‌فصل ۲) */}
-            <div className="flex p-0.5 bg-black/40 rounded-xl border border-white/10 mb-2.5 text-xs sm:text-sm">
-              <button
-                type="button"
-                onClick={() => onSetLegFilter(1)}
-                className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
-                  legFilter === 1
-                    ? 'bg-emerald-500 text-black font-extrabold shadow'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                نیم‌فصل ۱
-              </button>
-              <button
-                type="button"
-                onClick={() => onSetLegFilter(2)}
-                className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
-                  legFilter === 2
-                    ? 'bg-emerald-500 text-black font-extrabold shadow'
-                    : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                نیم‌فصل ۲
-              </button>
-            </div>
+            {/* Leg Filter Tabs (نیم‌فصل ۱ / نیم‌فصل ۲) - only for round-robin league */}
+            {activeLeague.mode !== 'cup' ? (
+              <div className="flex p-0.5 bg-black/40 rounded-xl border border-white/10 mb-2.5 text-xs sm:text-sm">
+                <button
+                  type="button"
+                  onClick={() => onSetLegFilter(1)}
+                  className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    legFilter === 1
+                      ? 'bg-emerald-500 text-black font-extrabold shadow'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  نیم‌فصل ۱
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSetLegFilter(2)}
+                  className={`flex-1 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    legFilter === 2
+                      ? 'bg-emerald-500 text-black font-extrabold shadow'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  نیم‌فصل ۲
+                </button>
+              </div>
+            ) : (
+              <div className="mb-2.5 px-2 py-1.5 rounded-xl bg-black/40 border border-white/10 flex items-center justify-between text-xs text-zinc-300">
+                <span className="font-bold flex items-center gap-1.5 text-emerald-400">
+                  <Swords className="w-3.5 h-3.5" />
+                  <span>جدول مراحل حذفی جام</span>
+                </span>
+                <span className="text-[11px] text-zinc-400">مسابقات تک‌حذفی (برنده صعود می‌کند)</span>
+              </div>
+            )}
 
             {/* All Matches Completed Celebration Banner */}
             {activeLeague.matches.every((m) => m.isPlayed) && !activeLeague.isFinished && (
@@ -115,6 +147,8 @@ export const MatchesView: React.FC<MatchesViewProps> = ({
               {displayedMatches.map((m) => {
                 const p1 = getPlayerLabel(m.player1Slot);
                 const p2 = getPlayerLabel(m.player2Slot);
+                const isMatchReady = m.player1Slot > 0 && m.player2Slot > 0;
+                const isFinal = activeLeague.mode === 'cup' && (m.id.includes('final') || m.round === Math.max(...activeLeague.matches.map((x) => x.round)));
 
                 return (
                   <div
@@ -122,12 +156,17 @@ export const MatchesView: React.FC<MatchesViewProps> = ({
                     className={`p-2 sm:p-2.5 rounded-xl border transition-all ${
                       m.isPlayed
                         ? 'bg-black/35 border-white/10'
+                        : isFinal
+                        ? 'bg-amber-950/20 border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
                         : 'bg-emerald-950/40 border-emerald-500/20 hover:border-emerald-400/40'
                     }`}
                   >
                     {/* Round Label */}
-                    <div className="flex items-center justify-between text-[11px] text-zinc-400 mb-1 font-medium">
-                      <span>هفته {m.round}</span>
+                    <div className="flex items-center justify-between text-[11px] mb-1 font-medium">
+                      <span className={isFinal ? 'text-amber-400 font-bold flex items-center gap-1' : 'text-zinc-400'}>
+                        {isFinal && <Trophy className="w-3.5 h-3.5 text-amber-400" />}
+                        <span>{getMatchRoundLabel(m)}</span>
+                      </span>
                     </div>
 
                     <div className="flex items-center justify-between gap-1.5">
@@ -150,6 +189,10 @@ export const MatchesView: React.FC<MatchesViewProps> = ({
                           <div className="px-2.5 sm:px-3 py-1 rounded-xl bg-black/60 border border-white/10 font-mono font-black text-base sm:text-lg text-emerald-400 tracking-wider">
                             {m.score1} - {m.score2}
                           </div>
+                        ) : !isMatchReady ? (
+                          <span className="px-2 py-1 rounded-lg bg-black/40 border border-white/5 text-[10px] sm:text-[11px] text-zinc-400 font-medium block">
+                            در انتظار صعود
+                          </span>
                         ) : (
                           isAdmin ? (
                             <button

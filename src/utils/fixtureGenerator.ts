@@ -5,6 +5,19 @@ export function generateFixtures(playerCount: number, mode: CompetitionMode = 'l
 
   // Cup mode: Multi-round Knockout Tree
   if (mode === 'cup') {
+    if (playerCount <= 2) {
+      // 2 Players: Direct Grand Final (Round 1)
+      matches.push({
+        id: 'cup_r1_final',
+        leg: 1,
+        round: 1,
+        player1Slot: 1,
+        player2Slot: 2,
+        isPlayed: false,
+      });
+      return matches;
+    }
+
     if (playerCount <= 4) {
       // 4 Players: 2 Semi-finals (Round 1) + 1 Grand Final (Round 2)
       matches.push({
@@ -45,6 +58,53 @@ export function generateFixtures(playerCount: number, mode: CompetitionMode = 'l
       matches.push({ id: 'cup_r2_m2', leg: 1, round: 2, player1Slot: 0, player2Slot: 0, isPlayed: false });
 
       matches.push({ id: 'cup_r3_final', leg: 1, round: 3, player1Slot: 0, player2Slot: 0, isPlayed: false });
+      return matches;
+    }
+
+    if (playerCount <= 16) {
+      // 16 Players: 8 Round of 16 (Round 1), 4 Quarter-finals (Round 2), 2 Semi-finals (Round 3), 1 Grand Final (Round 4)
+      for (let i = 1; i <= 8; i++) {
+        matches.push({
+          id: `cup_r1_m${i}`,
+          leg: 1,
+          round: 1,
+          player1Slot: 2 * i - 1,
+          player2Slot: 2 * i,
+          isPlayed: false,
+        });
+      }
+
+      for (let i = 1; i <= 4; i++) {
+        matches.push({
+          id: `cup_r2_m${i}`,
+          leg: 1,
+          round: 2,
+          player1Slot: 0,
+          player2Slot: 0,
+          isPlayed: false,
+        });
+      }
+
+      for (let i = 1; i <= 2; i++) {
+        matches.push({
+          id: `cup_r3_m${i}`,
+          leg: 1,
+          round: 3,
+          player1Slot: 0,
+          player2Slot: 0,
+          isPlayed: false,
+        });
+      }
+
+      matches.push({
+        id: 'cup_r4_final',
+        leg: 1,
+        round: 4,
+        player1Slot: 0,
+        player2Slot: 0,
+        isPlayed: false,
+      });
+
       return matches;
     }
 
@@ -151,25 +211,61 @@ export function advanceCupTree(matches: ScheduledMatch[]): ScheduledMatch[] {
   }
 
   // 8-player tree
-  const qf1 = updated.find((m) => m.id === 'cup_r1_m1');
-  const qf2 = updated.find((m) => m.id === 'cup_r1_m2');
-  const qf3 = updated.find((m) => m.id === 'cup_r1_m3');
-  const qf4 = updated.find((m) => m.id === 'cup_r1_m4');
-  const sf1 = updated.find((m) => m.id === 'cup_r2_m1');
-  const sf2 = updated.find((m) => m.id === 'cup_r2_m2');
   const final8 = updated.find((m) => m.id === 'cup_r3_final');
-
-  if (sf1) {
-    if (qf1 && qf1.isPlayed) sf1.player1Slot = getWinnerSlot(qf1);
-    if (qf2 && qf2.isPlayed) sf1.player2Slot = getWinnerSlot(qf2);
-  }
-  if (sf2) {
-    if (qf3 && qf3.isPlayed) sf2.player1Slot = getWinnerSlot(qf3);
-    if (qf4 && qf4.isPlayed) sf2.player2Slot = getWinnerSlot(qf4);
-  }
   if (final8) {
-    if (sf1 && sf1.isPlayed) final8.player1Slot = getWinnerSlot(sf1);
-    if (sf2 && sf2.isPlayed) final8.player2Slot = getWinnerSlot(sf2);
+    const qf1 = updated.find((m) => m.id === 'cup_r1_m1');
+    const qf2 = updated.find((m) => m.id === 'cup_r1_m2');
+    const qf3 = updated.find((m) => m.id === 'cup_r1_m3');
+    const qf4 = updated.find((m) => m.id === 'cup_r1_m4');
+    const sf1 = updated.find((m) => m.id === 'cup_r2_m1');
+    const sf2 = updated.find((m) => m.id === 'cup_r2_m2');
+
+    if (sf1) {
+      if (qf1 && qf1.isPlayed) sf1.player1Slot = getWinnerSlot(qf1);
+      if (qf2 && qf2.isPlayed) sf1.player2Slot = getWinnerSlot(qf2);
+    }
+    if (sf2) {
+      if (qf3 && qf3.isPlayed) sf2.player1Slot = getWinnerSlot(qf3);
+      if (qf4 && qf4.isPlayed) sf2.player2Slot = getWinnerSlot(qf4);
+    }
+    if (final8) {
+      if (sf1 && sf1.isPlayed) final8.player1Slot = getWinnerSlot(sf1);
+      if (sf2 && sf2.isPlayed) final8.player2Slot = getWinnerSlot(sf2);
+    }
+  }
+
+  // 16-player tree (Round 1: 8 matches -> Round 2: 4 QFs -> Round 3: 2 SFs -> Round 4: 1 Final)
+  const final16 = updated.find((m) => m.id === 'cup_r4_final');
+  if (final16) {
+    // Round 2 QFs
+    for (let q = 1; q <= 4; q++) {
+      const qf = updated.find((m) => m.id === `cup_r2_m${q}`);
+      const r1a = updated.find((m) => m.id === `cup_r1_m${2 * q - 1}`);
+      const r1b = updated.find((m) => m.id === `cup_r1_m${2 * q}`);
+      if (qf) {
+        if (r1a && r1a.isPlayed) qf.player1Slot = getWinnerSlot(r1a);
+        if (r1b && r1b.isPlayed) qf.player2Slot = getWinnerSlot(r1b);
+      }
+    }
+    // Round 3 SFs
+    const sf1 = updated.find((m) => m.id === 'cup_r3_m1');
+    const sf2 = updated.find((m) => m.id === 'cup_r3_m2');
+    const qf1 = updated.find((m) => m.id === 'cup_r2_m1');
+    const qf2 = updated.find((m) => m.id === 'cup_r2_m2');
+    const qf3 = updated.find((m) => m.id === 'cup_r2_m3');
+    const qf4 = updated.find((m) => m.id === 'cup_r2_m4');
+
+    if (sf1) {
+      if (qf1 && qf1.isPlayed) sf1.player1Slot = getWinnerSlot(qf1);
+      if (qf2 && qf2.isPlayed) sf1.player2Slot = getWinnerSlot(qf2);
+    }
+    if (sf2) {
+      if (qf3 && qf3.isPlayed) sf2.player1Slot = getWinnerSlot(qf3);
+      if (qf4 && qf4.isPlayed) sf2.player2Slot = getWinnerSlot(qf4);
+    }
+    // Round 4 Final
+    if (sf1 && sf1.isPlayed) final16.player1Slot = getWinnerSlot(sf1);
+    if (sf2 && sf2.isPlayed) final16.player2Slot = getWinnerSlot(sf2);
   }
 
   return updated;
