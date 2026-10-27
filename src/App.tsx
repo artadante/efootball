@@ -566,8 +566,14 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
       {/* 1. Football Pitch Background */}
       <PitchBackground />
 
-      {/* Main Container Shell */}
-      <div className="relative z-10 w-full max-w-lg md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto min-h-screen flex flex-col px-3.5 sm:px-6 pt-4 pb-28">
+      {/* Main Container Shell with iOS PWA Safe Area insets */}
+      <div 
+        className="relative z-10 w-full max-w-lg md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto min-h-screen flex flex-col px-3.5 sm:px-6"
+        style={{
+          paddingTop: 'max(1.25rem, calc(env(safe-area-inset-top, 0px) + 1rem))',
+          paddingBottom: 'max(6.5rem, calc(env(safe-area-inset-bottom, 0px) + 6.5rem))',
+        }}
+      >
         {/* Header Bar */}
         <HeaderBar
           activeLeague={activeLeague}

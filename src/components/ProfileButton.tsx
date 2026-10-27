@@ -122,7 +122,11 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
           role="dialog"
           aria-modal="true"
           aria-label="پروفایل کاربر"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 pb-24 sm:pb-6 bg-black/75 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fadeIn"
+          style={{
+            paddingTop: 'max(1rem, calc(env(safe-area-inset-top, 0px) + 0.75rem))',
+            paddingBottom: 'max(6rem, calc(env(safe-area-inset-bottom, 0px) + 6rem))',
+          }}
         >
           <div
             className="relative w-full max-w-sm rounded-3xl p-5 sm:p-6 bg-emerald-950/95 border border-white/20 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(34,197,94,0.2)] text-white max-h-[85vh] overflow-y-auto no-scrollbar"

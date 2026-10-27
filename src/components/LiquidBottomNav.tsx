@@ -43,7 +43,12 @@ export const LiquidBottomNav: React.FC<LiquidBottomNavProps> = ({
   ];
 
   return (
-    <div className="fixed bottom-4 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
+    <div 
+      className="fixed inset-x-0 z-50 flex justify-center px-4 pointer-events-none"
+      style={{
+        bottom: 'max(1rem, calc(env(safe-area-inset-bottom, 0px) + 0.75rem))',
+      }}
+    >
       <nav
         aria-label="منوی اصلی ناوبری"
         className="pointer-events-auto relative w-full max-w-md h-16 px-2 rounded-full bg-emerald-950/50 backdrop-blur-2xl border border-white/15 flex items-center justify-between transition-all duration-300"

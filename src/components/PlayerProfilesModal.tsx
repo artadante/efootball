@@ -93,6 +93,10 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
       aria-modal="true"
       aria-label="پروفایل بازیکنان"
       className="fixed inset-0 z-50 bg-[#041308] text-white flex flex-col p-3 sm:p-6 overflow-hidden animate-fadeIn"
+      style={{
+        paddingTop: 'max(0.75rem, calc(env(safe-area-inset-top, 0px) + 0.75rem))',
+        paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom, 0px) + 1rem))',
+      }}
     >
       {/* Top Main Navigation Bar */}
       <header className="flex items-center justify-between pb-3 sm:pb-4 border-b border-white/10 shrink-0 max-w-4xl mx-auto w-full">

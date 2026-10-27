@@ -163,6 +163,10 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
       role="dialog"
       aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn"
+      style={{
+        paddingTop: 'max(1rem, calc(env(safe-area-inset-top, 0px) + 0.75rem))',
+        paddingBottom: 'max(6rem, calc(env(safe-area-inset-bottom, 0px) + 6rem))',
+      }}
     >
       <div className="relative w-full max-w-md rounded-3xl p-6 bg-emerald-950/95 border border-emerald-500/30 backdrop-blur-2xl shadow-2xl text-white max-h-[90vh] overflow-y-auto no-scrollbar">
         {/* Header */}

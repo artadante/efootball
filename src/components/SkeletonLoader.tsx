@@ -13,8 +13,14 @@ export const SkeletonLoader: React.FC = () => {
         <div className="absolute bottom-20 left-1/4 w-80 h-80 rounded-full bg-green-500/10 blur-3xl animate-pulse" />
       </div>
 
-      {/* Main Container Shell */}
-      <div className="relative z-10 w-full max-w-lg md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto min-h-screen flex flex-col px-3.5 sm:px-6 pt-4 pb-28">
+      {/* Main Container Shell with iOS PWA Safe Area insets */}
+      <div 
+        className="relative z-10 w-full max-w-lg md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto min-h-screen flex flex-col px-3.5 sm:px-6"
+        style={{
+          paddingTop: 'max(1.25rem, calc(env(safe-area-inset-top, 0px) + 1rem))',
+          paddingBottom: 'max(6.5rem, calc(env(safe-area-inset-bottom, 0px) + 6.5rem))',
+        }}
+      >
         
         {/* 1. Header Bar Skeleton */}
         <header className="flex items-center justify-between py-2 gap-2">
@@ -104,7 +110,12 @@ export const SkeletonLoader: React.FC = () => {
       </div>
 
       {/* 4. Bottom Navigation Bar Skeleton */}
-      <div className="fixed bottom-3 inset-x-0 z-30 flex justify-center px-4 pointer-events-none">
+      <div 
+        className="fixed inset-x-0 z-30 flex justify-center px-4 pointer-events-none"
+        style={{
+          bottom: 'max(1rem, calc(env(safe-area-inset-bottom, 0px) + 0.75rem))',
+        }}
+      >
         <div className="w-full max-w-md h-14 rounded-2xl bg-black/70 border border-white/15 backdrop-blur-2xl flex items-center justify-around px-3 shadow-2xl animate-pulse">
           <div className="w-16 h-8 rounded-xl bg-white/10" />
           <div className="w-16 h-8 rounded-xl bg-emerald-500/20" />
