@@ -5,9 +5,13 @@ import {
   Edit3, 
   Save, 
   RotateCcw, 
-  AlertTriangle
+  AlertTriangle,
+  UserPlus,
+  Trash2,
+  Plus
 } from 'lucide-react';
 import { ActiveLeague } from '../types/league';
+import { RegisteredPlayer, DEFAULT_FIXED_PLAYERS } from '../types/player';
 import { TEAMS_DATABASE } from '../data/teams';
 import { TeamLogo } from './TeamLogo';
 
@@ -15,24 +19,32 @@ interface AdminLeagueControlModalProps {
   isOpen: boolean;
   onClose: () => void;
   activeLeague: ActiveLeague | null;
+  registeredPlayers?: RegisteredPlayer[];
   onUpdatePlayer: (slot: number, name: string, team: string) => void;
   onUpdateMatchScore: (matchId: string, score1: number, score2: number) => void;
   onResetMatch: (matchId: string) => void;
   onEndLeagueEarly: () => void;
+  onAddPlayer?: (name: string) => void;
+  onDeletePlayer?: (id: string) => void;
+  onCreateLeague?: () => void;
 }
 
 export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = ({
   isOpen,
   onClose,
   activeLeague,
+  registeredPlayers = DEFAULT_FIXED_PLAYERS,
   onUpdatePlayer,
   onUpdateMatchScore,
   onResetMatch,
   onEndLeagueEarly,
+  onAddPlayer,
+  onDeletePlayer,
+  onCreateLeague,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'players' | 'matches' | 'finish'>('players');
+  const [activeSubTab, setActiveSubTab] = useState<'players' | 'matches' | 'manage-players' | 'finish'>('players');
 
-  // Player editing state
+  // Player slot editing state
   const [editingSlot, setEditingSlot] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
   const [editTeam, setEditTeam] = useState('');
@@ -41,6 +53,9 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
   const [editingMatchId, setEditingMatchId] = useState<string | null>(null);
   const [editScore1, setEditScore1] = useState<number>(0);
   const [editScore2, setEditScore2] = useState<number>(0);
+
+  // New player registration state
+  const [newPlayerName, setNewPlayerName] = useState('');
 
   if (!isOpen) return null;
 
@@ -51,17 +66,32 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
         aria-modal="true"
         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
       >
-        <div className="relative w-full max-w-sm rounded-3xl p-6 bg-emerald-950/95 border border-white/20 backdrop-blur-2xl shadow-2xl text-white text-center space-y-3">
+        <div className="relative w-full max-w-sm rounded-3xl p-6 bg-emerald-950/95 border border-white/20 backdrop-blur-2xl shadow-2xl text-white text-center space-y-4">
           <div className="flex justify-between items-center pb-2 border-b border-white/10">
             <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
               <Settings2 className="w-4 h-4 text-amber-400" />
-              <span>کنترل لیگ</span>
+              <span>پنل ادمین</span>
             </h3>
             <button type="button" onClick={onClose} className="p-1 rounded-lg hover:bg-white/10 text-zinc-400">
               <X className="w-4 h-4" />
             </button>
           </div>
-          <p className="text-xs text-zinc-300 py-6">در حال حاضر هیچ لیگی در جریان نیست.</p>
+
+          <p className="text-xs text-zinc-300 py-2">در حال حاضر هیچ لیگی در جریان نیست.</p>
+
+          {onCreateLeague && (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onCreateLeague();
+              }}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-extrabold text-sm shadow flex items-center justify-center gap-1.5"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>ایجاد لیگ جدید و قرعه‌کشی 🏆</span>
+            </button>
+          )}
         </div>
       </div>
     );
@@ -90,6 +120,15 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
     setEditingMatchId(null);
   };
 
+  const handleAddNewPlayer = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPlayerName.trim()) return;
+    if (onAddPlayer) {
+      onAddPlayer(newPlayerName.trim());
+      setNewPlayerName('');
+    }
+  };
+
   const getPlayerName = (slot: number) => {
     const p = activeLeague.players.find((pl) => pl.slot === slot);
     return p?.name || `بازیکن ${slot}`;
@@ -99,7 +138,7 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-fadeIn"
     >
       <div className="relative w-full max-w-md max-h-[85vh] flex flex-col rounded-3xl p-5 bg-emerald-950/95 border border-amber-500/30 backdrop-blur-2xl shadow-2xl text-white">
         
@@ -124,8 +163,8 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
           </button>
         </div>
 
-        {/* Sub-Tabs: بازیکنان | ویرایش بازی‌ها | اتمام لیگ */}
-        <div className="flex p-1 bg-black/40 rounded-2xl border border-white/10 my-3 text-sm">
+        {/* Sub-Tabs: اسامی و تیم‌ها | ویرایش بازی‌ها | مدیریت بازیکنان | اتمام لیگ */}
+        <div className="flex p-1 bg-black/40 rounded-2xl border border-white/10 my-3 text-xs sm:text-sm">
           <button
             type="button"
             onClick={() => setActiveSubTab('players')}
@@ -150,6 +189,17 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
           </button>
           <button
             type="button"
+            onClick={() => setActiveSubTab('manage-players')}
+            className={`flex-1 py-2 rounded-xl font-bold transition-all ${
+              activeSubTab === 'manage-players'
+                ? 'bg-amber-400 text-black font-extrabold shadow'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            مدیریت بازیکنان
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveSubTab('finish')}
             className={`flex-1 py-2 rounded-xl font-bold transition-all ${
               activeSubTab === 'finish'
@@ -161,11 +211,11 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
           </button>
         </div>
 
-        {/* Sub-Tab 1: Players & Teams Manual Editing */}
+        {/* Sub-Tab 1: Players & Teams Menu-Based Editing */}
         {activeSubTab === 'players' && (
           <div className="flex-1 overflow-y-auto no-scrollbar space-y-2.5 pr-0.5">
             <p className="text-xs sm:text-sm text-zinc-300 mb-2">
-              تغییرات دستی شما بلافاصله در کل برنامه، بازی‌ها، جدول و صفحه چرخونه اعمال می‌شود:
+              تغییرات منویی شما بلافاصله در کل برنامه، بازی‌ها، جدول و صفحه چرخونه اعمال می‌شود:
             </p>
 
             {activeLeague.players.map((p) => {
@@ -195,14 +245,24 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
                   {isCurrentlyEditing ? (
                     <div className="space-y-2 pt-1">
                       <div className="grid grid-cols-2 gap-2">
-                        <input
-                          type="text"
+                        {/* Player Name Dropdown Selector */}
+                        <select
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
-                          placeholder="نام بازیکن"
                           className="p-2.5 rounded-xl bg-emerald-950 border border-emerald-400/40 text-sm text-white focus:outline-none"
-                          autoFocus
-                        />
+                        >
+                          <option value="" disabled>انتخاب نام بازیکن...</option>
+                          {registeredPlayers.map((rp) => (
+                            <option key={rp.id} value={rp.name}>
+                              {rp.name}
+                            </option>
+                          ))}
+                          {editName && !registeredPlayers.some(rp => rp.name === editName) && (
+                            <option value={editName}>{editName}</option>
+                          )}
+                        </select>
+
+                        {/* Team Dropdown Selector */}
                         <select
                           value={editTeam}
                           onChange={(e) => setEditTeam(e.target.value)}
@@ -273,81 +333,80 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
                 const p2Name = getPlayerName(m.player2Slot);
 
                 return (
-                  <div key={m.id} className="p-3 rounded-2xl bg-black/40 border border-white/10 space-y-2">
-                    <div className="flex items-center justify-between text-xs text-zinc-300">
-                      <span>هفته {m.round} ({m.leg === 1 ? 'دور رفت' : 'دور برگشت'})</span>
+                  <div
+                    key={m.id}
+                    className="p-3 rounded-2xl bg-black/40 border border-white/10 space-y-2"
+                  >
+                    <div className="flex items-center justify-between text-xs text-zinc-400">
+                      <span>هفته {m.round} ({m.leg === 1 ? 'رفت' : 'برگشت'})</span>
                       <button
                         type="button"
                         onClick={() => onResetMatch(m.id)}
-                        className="text-rose-400 hover:text-rose-300 flex items-center gap-1 font-medium text-xs"
-                        title="پاک کردن نتیجه بازی"
+                        className="text-amber-400 hover:text-amber-300 flex items-center gap-1 text-xs"
                       >
-                        <RotateCcw className="w-3.5 h-3.5" />
+                        <RotateCcw className="w-3 h-3" />
                         <span>ریست بازی</span>
                       </button>
                     </div>
 
                     {isEditing ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between gap-2 text-sm">
-                          <div className="flex-1 flex items-center gap-1 truncate text-start">
-                            <TeamLogo teamName={p1?.team} className="w-4 h-4" />
-                            <span className="truncate font-bold text-white">{p1Name}</span>
+                      <div className="space-y-2 pt-1">
+                        <div className="flex items-center justify-between gap-2 text-center">
+                          {/* Player 1 Dropdown */}
+                          <div className="flex-1">
+                            <span className="block text-xs font-bold text-white mb-1 truncate">{p1Name}</span>
+                            <select
+                              value={editScore1}
+                              onChange={(e) => setEditScore1(Number(e.target.value))}
+                              className="w-full py-2 px-2 text-center rounded-xl bg-emerald-950 border border-emerald-400/40 text-base font-black text-emerald-400 focus:outline-none"
+                            >
+                              {Array.from({ length: 21 }, (_, i) => (
+                                <option key={i} value={i} className="bg-slate-900 text-white font-mono">
+                                  {i} گل
+                                </option>
+                              ))}
+                            </select>
                           </div>
 
-                          {/* Menu-based goal selector for Home team */}
-                          <select
-                            value={editScore1}
-                            onChange={(e) => setEditScore1(Number(e.target.value))}
-                            className="w-16 py-1.5 px-1 text-center rounded-lg bg-emerald-950 border border-emerald-400 text-emerald-300 font-mono font-black text-base focus:outline-none"
-                          >
-                            {Array.from({ length: 21 }, (_, i) => (
-                              <option key={i} value={i} className="bg-zinc-900 text-white font-mono">
-                                {i}
-                              </option>
-                            ))}
-                          </select>
+                          <span className="font-bold text-zinc-500 font-mono mt-4">-</span>
 
-                          <span className="font-mono text-zinc-400 font-bold">-</span>
-
-                          {/* Menu-based goal selector for Away team */}
-                          <select
-                            value={editScore2}
-                            onChange={(e) => setEditScore2(Number(e.target.value))}
-                            className="w-16 py-1.5 px-1 text-center rounded-lg bg-emerald-950 border border-emerald-400 text-emerald-300 font-mono font-black text-base focus:outline-none"
-                          >
-                            {Array.from({ length: 21 }, (_, i) => (
-                              <option key={i} value={i} className="bg-zinc-900 text-white font-mono">
-                                {i}
-                              </option>
-                            ))}
-                          </select>
-
-                          <div className="flex-1 flex items-center justify-end gap-1 truncate text-end">
-                            <span className="truncate font-bold text-white">{p2Name}</span>
-                            <TeamLogo teamName={p2?.team} className="w-4 h-4" />
+                          {/* Player 2 Dropdown */}
+                          <div className="flex-1">
+                            <span className="block text-xs font-bold text-white mb-1 truncate">{p2Name}</span>
+                            <select
+                              value={editScore2}
+                              onChange={(e) => setEditScore2(Number(e.target.value))}
+                              className="w-full py-2 px-2 text-center rounded-xl bg-emerald-950 border border-emerald-400/40 text-base font-black text-emerald-400 focus:outline-none"
+                            >
+                              {Array.from({ length: 21 }, (_, i) => (
+                                <option key={i} value={i} className="bg-slate-900 text-white font-mono">
+                                  {i} گل
+                                </option>
+                              ))}
+                            </select>
                           </div>
                         </div>
+
                         <div className="flex gap-2">
                           <button
                             type="button"
                             onClick={() => handleSaveMatchScore(m.id)}
-                            className="flex-1 py-1.5 rounded-lg bg-emerald-500 text-black font-extrabold text-xs"
+                            className="flex-1 py-1.5 rounded-xl bg-emerald-500 text-black font-extrabold text-xs shadow"
                           >
                             ذخیره نتیجه
                           </button>
                           <button
                             type="button"
                             onClick={() => setEditingMatchId(null)}
-                            className="py-1.5 px-3 rounded-lg bg-white/10 text-zinc-300 text-xs font-semibold"
+                            className="py-1.5 px-3 rounded-xl bg-white/10 text-zinc-300 text-xs"
                           >
                             انصراف
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex-1 flex items-center gap-1.5 truncate text-start">
+                      <div className="flex items-center justify-between text-sm py-1">
+                        <div className="flex-1 flex items-center gap-1.5 truncate">
                           <TeamLogo teamName={p1?.team} className="w-4 h-4" />
                           <span className="truncate font-bold text-white">{p1Name}</span>
                         </div>
@@ -375,7 +434,89 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
           </div>
         )}
 
-        {/* Sub-Tab 3: End League Early */}
+        {/* Sub-Tab 3: Manage Registered Players */}
+        {activeSubTab === 'manage-players' && (
+          <div className="flex-1 overflow-y-auto no-scrollbar space-y-3 pr-0.5">
+            <p className="text-xs text-zinc-300">
+              مدیریت و افزودن بازیکنان جدید به منوی گردونه و پروفایل‌ها:
+            </p>
+
+            {/* Add new player form */}
+            <form onSubmit={handleAddNewPlayer} className="flex gap-2">
+              <input
+                type="text"
+                value={newPlayerName}
+                onChange={(e) => setNewPlayerName(e.target.value)}
+                placeholder="نام بازیکن جدید..."
+                className="flex-1 py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400"
+              />
+              <button
+                type="submit"
+                disabled={!newPlayerName.trim()}
+                className="py-2 px-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-black font-extrabold text-xs shadow flex items-center gap-1 transition-all"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>افزودن</span>
+              </button>
+            </form>
+
+            {/* Registered players list */}
+            <div className="space-y-1.5 pt-1">
+              {registeredPlayers.map((player) => (
+                <div
+                  key={player.id}
+                  className="p-2.5 rounded-xl bg-black/40 border border-white/10 flex items-center justify-between text-xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-emerald-950 border border-white/20 flex items-center justify-center font-bold text-xs text-emerald-300 overflow-hidden">
+                      {player.avatarUrl ? (
+                        <img src={player.avatarUrl} alt={player.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{player.name.charAt(0)}</span>
+                      )}
+                    </div>
+                    <span className="font-bold text-white text-sm">{player.name}</span>
+                    {player.isDefault && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-medium">
+                        ثابت
+                      </span>
+                    )}
+                  </div>
+
+                  {!player.isDefault && onDeletePlayer && (
+                    <button
+                      type="button"
+                      onClick={() => onDeletePlayer(player.id)}
+                      className="p-1 text-zinc-400 hover:text-rose-400 transition-colors"
+                      title="حذف بازیکن"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Quick Action: Create New League */}
+            {onCreateLeague && (
+              <div className="pt-2 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onCreateLeague();
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-extrabold text-xs shadow flex items-center justify-center gap-1.5 transition-all"
+                >
+                  <Plus className="w-4 h-4 stroke-[3]" />
+                  <span>ایجاد لیگ جدید و قرعه‌کشی 🏆</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Sub-Tab 4: Early Finish & Archive League */}
         {activeSubTab === 'finish' && (
           <div className="flex-1 flex flex-col justify-center text-center p-3 space-y-4">
             <div className="w-16 h-16 rounded-full bg-rose-500/20 border-2 border-rose-500 mx-auto flex items-center justify-center text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.3)]">

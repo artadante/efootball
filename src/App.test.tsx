@@ -16,24 +16,20 @@ describe('App Component Complete League & Dual Wheel Workflow', () => {
     expect(screen.getByText('تاریخچه')).toBeInTheDocument();
   });
 
-  it('requires admin PIN arta6996 to create a league with + button', () => {
+  it('opens player profiles modal from top-left button and shows registered players', () => {
     render(<App />);
 
-    const plusBtn = screen.getByRole('button', { name: /ثبت مسابقه/i });
-    fireEvent.click(plusBtn);
+    const profilesBtn = screen.getByRole('button', { name: /پروفایل و آمار بازیکنان/i });
+    expect(profilesBtn).toBeInTheDocument();
+    fireEvent.click(profilesBtn);
 
-    // Prompt for admin pin
-    expect(screen.getByText(/دسترسی مدیر لازم است/i)).toBeInTheDocument();
-
-    const pinInput = screen.getByPlaceholderText('رمز عبور مدیر');
-    fireEvent.change(pinInput, { target: { value: 'arta6996' } });
-    fireEvent.click(screen.getByRole('button', { name: /تایید رمز و ورود/i }));
-
-    // Now click + again, it opens the create league wizard!
-    fireEvent.click(plusBtn);
-    expect(screen.getByText(/راه‌اندازی مسابقات جدید/i)).toBeInTheDocument();
-    expect(screen.getByText(/۱. لیگ عادی فوتبال/i)).toBeInTheDocument();
-    expect(screen.getByText(/۲. جام حذفی/i)).toBeInTheDocument();
+    expect(screen.getByText('پروفایل و آمار بازیکنان')).toBeInTheDocument();
+    expect(screen.getByText('آرتا')).toBeInTheDocument();
+    expect(screen.getByText('پدرام')).toBeInTheDocument();
+    expect(screen.getByText('پیام')).toBeInTheDocument();
+    expect(screen.getByText('سهند')).toBeInTheDocument();
+    expect(screen.getByText('بابک')).toBeInTheDocument();
+    expect(screen.getByText('کارن')).toBeInTheDocument();
   });
 
   it('switches between all 4 tabs smoothly', () => {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, X, Shield, KeyRound, Crown, LogOut, Settings2 } from 'lucide-react';
+import { User, X, Shield, KeyRound, Crown, LogOut, Settings2, Plus } from 'lucide-react';
 
 interface ProfileButtonProps {
   userName?: string;
@@ -10,6 +10,7 @@ interface ProfileButtonProps {
   onAdminLogin?: (pin: string) => boolean | void;
   onAdminLogout?: () => void;
   onOpenLeagueControl?: () => void;
+  onCreateLeague?: () => void;
 }
 
 export const ProfileButton: React.FC<ProfileButtonProps> = ({
@@ -21,6 +22,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
   onAdminLogin,
   onAdminLogout,
   onOpenLeagueControl,
+  onCreateLeague,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [pinInput, setPinInput] = useState('');
@@ -154,6 +156,20 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                   
                   {/* Admin Actions */}
                   <div className="pt-2 flex flex-col gap-2">
+                    {onCreateLeague && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsOpen(false);
+                          onCreateLeague();
+                        }}
+                        className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-500 hover:brightness-110 text-black font-extrabold text-sm flex items-center justify-center gap-1.5 shadow transition-all active:scale-95"
+                      >
+                        <Plus className="w-4 h-4 stroke-[3]" />
+                        <span>ایجاد لیگ جدید و قرعه‌کشی 🏆</span>
+                      </button>
+                    )}
+
                     {onOpenLeagueControl && (
                       <button
                         type="button"

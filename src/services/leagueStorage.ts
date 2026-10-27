@@ -1,28 +1,42 @@
 import { ActiveLeague, ArchivedLeague } from '../types/league';
+import { RegisteredPlayer, DEFAULT_FIXED_PLAYERS } from '../types/player';
 import { supabase } from '../lib/supabase';
 
 const STORAGE_ACTIVE_KEY = 'efootball_active_league';
 const STORAGE_ARCHIVED_KEY = 'efootball_archived_leagues';
+const STORAGE_PLAYERS_KEY = 'efootball_registered_players';
 const DB_SYNC_NAME = '__EFOOTBALL_GLOBAL_STATE__';
 
 export interface LeagueAppState {
   activeLeague: ActiveLeague | null;
   archivedLeagues: ArchivedLeague[];
+  registeredPlayers?: RegisteredPlayer[];
   updatedAt?: string;
 }
 
 // 1. Load initial state from local storage for instantaneous render
-export function getLocalLeagueState(): LeagueAppState {
+export function getLocalLeagueState(): {
+  activeLeague: ActiveLeague | null;
+  archivedLeagues: ArchivedLeague[];
+  registeredPlayers: RegisteredPlayer[];
+} {
   try {
     const activeRaw = localStorage.getItem(STORAGE_ACTIVE_KEY);
     const archivedRaw = localStorage.getItem(STORAGE_ARCHIVED_KEY);
+    const playersRaw = localStorage.getItem(STORAGE_PLAYERS_KEY);
+
     return {
       activeLeague: activeRaw ? JSON.parse(activeRaw) : null,
       archivedLeagues: archivedRaw ? JSON.parse(archivedRaw) : [],
+      registeredPlayers: playersRaw ? JSON.parse(playersRaw) : DEFAULT_FIXED_PLAYERS,
     };
   } catch (err) {
     console.error('Error loading local state:', err);
-    return { activeLeague: null, archivedLeagues: [] };
+    return {
+      activeLeague: null,
+      archivedLeagues: [],
+      registeredPlayers: DEFAULT_FIXED_PLAYERS,
+    };
   }
 }
 
@@ -53,6 +67,9 @@ export async function fetchRemoteLeagueState(): Promise<LeagueAppState | null> {
       if (parsed.archivedLeagues) {
         localStorage.setItem(STORAGE_ARCHIVED_KEY, JSON.stringify(parsed.archivedLeagues));
       }
+      if (parsed.registeredPlayers && parsed.registeredPlayers.length > 0) {
+        localStorage.setItem(STORAGE_PLAYERS_KEY, JSON.stringify(parsed.registeredPlayers));
+      }
       return parsed;
     }
   } catch (err) {
@@ -65,7 +82,8 @@ export async function fetchRemoteLeagueState(): Promise<LeagueAppState | null> {
 // 3. Save state both locally and to Supabase Cloud
 export async function syncSaveLeagueState(
   activeLeague: ActiveLeague | null,
-  archivedLeagues: ArchivedLeague[]
+  archivedLeagues: ArchivedLeague[],
+  registeredPlayers?: RegisteredPlayer[]
 ): Promise<void> {
   // Always update local cache immediately
   try {
@@ -75,6 +93,9 @@ export async function syncSaveLeagueState(
       localStorage.removeItem(STORAGE_ACTIVE_KEY);
     }
     localStorage.setItem(STORAGE_ARCHIVED_KEY, JSON.stringify(archivedLeagues));
+    if (registeredPlayers) {
+      localStorage.setItem(STORAGE_PLAYERS_KEY, JSON.stringify(registeredPlayers));
+    }
   } catch (err) {
     console.error('Local save error:', err);
   }
@@ -82,9 +103,11 @@ export async function syncSaveLeagueState(
   // Push to Supabase Cloud for live cross-device sync
   if (supabase) {
     try {
+      const currentPlayers = registeredPlayers || getLocalLeagueState().registeredPlayers;
       const payload: LeagueAppState = {
         activeLeague,
         archivedLeagues,
+        registeredPlayers: currentPlayers,
         updatedAt: new Date().toISOString(),
       };
 
@@ -134,6 +157,9 @@ export function subscribeToRealtimeLeague(
               }
               if (parsed.archivedLeagues) {
                 localStorage.setItem(STORAGE_ARCHIVED_KEY, JSON.stringify(parsed.archivedLeagues));
+              }
+              if (parsed.registeredPlayers && parsed.registeredPlayers.length > 0) {
+                localStorage.setItem(STORAGE_PLAYERS_KEY, JSON.stringify(parsed.registeredPlayers));
               }
               onUpdate(parsed);
             }

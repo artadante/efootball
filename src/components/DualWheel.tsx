@@ -1,21 +1,26 @@
 import React, { useState } from 'react';
-import { Sparkles, Lock, CheckCircle2, User, Shield, AlertCircle, ListPlus } from 'lucide-react';
+import { Sparkles, Lock, CheckCircle2, User, Shield, AlertCircle, ListPlus, Users } from 'lucide-react';
 import { ActiveLeague } from '../types/league';
+import { RegisteredPlayer, DEFAULT_FIXED_PLAYERS } from '../types/player';
 import { TeamSelectorModal } from './TeamSelectorModal';
+import { PlayerSelectorModal } from './PlayerSelectorModal';
 import { TeamLogo } from './TeamLogo';
 
 interface DualWheelProps {
   activeLeague: ActiveLeague | null;
+  registeredPlayers?: RegisteredPlayer[];
   onSlotAssigned: (slotNumber: number, playerName: string, teamName: string) => void;
 }
 
 export const DualWheel: React.FC<DualWheelProps> = ({
   activeLeague,
+  registeredPlayers = DEFAULT_FIXED_PLAYERS,
   onSlotAssigned,
 }) => {
   const [playersInput, setPlayersInput] = useState('');
   const [teamsInput, setTeamsInput] = useState('');
   const [isTeamSelectorOpen, setIsTeamSelectorOpen] = useState(false);
+  const [isPlayerSelectorOpen, setIsPlayerSelectorOpen] = useState(false);
 
   // Rotation states for 2 wheels
   const [wheel1Angle, setWheel1Angle] = useState(0);
@@ -161,20 +166,40 @@ export const DualWheel: React.FC<DualWheelProps> = ({
 
         {/* Player Name Input & Team Picker Menu */}
         <div className="grid grid-cols-2 gap-2.5 my-3">
-          {/* 1. Players Input */}
+          {/* 1. Players Selector Menu (Menu-based) */}
           <div>
-            <label className="block text-xs font-semibold text-zinc-200 mb-1">
-              اسم بازیکنا (با ویرگول):
-            </label>
-            <textarea
-              rows={2}
-              value={playersInput}
-              onChange={(e) => setPlayersInput(e.target.value)}
-              placeholder="مثال: آرتا، علی، رضا، مهران..."
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-zinc-200">
+                بازیکنان ({playerList.length}):
+              </label>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsPlayerSelectorOpen(true)}
               disabled={isSpinning}
-              className="w-full p-2.5 rounded-xl bg-black/50 border border-white/15 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400 resize-none"
-            />
-            <span className="text-xs text-zinc-400 mt-0.5 block">{playerList.length} بازیکن</span>
+              className="w-full py-2.5 px-2 rounded-xl bg-gradient-to-r from-emerald-600/30 to-green-600/30 hover:from-emerald-600/40 hover:to-green-600/40 border border-emerald-400/50 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 shadow transition-all"
+            >
+              <Users className="w-4 h-4 text-emerald-400" />
+              <span>منوی انتخاب بازیکنان 👥</span>
+            </button>
+
+            {/* Selected players preview tags */}
+            <div className="mt-1.5 max-h-14 overflow-y-auto no-scrollbar flex flex-wrap gap-1">
+              {playerList.length === 0 ? (
+                <span className="text-[11px] text-zinc-500 italic">هنوز بازیکنی انتخاب نشده است</span>
+              ) : (
+                playerList.map((p, idx) => (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center gap-1 py-0.5 px-1.5 rounded-md bg-black/40 border border-white/10 text-[10px] text-white"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span>{p}</span>
+                  </span>
+                ))
+              )}
+            </div>
           </div>
 
           {/* 2. Teams Selector Menu (Menu-based as requested) */}
@@ -331,6 +356,15 @@ export const DualWheel: React.FC<DualWheelProps> = ({
         onClose={() => setIsTeamSelectorOpen(false)}
         selectedTeamNames={teamList}
         onConfirm={(chosen) => setTeamsInput(chosen.join(', '))}
+      />
+
+      {/* Player Selection Menu Modal */}
+      <PlayerSelectorModal
+        isOpen={isPlayerSelectorOpen}
+        onClose={() => setIsPlayerSelectorOpen(false)}
+        registeredPlayers={registeredPlayers || DEFAULT_FIXED_PLAYERS}
+        selectedPlayerNames={playerList}
+        onConfirm={(chosen) => setPlayersInput(chosen.join(', '))}
       />
     </div>
   );

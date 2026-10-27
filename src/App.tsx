@@ -5,6 +5,7 @@ import { ProfileButton } from './components/ProfileButton';
 import { CreateLeagueModal } from './components/CreateLeagueModal';
 import { DualWheel } from './components/DualWheel';
 import { AdminLeagueControlModal } from './components/AdminLeagueControlModal';
+import { PlayerProfilesModal } from './components/PlayerProfilesModal';
 import { TeamLogo } from './components/TeamLogo';
 import { 
   fetchRemoteLeagueState, 
@@ -13,7 +14,6 @@ import {
   getLocalLeagueState
 } from './services/leagueStorage';
 import { 
-  Plus, 
   Crown, 
   Medal, 
   ShieldAlert, 
@@ -25,15 +25,18 @@ import {
   Archive,
   Trophy,
   Flame,
-  Smartphone
+  Smartphone,
+  Users
 } from 'lucide-react';
 import { ActiveLeague, ArchivedLeague, StandingRow } from './types/league';
+import { RegisteredPlayer, DEFAULT_FIXED_PLAYERS } from './types/player';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('table');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState(false);
   const [isAdminLeagueControlOpen, setIsAdminLeagueControlOpen] = useState(false);
+  const [isProfilesModalOpen, setIsProfilesModalOpen] = useState(false);
   const [scoreEditMatchId, setScoreEditMatchId] = useState<string | null>(null);
   const [scoreInput1, setScoreInput1] = useState<number | string>(0);
   const [scoreInput2, setScoreInput2] = useState<number | string>(0);
@@ -58,18 +61,29 @@ export const App: React.FC = () => {
     return getLocalLeagueState().archivedLeagues;
   });
 
+  // Registered Players list (fixed default players + admin additions)
+  const [registeredPlayers, setRegisteredPlayers] = useState<RegisteredPlayer[]>(() => {
+    return getLocalLeagueState().registeredPlayers || DEFAULT_FIXED_PLAYERS;
+  });
+
   // Fetch initial remote state and subscribe to live changes across all devices
   useEffect(() => {
     fetchRemoteLeagueState().then((remote) => {
       if (remote) {
         if (remote.activeLeague !== undefined) setActiveLeague(remote.activeLeague);
         if (remote.archivedLeagues !== undefined) setArchivedLeagues(remote.archivedLeagues);
+        if (remote.registeredPlayers && remote.registeredPlayers.length > 0) {
+          setRegisteredPlayers(remote.registeredPlayers);
+        }
       }
     });
 
     const unsubscribe = subscribeToRealtimeLeague((remoteState) => {
       setActiveLeague(remoteState.activeLeague);
       setArchivedLeagues(remoteState.archivedLeagues || []);
+      if (remoteState.registeredPlayers && remoteState.registeredPlayers.length > 0) {
+        setRegisteredPlayers(remoteState.registeredPlayers);
+      }
     });
 
     return () => {
@@ -160,13 +174,34 @@ export const App: React.FC = () => {
   // Save active league to local cache and Supabase Cloud
   const saveActiveLeague = (league: ActiveLeague | null) => {
     setActiveLeague(league);
-    syncSaveLeagueState(league, archivedLeagues);
+    syncSaveLeagueState(league, archivedLeagues, registeredPlayers);
   };
 
   // Save archived leagues to local cache and Supabase Cloud
   const saveArchivedLeagues = (list: ArchivedLeague[]) => {
     setArchivedLeagues(list);
-    syncSaveLeagueState(activeLeague, list);
+    syncSaveLeagueState(activeLeague, list, registeredPlayers);
+  };
+
+  // Add new player to registered players list
+  const handleAddPlayer = (name: string) => {
+    if (!name.trim()) return;
+    const newPlayer: RegisteredPlayer = {
+      id: 'p-' + Date.now(),
+      name: name.trim(),
+      isDefault: false,
+      createdAt: new Date().toLocaleDateString('fa-IR'),
+    };
+    const updated = [...registeredPlayers, newPlayer];
+    setRegisteredPlayers(updated);
+    syncSaveLeagueState(activeLeague, archivedLeagues, updated);
+  };
+
+  // Delete custom player
+  const handleDeletePlayer = (id: string) => {
+    const updated = registeredPlayers.filter((p) => p.id !== id);
+    setRegisteredPlayers(updated);
+    syncSaveLeagueState(activeLeague, archivedLeagues, updated);
   };
 
   // Admin login handlers
@@ -185,8 +220,8 @@ export const App: React.FC = () => {
     localStorage.removeItem('efootball_is_admin');
   };
 
-  // Handle top-left '+' Click
-  const handleTopPlusClick = () => {
+  // Handle open create league from admin panel
+  const handleOpenCreateLeague = () => {
     if (!isAdmin) {
       setUnlockPinInput('');
       setUnlockError('');
@@ -416,6 +451,7 @@ export const App: React.FC = () => {
             onAdminLogin={handleAdminLogin}
             onAdminLogout={handleAdminLogout}
             onOpenLeagueControl={() => setIsAdminLeagueControlOpen(true)}
+            onCreateLeague={handleOpenCreateLeague}
           />
 
           {/* Center: Admin status / Active League Name */}
@@ -432,15 +468,15 @@ export const App: React.FC = () => {
             )}
           </div>
 
-          {/* Top-Left: '+' Button for creating league or competition */}
+          {/* Top-Left: Player Profiles Directory Button (Replaced '+' as requested) */}
           <button
             type="button"
-            onClick={handleTopPlusClick}
-            aria-label="ثبت مسابقه"
+            onClick={() => setIsProfilesModalOpen(true)}
+            aria-label="پروفایل و آمار بازیکنان"
             className="w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-emerald-600 via-green-500 to-emerald-400 text-black flex items-center justify-center shadow-[0_0_18px_rgba(34,197,94,0.4)] active:scale-95 hover:scale-105 transition-all focus:outline-none"
-            title="ایجاد لیگ جدید و قرعه‌کشی"
+            title="پروفایل و آمار بازیکنان"
           >
-            <Plus className="w-6 h-6 stroke-[2.75] text-slate-950" />
+            <Users className="w-5.5 h-5.5 stroke-[2.2] text-slate-950" />
           </button>
         </header>
 
@@ -474,6 +510,7 @@ export const App: React.FC = () => {
           {activeTab === 'wheel' && (
             <DualWheel
               activeLeague={activeLeague}
+              registeredPlayers={registeredPlayers}
               onSlotAssigned={handleSlotAssigned}
             />
           )}
@@ -1021,15 +1058,28 @@ export const App: React.FC = () => {
         );
       })()}
 
-      {/* Modal 4: Admin League Control (End early, edit players/teams, edit match scores) */}
+      {/* Modal 4: Admin League Control (End early, edit players/teams, edit match scores, manage players) */}
       <AdminLeagueControlModal
         isOpen={isAdminLeagueControlOpen}
         onClose={() => setIsAdminLeagueControlOpen(false)}
         activeLeague={activeLeague}
+        registeredPlayers={registeredPlayers}
         onUpdatePlayer={handleAdminUpdatePlayer}
         onUpdateMatchScore={handleAdminUpdateMatchScore}
         onResetMatch={handleAdminResetMatch}
         onEndLeagueEarly={handleFinishAndArchiveLeague}
+        onAddPlayer={handleAddPlayer}
+        onDeletePlayer={handleDeletePlayer}
+        onCreateLeague={handleOpenCreateLeague}
+      />
+
+      {/* Modal 5: Player Profiles & Career Statistics */}
+      <PlayerProfilesModal
+        isOpen={isProfilesModalOpen}
+        onClose={() => setIsProfilesModalOpen(false)}
+        registeredPlayers={registeredPlayers}
+        activeLeague={activeLeague}
+        archivedLeagues={archivedLeagues}
       />
 
       {/* 2. Liquid Glass Bottom Navigation Bar (چرخونه - بازی‌ها - جدول - تاریخچه) */}

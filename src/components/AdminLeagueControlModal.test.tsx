@@ -77,15 +77,16 @@ describe('AdminLeagueControlModal Component', () => {
     const editBtns = screen.getAllByRole('button', { name: /^ویرایش$/i });
     fireEvent.click(editBtns[0]);
 
-    const nameInput = screen.getByPlaceholderText('نام بازیکن');
-    const teamSelect = screen.getByRole('combobox');
+    const comboboxes = screen.getAllByRole('combobox');
+    const nameSelect = comboboxes[0];
+    const teamSelect = comboboxes[1];
 
-    fireEvent.change(nameInput, { target: { value: 'آرتا نوین' } });
+    fireEvent.change(nameSelect, { target: { value: 'پدرام' } });
     fireEvent.change(teamSelect, { target: { value: 'رئال مادرید' } });
 
     fireEvent.click(screen.getByRole('button', { name: /ذخیره تغییرات/i }));
 
-    expect(handleUpdatePlayer).toHaveBeenCalledWith(1, 'آرتا نوین', 'رئال مادرید');
+    expect(handleUpdatePlayer).toHaveBeenCalledWith(1, 'پدرام', 'رئال مادرید');
   });
 
   it('switches to matches sub-tab and allows editing scores and resetting a match', () => {
