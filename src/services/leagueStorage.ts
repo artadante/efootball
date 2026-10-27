@@ -22,29 +22,26 @@ export function getLocalLeagueState(): {
   registeredPlayers: RegisteredPlayer[];
 } {
   try {
+    // Purge any legacy backup key to prevent resurrecting deleted/default leagues
+    try {
+      localStorage.removeItem(STORAGE_ARCHIVED_BACKUP_KEY);
+    } catch {
+      // ignore
+    }
+
     const activeRaw = localStorage.getItem(STORAGE_ACTIVE_KEY);
     const archivedRaw = localStorage.getItem(STORAGE_ARCHIVED_KEY);
-    const backupRaw = localStorage.getItem(STORAGE_ARCHIVED_BACKUP_KEY);
     const playersRaw = localStorage.getItem(STORAGE_PLAYERS_KEY);
 
     let parsedArchived: ArchivedLeague[] = [];
     if (archivedRaw) {
       try {
-        parsedArchived = JSON.parse(archivedRaw);
-      } catch {
-        parsedArchived = [];
-      }
-    }
-
-    // Safety net: If archived is empty but backup has saved leagues, recover from backup
-    if ((!parsedArchived || parsedArchived.length === 0) && backupRaw) {
-      try {
-        const backupParsed = JSON.parse(backupRaw);
-        if (Array.isArray(backupParsed) && backupParsed.length > 0) {
-          parsedArchived = backupParsed;
+        const val = JSON.parse(archivedRaw);
+        if (Array.isArray(val)) {
+          parsedArchived = val;
         }
       } catch {
-        // ignore
+        parsedArchived = [];
       }
     }
 
@@ -89,23 +86,7 @@ export async function fetchRemoteLeagueState(): Promise<LeagueAppState | null> {
       }
 
       if (parsed.archivedLeagues && Array.isArray(parsed.archivedLeagues)) {
-        if (parsed.archivedLeagues.length > 0) {
-          localStorage.setItem(STORAGE_ARCHIVED_KEY, JSON.stringify(parsed.archivedLeagues));
-          localStorage.setItem(STORAGE_ARCHIVED_BACKUP_KEY, JSON.stringify(parsed.archivedLeagues));
-        } else {
-          // If remote is empty, check if we have a valid local backup before wiping
-          const backupRaw = localStorage.getItem(STORAGE_ARCHIVED_BACKUP_KEY);
-          if (backupRaw) {
-            try {
-              const localBackup = JSON.parse(backupRaw);
-              if (Array.isArray(localBackup) && localBackup.length > 0) {
-                parsed.archivedLeagues = localBackup;
-              }
-            } catch {
-              // ignore
-            }
-          }
-        }
+        localStorage.setItem(STORAGE_ARCHIVED_KEY, JSON.stringify(parsed.archivedLeagues));
       }
 
       if (parsed.registeredPlayers && parsed.registeredPlayers.length > 0) {
@@ -134,9 +115,7 @@ export async function syncSaveLeagueState(
       localStorage.removeItem(STORAGE_ACTIVE_KEY);
     }
     localStorage.setItem(STORAGE_ARCHIVED_KEY, JSON.stringify(archivedLeagues));
-    if (archivedLeagues && archivedLeagues.length > 0) {
-      localStorage.setItem(STORAGE_ARCHIVED_BACKUP_KEY, JSON.stringify(archivedLeagues));
-    }
+    localStorage.removeItem(STORAGE_ARCHIVED_BACKUP_KEY);
     if (registeredPlayers) {
       localStorage.setItem(STORAGE_PLAYERS_KEY, JSON.stringify(registeredPlayers));
     }
@@ -200,22 +179,7 @@ export function subscribeToRealtimeLeague(
                 localStorage.removeItem(STORAGE_ACTIVE_KEY);
               }
               if (parsed.archivedLeagues && Array.isArray(parsed.archivedLeagues)) {
-                if (parsed.archivedLeagues.length > 0) {
-                  localStorage.setItem(STORAGE_ARCHIVED_KEY, JSON.stringify(parsed.archivedLeagues));
-                  localStorage.setItem(STORAGE_ARCHIVED_BACKUP_KEY, JSON.stringify(parsed.archivedLeagues));
-                } else {
-                  const backupRaw = localStorage.getItem(STORAGE_ARCHIVED_BACKUP_KEY);
-                  if (backupRaw) {
-                    try {
-                      const localBackup = JSON.parse(backupRaw);
-                      if (Array.isArray(localBackup) && localBackup.length > 0) {
-                        parsed.archivedLeagues = localBackup;
-                      }
-                    } catch {
-                      // ignore
-                    }
-                  }
-                }
+                localStorage.setItem(STORAGE_ARCHIVED_KEY, JSON.stringify(parsed.archivedLeagues));
               }
               if (parsed.registeredPlayers && parsed.registeredPlayers.length > 0) {
                 localStorage.setItem(STORAGE_PLAYERS_KEY, JSON.stringify(parsed.registeredPlayers));
