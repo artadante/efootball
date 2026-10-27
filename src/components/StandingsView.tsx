@@ -1,8 +1,9 @@
-import React from 'react';
-import { Medal, Trophy, Crown } from 'lucide-react';
+import React, { useState } from 'react';
+import { Medal, Trophy, Crown, TrendingUp, ChevronDown } from 'lucide-react';
 import { ActiveLeague, StandingRow } from '../types/league';
 import { TeamLogo } from './TeamLogo';
 import { PositionProgressionChart } from './PositionProgressionChart';
+import { soundEngine } from '../utils/soundEffects';
 
 export interface StandingsViewProps {
   activeLeague: ActiveLeague | null;
@@ -13,6 +14,8 @@ export const StandingsView: React.FC<StandingsViewProps> = ({
   activeLeague,
   standings,
 }) => {
+  const [isChartOpen, setIsChartOpen] = useState(false);
+
   return (
     <div className="space-y-3 animate-fadeIn my-auto w-full">
       <div className="rounded-2xl p-3 sm:p-4 bg-emerald-950/50 border border-white/15 backdrop-blur-2xl shadow-xl">
@@ -105,10 +108,36 @@ export const StandingsView: React.FC<StandingsViewProps> = ({
               </table>
             </div>
 
-            {/* Position Progression Chart Across Season */}
+            {/* Collapsible Position Progression Chart Across Season */}
             {activeLeague && (
-              <div className="mt-3.5 pt-3 border-t border-white/10">
-                <PositionProgressionChart activeLeague={activeLeague} />
+              <div className="mt-3 pt-2.5 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundEngine.playClick();
+                    setIsChartOpen((prev) => !prev);
+                  }}
+                  className="w-full py-2 px-3 rounded-xl bg-black/40 hover:bg-black/60 border border-white/10 flex items-center justify-between transition-all cursor-pointer text-xs font-bold text-zinc-300 hover:text-white group"
+                >
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                    <span>نمودار تغییرات رتبه در طول فصل</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-zinc-400 font-medium">
+                    <span>{isChartOpen ? 'بستن نمودار' : 'مشاهده نمودار'}</span>
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform duration-200 ${
+                        isChartOpen ? 'rotate-180 text-emerald-400' : 'text-zinc-400'
+                      }`}
+                    />
+                  </div>
+                </button>
+
+                {isChartOpen && (
+                  <div className="mt-2.5 animate-fadeIn">
+                    <PositionProgressionChart activeLeague={activeLeague} />
+                  </div>
+                )}
               </div>
             )}
           </>
