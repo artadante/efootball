@@ -1,9 +1,13 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const rawUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const rawUrl = 
+  import.meta.env.VITE_SUPABASE_URL || 
+  'https://uzcuypdufieygrbkhnwe.supabase.co';
 // Clean trailing slashes or /rest/v1 if accidentally included
 export const supabaseUrl = rawUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
-export const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+export const supabaseAnonKey = 
+  import.meta.env.VITE_SUPABASE_ANON_KEY || 
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6Y3V5cGR1ZmlleWdyYmtobndlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwNTYzMDMsImV4cCI6MjEwODYzMjMwM30.xqxdLZh7l7dzje6nhKkmx9NAj81hL1-056-eUOHJkWU';
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl && 

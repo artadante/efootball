@@ -40,6 +40,9 @@ jobs:
 
       - name: Build static site with Vite
         run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://uzcuypdufieygrbkhnwe.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6Y3V5cGR1ZmlleWdyYmtobndlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwNTYzMDMsImV4cCI6MjEwODYzMjMwM30.xqxdLZh7l7dzje6nhKkmx9NAj81hL1-056-eUOHJkWU' }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
