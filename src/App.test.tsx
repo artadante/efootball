@@ -23,7 +23,7 @@ describe('App Component Complete League & Dual Wheel Workflow', () => {
     expect(profilesBtn).toBeInTheDocument();
     fireEvent.click(profilesBtn);
 
-    expect(screen.getByText('پروفایل و آمار بازیکنان')).toBeInTheDocument();
+    expect(screen.getByText(/پروفایل بازیکنان/i)).toBeInTheDocument();
     expect(screen.getByText('آرتا')).toBeInTheDocument();
     expect(screen.getByText('پدرام')).toBeInTheDocument();
     expect(screen.getByText('پیام')).toBeInTheDocument();

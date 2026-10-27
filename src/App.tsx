@@ -40,7 +40,7 @@ export const App: React.FC = () => {
   const [scoreEditMatchId, setScoreEditMatchId] = useState<string | null>(null);
   const [scoreInput1, setScoreInput1] = useState<number | string>(0);
   const [scoreInput2, setScoreInput2] = useState<number | string>(0);
-  const [legFilter, setLegFilter] = useState<'all' | 1 | 2>('all');
+  const [legFilter, setLegFilter] = useState<1 | 2>(1);
   const [showPwaTip, setShowPwaTip] = useState(true);
 
   // Admin authentication (persisted)
@@ -200,6 +200,18 @@ export const App: React.FC = () => {
   // Delete custom player
   const handleDeletePlayer = (id: string) => {
     const updated = registeredPlayers.filter((p) => p.id !== id);
+    setRegisteredPlayers(updated);
+    syncSaveLeagueState(activeLeague, archivedLeagues, updated);
+  };
+
+  // Update avatar of a player
+  const handleUpdatePlayerAvatar = (playerId: string, avatarUrl: string) => {
+    const updated = registeredPlayers.map((p) => {
+      if (p.id === playerId) {
+        return { ...p, avatarUrl };
+      }
+      return p;
+    });
     setRegisteredPlayers(updated);
     syncSaveLeagueState(activeLeague, archivedLeagues, updated);
   };
@@ -424,12 +436,9 @@ export const App: React.FC = () => {
     setActiveTab('history');
   };
 
-  // Filtered matches for "بازی‌ها" tab
+  // Filtered matches for "بازی‌ها" tab (نیم‌فصل ۱ یا ۲)
   const displayedMatches = activeLeague
-    ? activeLeague.matches.filter((m) => {
-        if (legFilter === 'all') return true;
-        return m.leg === legFilter;
-      })
+    ? activeLeague.matches.filter((m) => m.leg === legFilter)
     : [];
 
   return (
@@ -543,17 +552,6 @@ export const App: React.FC = () => {
                   <>
                     {/* Leg Filter Tabs (نیم‌فصل اول / دوم) */}
                     <div className="flex p-1 bg-black/40 rounded-2xl border border-white/10 mb-3 text-sm">
-                      <button
-                        type="button"
-                        onClick={() => setLegFilter('all')}
-                        className={`flex-1 py-2 rounded-xl font-bold transition-all ${
-                          legFilter === 'all'
-                            ? 'bg-emerald-500 text-black font-extrabold shadow'
-                            : 'text-zinc-400 hover:text-white'
-                        }`}
-                      >
-                        همه بازی‌ها
-                      </button>
                       <button
                         type="button"
                         onClick={() => setLegFilter(1)}
@@ -694,11 +692,6 @@ export const App: React.FC = () => {
                     <Medal className="w-5 h-5 text-emerald-400" />
                     <span>جدول رده‌بندی {activeLeague?.name || 'لیگ'}</span>
                   </h3>
-                  {standings.length > 0 && (
-                    <span className="text-xs text-zinc-300 font-mono font-medium">
-                      {standings.length} بازیکن
-                    </span>
-                  )}
                 </div>
 
                 {standings.length === 0 ? (
@@ -785,9 +778,6 @@ export const App: React.FC = () => {
                     <History className="w-5 h-5 text-emerald-400" />
                     <span>تاریخچه و تالار افتخارات لیگ‌ها</span>
                   </h3>
-                  <span className="text-xs text-zinc-300 font-mono font-medium">
-                    ({archivedLeagues.length} لیگ بایگانی‌شده)
-                  </span>
                 </div>
 
                 {archivedLeagues.length === 0 ? (
@@ -1070,6 +1060,7 @@ export const App: React.FC = () => {
         onEndLeagueEarly={handleFinishAndArchiveLeague}
         onAddPlayer={handleAddPlayer}
         onDeletePlayer={handleDeletePlayer}
+        onUpdatePlayerAvatar={handleUpdatePlayerAvatar}
         onCreateLeague={handleOpenCreateLeague}
       />
 

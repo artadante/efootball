@@ -171,3 +171,164 @@ export function calculatePlayerCareerStats(
     performancePoints,
   };
 }
+
+export interface HeadToHeadMatch {
+  id: string;
+  leagueName: string;
+  date?: string;
+  player1Team: string;
+  player2Team: string;
+  score1: number; // player1 score
+  score2: number; // player2 score
+  winner: string | 'draw';
+}
+
+export interface HeadToHeadStats {
+  player1Name: string;
+  player2Name: string;
+  totalMatches: number;
+  player1Wins: number;
+  player2Wins: number;
+  draws: number;
+  player1Goals: number;
+  player2Goals: number;
+  leader: string | null;
+  winDiff: number;
+  goalDiff: number;
+  matches: HeadToHeadMatch[];
+}
+
+export function calculateHeadToHead(
+  name1: string,
+  name2: string,
+  activeLeague: ActiveLeague | null,
+  archivedLeagues: ArchivedLeague[]
+): HeadToHeadStats {
+  const p1Name = name1.trim();
+  const p2Name = name2.trim();
+  const matches: HeadToHeadMatch[] = [];
+
+  let p1Wins = 0;
+  let p2Wins = 0;
+  let draws = 0;
+  let p1Goals = 0;
+  let p2Goals = 0;
+
+  // 1. Process Archived Leagues
+  for (const archived of archivedLeagues) {
+    const standing1 = archived.standings.find((s) => s.name && s.name.trim() === p1Name);
+    const standing2 = archived.standings.find((s) => s.name && s.name.trim() === p2Name);
+    const defaultTeam1 = standing1?.team || 'تیم مشخص‌نشده';
+    const defaultTeam2 = standing2?.team || 'تیم مشخص‌نشده';
+
+    for (const m of archived.matches) {
+      const matchP1 = m.player1 ? m.player1.trim() : '';
+      const matchP2 = m.player2 ? m.player2.trim() : '';
+
+      const isDirectMatch =
+        (matchP1 === p1Name && matchP2 === p2Name) ||
+        (matchP1 === p2Name && matchP2 === p1Name);
+
+      if (!isDirectMatch) continue;
+
+      const isP1First = matchP1 === p1Name;
+      const score1 = isP1First ? m.score1 : m.score2;
+      const score2 = isP1First ? m.score2 : m.score1;
+      const team1 = isP1First ? (m.team1 || defaultTeam1) : (m.team2 || defaultTeam1);
+      const team2 = isP1First ? (m.team2 || defaultTeam2) : (m.team1 || defaultTeam2);
+
+      p1Goals += score1;
+      p2Goals += score2;
+
+      let winner: string | 'draw' = 'draw';
+      if (score1 > score2) {
+        winner = p1Name;
+        p1Wins += 1;
+      } else if (score2 > score1) {
+        winner = p2Name;
+        p2Wins += 1;
+      } else {
+        draws += 1;
+      }
+
+      matches.push({
+        id: m.id,
+        leagueName: archived.name,
+        date: archived.finishedAt,
+        player1Team: team1,
+        player2Team: team2,
+        score1,
+        score2,
+        winner,
+      });
+    }
+  }
+
+  // 2. Process Active League
+  if (activeLeague) {
+    const slot1 = activeLeague.players.find((p) => p.name && p.name.trim() === p1Name);
+    const slot2 = activeLeague.players.find((p) => p.name && p.name.trim() === p2Name);
+
+    if (slot1 && slot2) {
+      for (const m of activeLeague.matches) {
+        if (!m.isPlayed || typeof m.score1 !== 'number' || typeof m.score2 !== 'number') continue;
+
+        const isDirectMatch =
+          (m.player1Slot === slot1.slot && m.player2Slot === slot2.slot) ||
+          (m.player1Slot === slot2.slot && m.player2Slot === slot1.slot);
+
+        if (!isDirectMatch) continue;
+
+        const isP1First = m.player1Slot === slot1.slot;
+        const score1 = isP1First ? m.score1 : m.score2;
+        const score2 = isP1First ? m.score2 : m.score1;
+        const team1 = slot1.team || `تیم ${slot1.slot}`;
+        const team2 = slot2.team || `تیم ${slot2.slot}`;
+
+        p1Goals += score1;
+        p2Goals += score2;
+
+        let winner: string | 'draw' = 'draw';
+        if (score1 > score2) {
+          winner = p1Name;
+          p1Wins += 1;
+        } else if (score2 > score1) {
+          winner = p2Name;
+          p2Wins += 1;
+        } else {
+          draws += 1;
+        }
+
+        matches.push({
+          id: m.id,
+          leagueName: activeLeague.name,
+          date: m.playedAt,
+          player1Team: team1,
+          player2Team: team2,
+          score1,
+          score2,
+          winner,
+        });
+      }
+    }
+  }
+
+  const leader = p1Wins > p2Wins ? p1Name : p2Wins > p1Wins ? p2Name : null;
+  const winDiff = Math.abs(p1Wins - p2Wins);
+  const goalDiff = p1Goals - p2Goals;
+
+  return {
+    player1Name: p1Name,
+    player2Name: p2Name,
+    totalMatches: matches.length,
+    player1Wins: p1Wins,
+    player2Wins: p2Wins,
+    draws,
+    player1Goals: p1Goals,
+    player2Goals: p2Goals,
+    leader,
+    winDiff,
+    goalDiff,
+    matches: matches.reverse(),
+  };
+}

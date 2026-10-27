@@ -8,7 +8,10 @@ import {
   AlertTriangle,
   UserPlus,
   Trash2,
-  Plus
+  Plus,
+  Camera,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 import { ActiveLeague } from '../types/league';
 import { RegisteredPlayer, DEFAULT_FIXED_PLAYERS } from '../types/player';
@@ -26,6 +29,7 @@ interface AdminLeagueControlModalProps {
   onEndLeagueEarly: () => void;
   onAddPlayer?: (name: string) => void;
   onDeletePlayer?: (id: string) => void;
+  onUpdatePlayerAvatar?: (playerId: string, avatarUrl: string) => void;
   onCreateLeague?: () => void;
 }
 
@@ -40,6 +44,7 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
   onEndLeagueEarly,
   onAddPlayer,
   onDeletePlayer,
+  onUpdatePlayerAvatar,
   onCreateLeague,
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'players' | 'matches' | 'manage-players' | 'finish'>('players');
@@ -56,6 +61,10 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
 
   // New player registration state
   const [newPlayerName, setNewPlayerName] = useState('');
+
+  // Player Avatar editing modal state
+  const [avatarPlayer, setAvatarPlayer] = useState<RegisteredPlayer | null>(null);
+  const [avatarUrlInput, setAvatarUrlInput] = useState('');
 
   if (!isOpen) return null;
 
@@ -468,7 +477,7 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
                   className="p-2.5 rounded-xl bg-black/40 border border-white/10 flex items-center justify-between text-xs"
                 >
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-emerald-950 border border-white/20 flex items-center justify-center font-bold text-xs text-emerald-300 overflow-hidden">
+                    <div className="w-8 h-8 rounded-full bg-emerald-950 border border-white/20 flex items-center justify-center font-bold text-xs text-emerald-300 overflow-hidden shrink-0">
                       {player.avatarUrl ? (
                         <img src={player.avatarUrl} alt={player.name} className="w-full h-full object-cover" />
                       ) : (
@@ -483,16 +492,32 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
                     )}
                   </div>
 
-                  {!player.isDefault && onDeletePlayer && (
+                  <div className="flex items-center gap-1.5">
+                    {/* Change Avatar Button */}
                     <button
                       type="button"
-                      onClick={() => onDeletePlayer(player.id)}
-                      className="p-1 text-zinc-400 hover:text-rose-400 transition-colors"
-                      title="حذف بازیکن"
+                      onClick={() => {
+                        setAvatarPlayer(player);
+                        setAvatarUrlInput(player.avatarUrl || '');
+                      }}
+                      className="py-1 px-2 rounded-lg bg-white/10 hover:bg-emerald-500/20 text-emerald-300 hover:text-emerald-200 text-xs font-medium flex items-center gap-1 transition-all"
+                      title="تنظیم عکس پروفایل بازیکن"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>عکس</span>
                     </button>
-                  )}
+
+                    {!player.isDefault && onDeletePlayer && (
+                      <button
+                        type="button"
+                        onClick={() => onDeletePlayer(player.id)}
+                        className="p-1 text-zinc-400 hover:text-rose-400 transition-colors"
+                        title="حذف بازیکن"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -513,6 +538,111 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
                 </button>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Modal: Edit Player Avatar */}
+        {avatarPlayer && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
+          >
+            <div className="relative w-full max-w-xs rounded-3xl p-5 bg-emerald-950 border border-emerald-500/30 backdrop-blur-2xl shadow-2xl text-white space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                  <ImageIcon className="w-4 h-4 text-emerald-400" />
+                  <span>عکس پروفایل {avatarPlayer.name}</span>
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setAvatarPlayer(null)}
+                  className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Current Preview */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-emerald-400 to-green-300 shadow-lg">
+                  <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center overflow-hidden font-bold text-2xl text-emerald-300">
+                    {avatarPlayer.avatarUrl ? (
+                      <img src={avatarPlayer.avatarUrl} alt={avatarPlayer.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{avatarPlayer.name.charAt(0)}</span>
+                    )}
+                  </div>
+                </div>
+                <span className="text-xs text-zinc-300 font-bold">{avatarPlayer.name}</span>
+              </div>
+
+              {/* Upload file directly from phone or PC */}
+              <label className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-extrabold text-xs shadow flex items-center justify-center gap-2 cursor-pointer hover:brightness-105 active:scale-95 transition-all">
+                <Upload className="w-4 h-4" />
+                <span>انتخاب عکس از گالری / کامپیوتر</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                      const base64 = ev.target?.result as string;
+                      if (base64 && onUpdatePlayerAvatar) {
+                        onUpdatePlayerAvatar(avatarPlayer.id, base64);
+                        setAvatarPlayer(null);
+                      }
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                />
+              </label>
+
+              {/* Or paste direct URL */}
+              <div className="space-y-1.5 pt-1">
+                <span className="text-[11px] text-zinc-400 block">یا وارد کردن لینک مستقیم تصویر:</span>
+                <div className="flex gap-1.5">
+                  <input
+                    type="url"
+                    value={avatarUrlInput}
+                    onChange={(e) => setAvatarUrlInput(e.target.value)}
+                    placeholder="https://..."
+                    className="flex-1 py-1.5 px-2.5 rounded-xl bg-black/60 border border-white/15 text-xs text-white focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onUpdatePlayerAvatar) {
+                        onUpdatePlayerAvatar(avatarPlayer.id, avatarUrlInput.trim());
+                        setAvatarPlayer(null);
+                      }
+                    }}
+                    className="py-1.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs"
+                  >
+                    ذخیره
+                  </button>
+                </div>
+              </div>
+
+              {/* Remove photo option if custom avatar exists */}
+              {avatarPlayer.avatarUrl && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onUpdatePlayerAvatar) {
+                      onUpdatePlayerAvatar(avatarPlayer.id, '');
+                      setAvatarPlayer(null);
+                    }
+                  }}
+                  className="w-full py-1.5 text-center text-xs text-rose-400 hover:text-rose-300 font-medium"
+                >
+                  حذف عکس و بازگشت به حالت پیش‌فرض
+                </button>
+              )}
+            </div>
           </div>
         )}
 

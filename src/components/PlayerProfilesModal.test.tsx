@@ -82,7 +82,7 @@ describe('PlayerProfilesModal Component', () => {
       />
     );
 
-    expect(screen.getByText('پروفایل و آمار بازیکنان')).toBeInTheDocument();
+    expect(screen.getByText(/پروفایل بازیکنان/i)).toBeInTheDocument();
     expect(screen.getByText('آرتا')).toBeInTheDocument();
     expect(screen.getByText('پدرام')).toBeInTheDocument();
     expect(screen.getByText('پیام')).toBeInTheDocument();
@@ -107,16 +107,17 @@ describe('PlayerProfilesModal Component', () => {
     fireEvent.click(artaCard);
 
     // Detailed profile view elements
-    expect(screen.getByText(/عضو دائمی لیگ دوستانه/i)).toBeInTheDocument();
+    expect(screen.queryByText(/عضو دائمی لیگ دوستانه/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ادمین/i)).not.toBeInTheDocument();
     expect(screen.getByText(/تعداد بازی کلی/i)).toBeInTheDocument();
     expect(screen.getByText(/برد \/ مساوی \/ باخت/i)).toBeInTheDocument();
     expect(screen.getByText(/درصد پیروزی/i)).toBeInTheDocument();
     expect(screen.getByText(/نمودار روند امتیازگیری و عملکرد/i)).toBeInTheDocument();
-    expect(screen.getByText(/تاریخچه تمامی بازی‌های ثبت‌شده/i)).toBeInTheDocument();
+    expect(screen.getByText(/سوابق تمام بازی‌های ثبت‌شده/i)).toBeInTheDocument();
 
     // Back to directory button
-    const backBtn = screen.getByRole('button', { name: /لیست بازیکنان/i });
+    const backBtn = screen.getByRole('button', { name: /بازگشت به لیست بازیکنان/i });
     fireEvent.click(backBtn);
-    expect(screen.getByText(/برای مشاهده سوابق، تاریخچه بازی‌ها و نمودار عملکرد/i)).toBeInTheDocument();
+    expect(screen.getByText(/مقایسه ۲ بازیکن/i)).toBeInTheDocument();
   });
 });
