@@ -5,13 +5,24 @@ import {
   ArrowRight, 
   Swords, 
   Trophy,
-  Scale
+  Scale,
+  Award,
+  Flame,
+  Share2
 } from 'lucide-react';
 import { RegisteredPlayer } from '../types/player';
 import { ActiveLeague, ArchivedLeague } from '../types/league';
-import { calculatePlayerCareerStats, calculateHeadToHead } from '../utils/playerStats';
+import { calculatePlayerCareerStats, calculateHeadToHead, calculatePlayerNickname } from '../utils/playerStats';
+import { calculateAllPlayersElo } from '../utils/eloRating';
+import { calculateGuinnessRecords } from '../utils/guinnessRecords';
+import { PlayerFormBadge } from './PlayerFormBadge';
 import { PlayerPerformanceGraph } from './PlayerPerformanceGraph';
+import { FutCard } from './FutCard';
+import { GuinnessRecordsModal } from './GuinnessRecordsModal';
+import { PuskasPollModal } from './PuskasPollModal';
+import { StoryPosterModal } from './StoryPosterModal';
 import { TeamLogo } from './TeamLogo';
+import { soundEngine } from '../utils/soundEffects';
 
 interface PlayerProfilesModalProps {
   isOpen: boolean;
@@ -35,7 +46,36 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
   const [compareName1, setCompareName1] = useState<string>(registeredPlayers[0]?.name || '');
   const [compareName2, setCompareName2] = useState<string>(registeredPlayers[1]?.name || '');
 
+  // Sub-modals for Guinness and Puskas Poll and Story Poster
+  const [isGuinnessOpen, setIsGuinnessOpen] = useState(false);
+  const [isPuskasOpen, setIsPuskasOpen] = useState(false);
+  const [isPosterOpen, setIsPosterOpen] = useState(false);
+
   if (!isOpen) return null;
+
+  // Build chronological match list for ELO
+  const allMatchesChronological: { player1: string; player2: string; score1: number; score2: number }[] = [];
+  archivedLeagues.forEach((arc) => {
+    arc.matches.forEach((m) => {
+      allMatchesChronological.push({ player1: m.player1, player2: m.player2, score1: m.score1, score2: m.score2 });
+    });
+  });
+  if (activeLeague) {
+    activeLeague.matches
+      .filter((m) => m.isPlayed && typeof m.score1 === 'number' && typeof m.score2 === 'number')
+      .forEach((m) => {
+        const p1 = activeLeague.players.find((p) => p.slot === m.player1Slot)?.name || '';
+        const p2 = activeLeague.players.find((p) => p.slot === m.player2Slot)?.name || '';
+        allMatchesChronological.push({ player1: p1, player2: p2, score1: m.score1!, score2: m.score2! });
+      });
+  }
+
+  const eloMap = calculateAllPlayersElo(
+    registeredPlayers.map((p) => p.name),
+    allMatchesChronological
+  );
+
+  const guinnessRecords = calculateGuinnessRecords(registeredPlayers, activeLeague, archivedLeagues);
 
   const activeStats = selectedPlayer
     ? calculatePlayerCareerStats(selectedPlayer, activeLeague, archivedLeagues)
@@ -82,20 +122,67 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
           )}
         </div>
 
-        {/* Action Controls: Compare button & Close */}
-        <div className="flex items-center gap-2">
-          {viewMode === 'list' && registeredPlayers.length >= 2 && (
+        {/* Action Controls: Guinness Records, Puskas, Compare button & Close */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
+          {viewMode === 'list' && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  soundEngine.playClick();
+                  setIsGuinnessOpen(true);
+                }}
+                className="py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-500 hover:brightness-110 text-white font-bold text-xs flex items-center gap-1 shadow active:scale-95 transition-all"
+                title="تالار رکوردهای گینس مسابقات"
+              >
+                <Award className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">رکوردهای گینس 🎖️</span>
+                <span className="sm:hidden">گینس</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  soundEngine.playClick();
+                  setIsPuskasOpen(true);
+                }}
+                className="py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-amber-600 to-yellow-500 hover:brightness-110 text-black font-extrabold text-xs flex items-center gap-1 shadow active:scale-95 transition-all"
+                title="نظرسنجی جایزه پوشکاش"
+              >
+                <Flame className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">جایزه پوشکاش ⚽</span>
+                <span className="sm:hidden">پوشکاش</span>
+              </button>
+
+              {registeredPlayers.length >= 2 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundEngine.playClick();
+                    setCompareName1(registeredPlayers[0]?.name || '');
+                    setCompareName2(registeredPlayers[1]?.name || '');
+                    setViewMode('compare');
+                  }}
+                  className="py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-400 hover:brightness-110 text-black font-extrabold text-xs flex items-center gap-1 shadow active:scale-95 transition-all"
+                >
+                  <Scale className="w-3.5 h-3.5" />
+                  <span>مقایسه ۲ بازیکن ⚔️</span>
+                </button>
+              )}
+            </>
+          )}
+
+          {viewMode === 'profile' && selectedPlayer && (
             <button
               type="button"
               onClick={() => {
-                setCompareName1(registeredPlayers[0]?.name || '');
-                setCompareName2(registeredPlayers[1]?.name || '');
-                setViewMode('compare');
+                soundEngine.playClick();
+                setIsPosterOpen(true);
               }}
-              className="py-2 px-3 sm:px-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-black font-extrabold text-xs sm:text-sm flex items-center gap-1.5 shadow-lg active:scale-95 transition-all"
+              className="py-1.5 sm:py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-black font-bold text-xs flex items-center gap-1.5 shadow active:scale-95 transition-all"
             >
-              <Scale className="w-4 h-4" />
-              <span>مقایسه ۲ بازیکن ⚔️</span>
+              <Share2 className="w-3.5 h-3.5" />
+              <span>پوستر استوری 📸</span>
             </button>
           )}
 
@@ -117,38 +204,57 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
         {viewMode === 'list' && (
           <div className="space-y-4 pb-12">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-4">
-              {registeredPlayers.map((player) => (
-                <button
-                  key={player.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedPlayer(player);
-                    setViewMode('profile');
-                  }}
-                  className="relative overflow-hidden w-full p-4 sm:p-5 rounded-3xl bg-emerald-950/50 border border-white/15 hover:border-emerald-400/60 hover:bg-emerald-900/40 transition-all flex items-center gap-4 text-start group active:scale-95 shadow-xl cursor-pointer"
-                >
-                  {/* Large Logo / Avatar */}
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 min-w-[5rem] min-h-[5rem] sm:min-w-[6rem] sm:min-h-[6rem] rounded-full p-1 bg-gradient-to-tr from-emerald-400 via-green-300 to-emerald-500 shadow-[0_0_20px_rgba(34,197,94,0.35)] shrink-0 group-hover:scale-105 transition-all flex items-center justify-center overflow-hidden">
-                    <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center overflow-hidden font-black text-2xl sm:text-3xl text-emerald-300">
-                      {player.avatarUrl ? (
-                        <img src={player.avatarUrl} alt={player.name} className="w-full h-full object-cover rounded-full" />
-                      ) : (
-                        <span>{player.name.charAt(0)}</span>
-                      )}
-                    </div>
-                  </div>
+              {registeredPlayers.map((player) => {
+                const pStats = calculatePlayerCareerStats(player, activeLeague, archivedLeagues);
+                const eloInfo = eloMap[player.name];
+                const formResults = pStats.matches.map((m) => m.result);
 
-                  {/* Large Name */}
-                  <div className="flex-1 min-w-0">
-                    <span className="block text-xl sm:text-2xl font-black text-white group-hover:text-emerald-300 transition-colors truncate">
-                      {player.name}
-                    </span>
-                    <span className="text-xs text-emerald-400/80 font-semibold mt-1.5 block">
-                      مشاهده پروفایل و آمار ➔
-                    </span>
-                  </div>
-                </button>
-              ))}
+                return (
+                  <button
+                    key={player.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedPlayer(player);
+                      setViewMode('profile');
+                    }}
+                    className="relative overflow-hidden w-full p-4 sm:p-5 rounded-3xl bg-emerald-950/50 border border-white/15 hover:border-emerald-400/60 hover:bg-emerald-900/40 transition-all flex items-center gap-4 text-start group active:scale-95 shadow-xl cursor-pointer"
+                  >
+                    {/* Large Logo / Avatar */}
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 min-w-[5rem] min-h-[5rem] sm:min-w-[6rem] sm:min-h-[6rem] rounded-full p-1 bg-gradient-to-tr from-emerald-400 via-green-300 to-emerald-500 shadow-[0_0_20px_rgba(34,197,94,0.35)] shrink-0 group-hover:scale-105 transition-all flex items-center justify-center overflow-hidden">
+                      <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center overflow-hidden font-black text-2xl sm:text-3xl text-emerald-300">
+                        {player.avatarUrl ? (
+                          <img src={player.avatarUrl} alt={player.name} className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                          <span>{player.name.charAt(0)}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Large Name, ELO, Form Arrow */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="block text-xl sm:text-2xl font-black text-white group-hover:text-emerald-300 transition-colors truncate">
+                          {player.name}
+                        </span>
+                        <PlayerFormBadge results={formResults} />
+                      </div>
+
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${eloInfo?.tierBg || 'bg-white/10 text-white'}`}>
+                          {eloInfo?.tierNameFa || 'عادی'}
+                        </span>
+                        <span className="text-[11px] font-mono text-zinc-400">
+                          ELO {eloInfo?.rating || 1200}
+                        </span>
+                      </div>
+
+                      <span className="text-xs text-emerald-400/80 font-semibold mt-1.5 block">
+                        مشاهده پروفایل و آمار ➔
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -169,15 +275,36 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
                 </div>
               </div>
 
-              {/* Player Name without any admin badge */}
-              <h3 className="text-2xl sm:text-3xl font-black text-white">{selectedPlayer.name}</h3>
+              {/* Player Name & ELO Tier & Form */}
+              <div className="flex items-center gap-2">
+                <h3 className="text-2xl sm:text-3xl font-black text-white">{selectedPlayer.name}</h3>
+                <PlayerFormBadge results={activeStats.matches.map(m => m.result)} showLabel />
+              </div>
+
+              <div className="flex items-center gap-2 mt-2">
+                <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${eloMap[selectedPlayer.name]?.tierBg || 'bg-white/10 text-white'}`}>
+                  {eloMap[selectedPlayer.name]?.tierNameFa || 'رتبه نامشخص'}
+                </span>
+                <span className="text-xs font-mono text-zinc-300">
+                  امتیاز ELO: {eloMap[selectedPlayer.name]?.rating || 1200}
+                </span>
+              </div>
 
               {activeStats.championships > 0 && (
-                <div className="mt-2 inline-flex items-center gap-1 py-1 px-3 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs font-bold">
+                <div className="mt-2.5 inline-flex items-center gap-1 py-1 px-3 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs font-bold">
                   <Trophy className="w-3.5 h-3.5" />
                   <span>{activeStats.championships} عنوان قهرمانی مسابقات</span>
                 </div>
               )}
+            </div>
+
+            {/* 3D Flippable FUT / eFootball Ultimate Team Card */}
+            <div className="py-2">
+              <FutCard
+                stats={activeStats}
+                eloRating={eloMap[selectedPlayer.name]?.rating || 1200}
+                nickname={calculatePlayerNickname(activeStats)}
+              />
             </div>
 
             {/* Career Lifetime Stats Grid */}
@@ -473,6 +600,33 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
           </div>
         )}
       </main>
+
+      {/* Sub Modals: Guinness Hall of Fame, Puskas Best Goal, Story Poster */}
+      <GuinnessRecordsModal
+        isOpen={isGuinnessOpen}
+        onClose={() => setIsGuinnessOpen(false)}
+        records={guinnessRecords}
+      />
+
+      <PuskasPollModal
+        isOpen={isPuskasOpen}
+        onClose={() => setIsPuskasOpen(false)}
+        players={registeredPlayers.map((p) => p.name)}
+        currentUserName={selectedPlayer?.name || registeredPlayers[0]?.name || 'کاربر مهمان'}
+      />
+
+      {selectedPlayer && (
+        <StoryPosterModal
+          isOpen={isPosterOpen}
+          onClose={() => setIsPosterOpen(false)}
+          title="PLAYER PROFILE"
+          player1Name={selectedPlayer.name}
+          player1Team={activeStats?.teamsPlayed[0] || 'eFootball'}
+          player2Name="STAR OF LEAGUE"
+          player2Team={calculatePlayerNickname(activeStats || ({} as any))}
+          leagueName="کارت مسابقات رسمی eFootball"
+        />
+      )}
     </div>
   );
 };

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { User, X, Shield, KeyRound, Crown, LogOut, Settings2, Plus } from 'lucide-react';
+import { User, X, Shield, KeyRound, Crown, LogOut, Settings2, Plus, Sparkles, UserCheck } from 'lucide-react';
+import { RegisteredPlayer } from '../types/player';
+import { soundEngine } from '../utils/soundEffects';
 
 interface ProfileButtonProps {
   userName?: string;
@@ -7,10 +9,13 @@ interface ProfileButtonProps {
   avatarUrl?: string;
   favoriteTeam?: string;
   isAdmin?: boolean;
+  registeredPlayers?: RegisteredPlayer[];
   onAdminLogin?: (pin: string) => boolean | void;
   onAdminLogout?: () => void;
   onOpenLeagueControl?: () => void;
   onCreateLeague?: () => void;
+  onSelectActiveUser?: (player: RegisteredPlayer | null) => void;
+  onOpenPlayerProfile?: (playerName: string) => void;
 }
 
 export const ProfileButton: React.FC<ProfileButtonProps> = ({
@@ -19,14 +24,18 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
   avatarUrl,
   favoriteTeam = 'eFootball Club',
   isAdmin = false,
+  registeredPlayers = [],
   onAdminLogin,
   onAdminLogout,
   onOpenLeagueControl,
   onCreateLeague,
+  onSelectActiveUser,
+  onOpenPlayerProfile,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [showAdminPinPrompt, setShowAdminPinPrompt] = useState(false);
 
   const effectiveAvatar = avatarUrl || (isAdmin ? '/admin-avatar.png' : undefined);
   const initial = userName ? userName.trim().charAt(0) : 'ک';
@@ -38,11 +47,33 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
     if (onAdminLogin) {
       const result = onAdminLogin(pinInput);
       if (result === false) {
+        soundEngine.playClick();
         setLoginError('رمز عبور مدیر اشتباه است.');
       } else {
+        soundEngine.playClick();
         setLoginError('');
         setPinInput('');
+        setShowAdminPinPrompt(false);
       }
+    }
+  };
+
+  const handleSelectPlayer = (player: RegisteredPlayer | null) => {
+    soundEngine.playClick();
+    if (!player) {
+      // Guest mode
+      if (onSelectActiveUser) onSelectActiveUser(null);
+      return;
+    }
+
+    if (player.name === 'آرتا' || player.id === 'arta') {
+      // Require admin password
+      setShowAdminPinPrompt(true);
+      return;
+    }
+
+    if (onSelectActiveUser) {
+      onSelectActiveUser(player);
     }
   };
 
@@ -52,9 +83,12 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
       <div className="relative">
         <button
           type="button"
-          onClick={() => setIsOpen(true)}
+          onClick={() => {
+            soundEngine.playClick();
+            setIsOpen(true);
+          }}
           aria-label={`پروفایل ${userName}`}
-          className={`relative w-11 h-11 rounded-full p-0.5 shadow-[0_0_15px_rgba(34,197,94,0.35)] hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none ${
+          className={`relative w-11 h-11 rounded-full p-0.5 shadow-[0_0_15px_rgba(34,197,94,0.35)] hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none cursor-pointer ${
             isAdmin
               ? 'bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-200 ring-2 ring-amber-400/60'
               : 'bg-gradient-to-tr from-emerald-600 via-emerald-400 to-green-300'
@@ -85,10 +119,10 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
           role="dialog"
           aria-modal="true"
           aria-label="پروفایل کاربر"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fadeIn"
         >
           <div
-            className="relative w-full max-w-sm rounded-3xl p-6 bg-emerald-950/85 border border-white/20 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(34,197,94,0.2)] text-white"
+            className="relative w-full max-w-sm rounded-3xl p-5 sm:p-6 bg-emerald-950/90 border border-white/20 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(34,197,94,0.2)] text-white max-h-[92vh] overflow-y-auto no-scrollbar"
             style={{
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.9), inset 0 1px 1px 0 rgba(255,255,255,0.3)',
             }}
@@ -113,7 +147,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
             </div>
 
             {/* Avatar & Name */}
-            <div className="flex flex-col items-center mt-4">
+            <div className="flex flex-col items-center mt-3">
               <div 
                 className={`w-20 h-20 rounded-full p-1 shadow-lg shrink-0 overflow-hidden flex items-center justify-center ${
                   isAdmin
@@ -137,12 +171,82 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                   </span>
                 )}
               </div>
-              <p className="text-sm text-emerald-400 font-medium">
+              <p className="text-xs text-emerald-400 font-medium">
                 امتیاز eFootball: {rating} • {favoriteTeam}
               </p>
+
+              {/* View Personal Career Button if player is chosen */}
+              {userName !== 'کاربر مهمان' && onOpenPlayerProfile && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    onOpenPlayerProfile(userName);
+                  }}
+                  className="mt-2 py-1 px-3 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-300 text-xs font-bold transition-all flex items-center gap-1"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>مشاهده کارنامه و کارت اختصاصی من</span>
+                </button>
+              )}
             </div>
 
-            {/* Admin status vs Visitor status */}
+            {/* User Switcher / Selection Grid */}
+            <div className="mt-4 pt-3 border-t border-white/10">
+              <span className="text-xs font-bold text-zinc-300 block mb-2 flex items-center gap-1">
+                <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>ورود به عنوان کاربر یا بازیکن:</span>
+              </span>
+
+              <div className="grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto no-scrollbar">
+                {/* Guest option */}
+                <button
+                  type="button"
+                  onClick={() => handleSelectPlayer(null)}
+                  className={`p-2 rounded-xl text-xs font-bold transition-all text-center flex flex-col items-center gap-1 ${
+                    userName === 'کاربر مهمان' && !isAdmin
+                      ? 'bg-emerald-500 text-black shadow-md'
+                      : 'bg-white/5 hover:bg-white/10 text-zinc-300'
+                  }`}
+                >
+                  <span className="w-6 h-6 rounded-full bg-black/40 flex items-center justify-center text-[10px]">👤</span>
+                  <span className="truncate w-full text-[11px]">مهمان</span>
+                </button>
+
+                {/* Registered Players */}
+                {registeredPlayers.map((player) => {
+                  const isCurrent = userName === player.name;
+                  const isArta = player.name === 'آرتا';
+
+                  return (
+                    <button
+                      key={player.id}
+                      type="button"
+                      onClick={() => handleSelectPlayer(player)}
+                      className={`p-2 rounded-xl text-xs font-bold transition-all text-center flex flex-col items-center gap-1 relative ${
+                        isCurrent
+                          ? 'bg-emerald-500 text-black shadow-md'
+                          : 'bg-white/5 hover:bg-white/10 text-zinc-300'
+                      }`}
+                    >
+                      {isArta && (
+                        <Crown className="w-3 h-3 text-amber-400 absolute top-1 right-1" />
+                      )}
+                      <div className="w-6 h-6 rounded-full bg-black/40 overflow-hidden flex items-center justify-center text-[10px] shrink-0">
+                        {player.avatarUrl ? (
+                          <img src={player.avatarUrl} alt={player.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span>{player.name.charAt(0)}</span>
+                        )}
+                      </div>
+                      <span className="truncate w-full text-[11px]">{player.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Admin status vs Visitor status & PIN Form */}
             <div className="mt-4">
               {isAdmin ? (
                 <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-400/30 text-amber-200 text-sm space-y-2">
@@ -199,13 +303,19 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className="p-3.5 rounded-2xl bg-black/40 border border-white/10 text-sm">
-                  <div className="flex items-center gap-2 text-zinc-300 mb-2 font-bold">
+                <div className={`p-3.5 rounded-2xl border text-sm transition-all ${
+                  showAdminPinPrompt
+                    ? 'bg-amber-950/60 border-amber-400 ring-2 ring-amber-400/40 shadow-lg'
+                    : 'bg-black/40 border-white/10'
+                }`}>
+                  <div className="flex items-center gap-2 text-zinc-300 mb-1 font-bold">
                     <Shield className="w-4 h-4 text-emerald-400" />
-                    <span>حالت مهمان / تماشاگر</span>
+                    <span>ورود به پنل مدیریت لیگ</span>
                   </div>
-                  <p className="text-xs sm:text-sm text-zinc-300 mb-3">
-                    کاربران عادی فقط امکان مشاهده جدول و تاریخچه را دارند. برای مدیریت مسابقات، با رمز ادمین وارد شوید.
+                  <p className="text-xs text-zinc-400 mb-2.5">
+                    {showAdminPinPrompt
+                      ? 'برای فعال‌سازی دسترسی مدیر (آرتا)، رمز عبور مدیر را وارد کنید:'
+                      : 'برای دسترسی به قرعه‌کشی و ثبت نتایج، رمز عبور مدیر (آرتا) را وارد کنید.'}
                   </p>
 
                   <form onSubmit={handleLoginSubmit} className="space-y-2.5">
@@ -230,7 +340,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                     <button
                       type="submit"
                       aria-label="ورود مدیر"
-                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-extrabold text-sm shadow hover:brightness-110 active:scale-95 transition-all"
+                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-extrabold text-sm shadow hover:brightness-110 active:scale-95 transition-all cursor-pointer"
                     >
                       ورود مدیر
                     </button>
@@ -244,7 +354,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="w-full py-2 rounded-xl bg-white/10 hover:bg-white/15 text-zinc-300 hover:text-white text-xs font-semibold transition-all"
+                className="w-full py-2 rounded-xl bg-white/10 hover:bg-white/15 text-zinc-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
               >
                 بستن
               </button>

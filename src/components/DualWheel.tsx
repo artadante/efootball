@@ -5,6 +5,7 @@ import { RegisteredPlayer, DEFAULT_FIXED_PLAYERS } from '../types/player';
 import { TeamSelectorModal } from './TeamSelectorModal';
 import { PlayerSelectorModal } from './PlayerSelectorModal';
 import { TeamLogo } from './TeamLogo';
+import { soundEngine } from '../utils/soundEffects';
 
 interface DualWheelProps {
   activeLeague: ActiveLeague | null;
@@ -103,6 +104,18 @@ export const DualWheel: React.FC<DualWheelProps> = ({
 
     setIsSpinning(true);
     setLastAssigned(null);
+    soundEngine.playClick();
+
+    // Rhythmic tick sounds while spinning
+    let tickCount = 0;
+    const maxTicks = 24;
+    const tickInterval = setInterval(() => {
+      soundEngine.playWheelTick(0.8 + (maxTicks - tickCount) * 0.03);
+      tickCount++;
+      if (tickCount >= maxTicks) {
+        clearInterval(tickInterval);
+      }
+    }, 130);
 
     // Random rotations for Wheel 1 (Players)
     const spins1 = 5 + Math.floor(Math.random() * 4);
@@ -118,6 +131,7 @@ export const DualWheel: React.FC<DualWheelProps> = ({
 
     setTimeout(() => {
       setIsSpinning(false);
+      soundEngine.playWheelWin();
 
       // Calculate picked player
       const norm1 = (360 - (newAngle1 % 360)) % 360;

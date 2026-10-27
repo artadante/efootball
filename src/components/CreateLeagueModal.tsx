@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Trophy, Swords, X, Shuffle, CheckCircle2, ChevronRight, Sparkles } from 'lucide-react';
 import { CompetitionMode, ActiveLeague, LeaguePlayer } from '../types/league';
 import { generateFixtures } from '../utils/fixtureGenerator';
+import { soundEngine } from '../utils/soundEffects';
 
 interface CreateLeagueModalProps {
   isOpen: boolean;
@@ -24,14 +25,23 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
   if (!isOpen) return null;
 
   const handleStartDraw = () => {
+    soundEngine.playClick();
     setStep(3);
     setIsDrawing(true);
     setDrawFinished(false);
+
+    let tick = 0;
+    const interval = setInterval(() => {
+      soundEngine.playWheelTick(1);
+      tick++;
+      if (tick > 15) clearInterval(interval);
+    }, 140);
 
     // Simulate exciting animated draw
     setTimeout(() => {
       setIsDrawing(false);
       setDrawFinished(true);
+      soundEngine.playWheelWin();
     }, 2400);
   };
 
