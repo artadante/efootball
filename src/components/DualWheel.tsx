@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Lock, CheckCircle2, User, Shield, AlertCircle, ListPlus, Users, Ban, Disc } from 'lucide-react';
+import { Sparkles, Lock, CheckCircle2, User, Shield, AlertCircle, ListPlus, Users, Disc } from 'lucide-react';
 import { ActiveLeague } from '../types/league';
 import { RegisteredPlayer, DEFAULT_FIXED_PLAYERS } from '../types/player';
 import { TeamSelectorModal } from './TeamSelectorModal';
@@ -28,24 +28,6 @@ export const DualWheel: React.FC<DualWheelProps> = ({
   const [wheel2Angle, setWheel2Angle] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
   const [lastAssigned, setLastAssigned] = useState<{ slot: number; name: string; team: string } | null>(null);
-
-  // Check banned teams from Pick & Ban
-  const bannedTeams = React.useMemo(() => {
-    try {
-      const raw = localStorage.getItem('efootball_pick_ban');
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      const list: string[] = [];
-      Object.values(parsed).forEach((p: any) => {
-        if (p.bannedTeam && !list.includes(p.bannedTeam)) {
-          list.push(p.bannedTeam);
-        }
-      });
-      return list;
-    } catch {
-      return [];
-    }
-  }, []);
 
   // Parse items from input strings
   const playerList = playersInput
@@ -157,19 +139,11 @@ export const DualWheel: React.FC<DualWheelProps> = ({
       const playerIdx = Math.floor(norm1 / segSize1);
       const chosenPlayer = playerList[playerIdx] || playerList[0];
 
-      // Calculate picked team (excluding banned teams if alternatives exist)
+      // Calculate picked team
       const norm2 = (360 - (newAngle2 % 360)) % 360;
       const segSize2 = 360 / teamList.length;
-      let teamIdx = Math.floor(norm2 / segSize2);
-      let chosenTeam = teamList[teamIdx] || teamList[0];
-
-      if (bannedTeams.includes(chosenTeam)) {
-        const unbannedTeams = teamList.filter((t) => !bannedTeams.includes(t));
-        if (unbannedTeams.length > 0) {
-          chosenTeam = unbannedTeams[0];
-          teamIdx = teamList.indexOf(chosenTeam);
-        }
-      }
+      const teamIdx = Math.floor(norm2 / segSize2);
+      const chosenTeam = teamList[teamIdx] || teamList[0];
 
       // Assign to current slot
       onSlotAssigned(currentSlotNumber, chosenPlayer, chosenTeam);
@@ -278,15 +252,6 @@ export const DualWheel: React.FC<DualWheelProps> = ({
             </div>
           </div>
         </div>
-
-        {/* Pick & Ban indicator if active */}
-        {bannedTeams.length > 0 && (
-          <div className="py-1 px-2.5 rounded-xl bg-rose-950/40 border border-rose-500/30 text-[11px] text-rose-300 flex items-center gap-1.5 mb-2">
-            <Ban className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-            <span className="font-bold">تیم‌های بن‌شده:</span>
-            <span className="truncate">{bannedTeams.join('، ')}</span>
-          </div>
-        )}
 
         {/* 2 Graphical Wheels Display */}
         <div className="grid grid-cols-2 gap-3 my-4">

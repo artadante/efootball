@@ -13,7 +13,6 @@ import { AdminAuthModal } from './components/AdminAuthModal';
 import { ScoreEntryModal } from './components/ScoreEntryModal';
 import { AdminLeagueControlModal } from './components/AdminLeagueControlModal';
 import { PlayerProfilesModal } from './components/PlayerProfilesModal';
-import { PickBanModal, PlayerPickBan } from './components/PickBanModal';
 import { MatchPredictionModal } from './components/MatchPredictionModal';
 import { ChampionshipCelebration } from './components/ChampionshipCelebration';
 import {
@@ -73,10 +72,6 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
 
   // Prediction modal
   const [isPredictionModalOpen, setIsPredictionModalOpen] = useState(false);
-
-  // Pick and ban modal
-  const [isPickBanOpen, setIsPickBanOpen] = useState(false);
-  const [picksBans, setPicksBans] = useState<Record<string, PlayerPickBan>>({});
 
   // Celebration modal
   const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
@@ -651,6 +646,13 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
     }
   };
 
+  // Delete an archived league from History (Admin only)
+  const handleDeleteArchivedLeague = (archivedId: string) => {
+    if (!isAdmin) return;
+    const updated = archivedLeaguesRef.current.filter((a) => a.id !== archivedId);
+    persistAppState(activeLeagueRef.current, updated);
+  };
+
   // Finalize & Archive League to History (Official Celebration)
   const handleFinishAndArchiveLeague = () => {
     const curActive = activeLeagueRef.current;
@@ -756,11 +758,13 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
             <HistoryView
               archivedLeagues={archivedLeagues}
               registeredPlayers={registeredPlayers}
+              isAdmin={isAdmin}
               onOpenCelebration={(data) => {
                 setCelebrationData(data);
                 setIsCelebrationOpen(true);
               }}
               onResumeLeague={handleResumeLeagueFromHistory}
+              onDeleteLeague={handleDeleteArchivedLeague}
             />
           )}
         </main>
@@ -817,15 +821,6 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
         registeredPlayers={registeredPlayers}
         activeLeague={activeLeague}
         archivedLeagues={archivedLeagues}
-      />
-
-      {/* Modal 6: Team Pick & Ban System */}
-      <PickBanModal
-        isOpen={isPickBanOpen}
-        onClose={() => setIsPickBanOpen(false)}
-        players={registeredPlayers.map((p) => p.name)}
-        initialPicksBans={picksBans}
-        onSave={(data) => setPicksBans(data)}
       />
 
       {/* Modal 7: Match Predictions & Leaderboard */}

@@ -63,16 +63,19 @@ describe('HistoryView Component', () => {
     },
   ];
 
-  it('renders archived league with status badge, standings, and action buttons', () => {
+  it('renders archived league with status badge, standings, and action buttons for admin', () => {
     const handleResume = vi.fn();
     const handleCelebration = vi.fn();
+    const handleDelete = vi.fn();
 
     render(
       <HistoryView
         archivedLeagues={mockArchivedLeagues}
         registeredPlayers={mockRegisteredPlayers}
+        isAdmin={true}
         onOpenCelebration={handleCelebration}
         onResumeLeague={handleResume}
+        onDeleteLeague={handleDelete}
       />
     );
 
@@ -80,9 +83,10 @@ describe('HistoryView Component', () => {
     expect(screen.getByText(/متوقف‌شده \(آماده ادامه\)/i)).toBeInTheDocument();
     expect(screen.getByText(/پدرام \(منچسترسیتی\)/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /ادامه این لیگ/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /حذف/i })).toBeInTheDocument();
   });
 
-  it('triggers onResumeLeague when clicking "ادامه این لیگ"', () => {
+  it('triggers onResumeLeague when admin clicks "ادامه این لیگ"', () => {
     const handleResume = vi.fn();
     const handleCelebration = vi.fn();
 
@@ -90,6 +94,7 @@ describe('HistoryView Component', () => {
       <HistoryView
         archivedLeagues={mockArchivedLeagues}
         registeredPlayers={mockRegisteredPlayers}
+        isAdmin={true}
         onOpenCelebration={handleCelebration}
         onResumeLeague={handleResume}
       />
@@ -99,6 +104,64 @@ describe('HistoryView Component', () => {
     fireEvent.click(resumeBtn);
 
     expect(handleResume).toHaveBeenCalledWith('league-1');
+  });
+
+  it('does NOT show "ادامه این لیگ" when league is officially completed', () => {
+    const finishedLeague: ArchivedLeague = {
+      ...mockArchivedLeagues[0],
+      isManuallyPaused: false,
+    };
+
+    render(
+      <HistoryView
+        archivedLeagues={[finishedLeague]}
+        registeredPlayers={mockRegisteredPlayers}
+        isAdmin={true}
+        onOpenCelebration={vi.fn()}
+        onResumeLeague={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(/تکمیل‌شده/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /ادامه این لیگ/i })).not.toBeInTheDocument();
+  });
+
+  it('triggers onDeleteLeague when admin confirms deletion', () => {
+    const handleDelete = vi.fn();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    render(
+      <HistoryView
+        archivedLeagues={mockArchivedLeagues}
+        registeredPlayers={mockRegisteredPlayers}
+        isAdmin={true}
+        onOpenCelebration={vi.fn()}
+        onDeleteLeague={handleDelete}
+      />
+    );
+
+    const deleteBtn = screen.getByRole('button', { name: /حذف/i });
+    fireEvent.click(deleteBtn);
+
+    expect(window.confirm).toHaveBeenCalled();
+    expect(handleDelete).toHaveBeenCalledWith('league-1');
+  });
+
+  it('hides "ادامه این لیگ" and "حذف" buttons for non-admin visitors', () => {
+    render(
+      <HistoryView
+        archivedLeagues={mockArchivedLeagues}
+        registeredPlayers={mockRegisteredPlayers}
+        isAdmin={false}
+        onOpenCelebration={vi.fn()}
+        onResumeLeague={vi.fn()}
+        onDeleteLeague={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByRole('button', { name: /ادامه این لیگ/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /حذف/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /جشن/i })).toBeInTheDocument();
   });
 
   it('shows empty message when no leagues are archived', () => {

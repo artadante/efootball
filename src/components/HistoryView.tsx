@@ -1,5 +1,5 @@
 import React from 'react';
-import { History, Archive, Crown, Trophy, Play } from 'lucide-react';
+import { History, Archive, Crown, Trophy, Play, Trash2 } from 'lucide-react';
 import { ArchivedLeague } from '../types/league';
 import { RegisteredPlayer } from '../types/player';
 import { TeamLogo } from './TeamLogo';
@@ -8,6 +8,7 @@ import { soundEngine } from '../utils/soundEffects';
 export interface HistoryViewProps {
   archivedLeagues: ArchivedLeague[];
   registeredPlayers: RegisteredPlayer[];
+  isAdmin?: boolean;
   onOpenCelebration: (data: {
     championName: string;
     championTeam: string;
@@ -15,13 +16,16 @@ export interface HistoryViewProps {
     avatarUrl?: string;
   }) => void;
   onResumeLeague?: (archivedId: string) => void;
+  onDeleteLeague?: (archivedId: string) => void;
 }
 
 export const HistoryView: React.FC<HistoryViewProps> = ({
   archivedLeagues,
   registeredPlayers,
+  isAdmin = false,
   onOpenCelebration,
   onResumeLeague,
+  onDeleteLeague,
 }) => {
   return (
     <div className="space-y-3 animate-fadeIn my-auto w-full">
@@ -82,8 +86,8 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                   </div>
 
                   <div className="flex items-center gap-2 flex-wrap">
-                    {/* Primary Action: Resume League */}
-                    {onResumeLeague && (
+                    {/* Primary Action: Resume League (Admin only & Only for manually paused leagues) */}
+                    {isAdmin && archived.isManuallyPaused && onResumeLeague && (
                       <button
                         type="button"
                         onClick={() => {
@@ -95,6 +99,24 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                       >
                         <Play className="w-3.5 h-3.5 fill-black" />
                         <span>ادامه این لیگ</span>
+                      </button>
+                    )}
+
+                    {/* Delete League Action (Admin only with confirmation) */}
+                    {isAdmin && onDeleteLeague && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`آیا از حذف لیگ «${archived.name}» از تاریخچه اطمینان دارید؟ این عملیات غیرقابل بازگشت است.`)) {
+                            soundEngine.playClick();
+                            onDeleteLeague(archived.id);
+                          }
+                        }}
+                        className="py-1.5 px-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 font-bold text-xs flex items-center gap-1 shadow active:scale-95 transition-all cursor-pointer"
+                        title="حذف این لیگ از تاریخچه"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>حذف</span>
                       </button>
                     )}
 
