@@ -284,12 +284,16 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
     syncSaveLeagueState(activeLeague, archivedLeagues, updated);
   };
 
-  // Admin login handlers
+  // Admin login handlers - Automatically switches to Arta on login
   const handleAdminLogin = (pin: string) => {
     if (pin === adminPin) {
       setIsAdmin(true);
       localStorage.setItem('efootball_is_admin', 'true');
       setIsAdminAuthModalOpen(false);
+      const artaPlayer = registeredPlayers.find((p) => p.name === 'آرتا');
+      if (artaPlayer) {
+        handleSelectActiveUser(artaPlayer);
+      }
       return true;
     }
     return false;
@@ -298,6 +302,7 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
   const handleAdminLogout = () => {
     setIsAdmin(false);
     localStorage.removeItem('efootball_is_admin');
+    handleSelectActiveUser(null);
   };
 
   // Handle open create league from admin panel

@@ -53,7 +53,7 @@ describe('App Component Complete League & Dual Wheel Workflow', () => {
     render(<App />);
 
     // Profile button for admin
-    const profileBtn = screen.getByRole('button', { name: /پروفایل مدیر کل لیگ/i });
+    const profileBtn = screen.getByRole('button', { name: /پروفایل (مدیر کل لیگ|آرتا)/i });
     fireEvent.click(profileBtn);
 
     // Click "کنترل لیگ در حال جریان"

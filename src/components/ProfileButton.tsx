@@ -3,7 +3,7 @@ import { User, X, Shield, KeyRound, Crown, LogOut, Settings2, Plus, Sparkles, Us
 import { RegisteredPlayer } from '../types/player';
 import { soundEngine } from '../utils/soundEffects';
 
-interface ProfileButtonProps {
+export interface ProfileButtonProps {
   userName?: string;
   rating?: number;
   avatarUrl?: string;
@@ -35,7 +35,6 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [showAdminPinPrompt, setShowAdminPinPrompt] = useState(false);
 
   const effectiveAvatar = avatarUrl || (isAdmin ? '/admin-avatar.png' : undefined);
   const initial = userName ? userName.trim().charAt(0) : 'ک';
@@ -53,7 +52,11 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
         soundEngine.playClick();
         setLoginError('');
         setPinInput('');
-        setShowAdminPinPrompt(false);
+        // Automatically switch to Arta
+        const artaPlayer = registeredPlayers.find((p) => p.name === 'آرتا');
+        if (artaPlayer && onSelectActiveUser) {
+          onSelectActiveUser(artaPlayer);
+        }
       }
     }
   };
@@ -62,13 +65,10 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
     soundEngine.playClick();
     if (!player) {
       // Guest mode
+      if (isAdmin && onAdminLogout) {
+        onAdminLogout();
+      }
       if (onSelectActiveUser) onSelectActiveUser(null);
-      return;
-    }
-
-    if (player.name === 'آرتا' || player.id === 'arta') {
-      // Require admin password
-      setShowAdminPinPrompt(true);
       return;
     }
 
@@ -76,6 +76,9 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
       onSelectActiveUser(player);
     }
   };
+
+  // Only show password box if user is on Guest mode and not yet admin
+  const isGuestMode = !isAdmin && userName === 'کاربر مهمان';
 
   return (
     <>
@@ -113,16 +116,16 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
         </button>
       </div>
 
-      {/* Liquid Glass Profile Drawer / Modal */}
+      {/* Liquid Glass Profile Drawer / Modal - Elevated pb-24 on mobile to prevent phone navbar overlap */}
       {isOpen && (
         <div
           role="dialog"
           aria-modal="true"
           aria-label="پروفایل کاربر"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 pb-24 sm:pb-6 bg-black/75 backdrop-blur-md animate-fadeIn"
         >
           <div
-            className="relative w-full max-w-sm rounded-3xl p-5 sm:p-6 bg-emerald-950/90 border border-white/20 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(34,197,94,0.2)] text-white max-h-[92vh] overflow-y-auto no-scrollbar"
+            className="relative w-full max-w-sm rounded-3xl p-5 sm:p-6 bg-emerald-950/95 border border-white/20 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(34,197,94,0.2)] text-white max-h-[85vh] overflow-y-auto no-scrollbar"
             style={{
               boxShadow: '0 25px 50px -12px rgba(0,0,0,0.9), inset 0 1px 1px 0 rgba(255,255,255,0.3)',
             }}
@@ -140,7 +143,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                 type="button"
                 onClick={() => setIsOpen(false)}
                 aria-label="بستن پروفایل"
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-zinc-300 hover:text-white transition-colors"
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-zinc-300 hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -183,7 +186,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                     setIsOpen(false);
                     onOpenPlayerProfile(userName);
                   }}
-                  className="mt-2 py-1 px-3 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-300 text-xs font-bold transition-all flex items-center gap-1"
+                  className="mt-2 py-1 px-3 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/30 text-emerald-300 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>مشاهده کارنامه و کارت اختصاصی من</span>
@@ -191,7 +194,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
               )}
             </div>
 
-            {/* User Switcher / Selection Grid */}
+            {/* User Switcher / Selection Grid: Arta is removed from regular list */}
             <div className="mt-4 pt-3 border-t border-white/10">
               <span className="text-xs font-bold text-zinc-300 block mb-2 flex items-center gap-1">
                 <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
@@ -205,7 +208,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                   onClick={() => handleSelectPlayer(null)}
                   className={`p-2 rounded-xl text-xs font-bold transition-all text-center flex flex-col items-center gap-1 cursor-pointer ${
                     userName === 'کاربر مهمان' && !isAdmin
-                      ? 'bg-emerald-500 text-black shadow-md'
+                      ? 'bg-emerald-500 text-black shadow-md font-black'
                       : 'bg-white/5 hover:bg-white/10 text-zinc-300'
                   }`}
                 >
@@ -215,48 +218,46 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                   <span className="truncate w-full text-[11px]">مهمان</span>
                 </button>
 
-                {/* Registered Players */}
-                {registeredPlayers.map((player) => {
-                  const isCurrent = userName === player.name;
-                  const isArta = player.name === 'آرتا';
+                {/* Registered Players (excluding Arta who enters via Admin password) */}
+                {registeredPlayers
+                  .filter((player) => player.name !== 'آرتا')
+                  .map((player) => {
+                    const isCurrent = userName === player.name;
 
-                  return (
-                    <button
-                      key={player.id}
-                      type="button"
-                      onClick={() => handleSelectPlayer(player)}
-                      className={`p-2 rounded-xl text-xs font-bold transition-all text-center flex flex-col items-center gap-1 relative ${
-                        isCurrent
-                          ? 'bg-emerald-500 text-black shadow-md'
-                          : 'bg-white/5 hover:bg-white/10 text-zinc-300'
-                      }`}
-                    >
-                      {isArta && (
-                        <Crown className="w-3 h-3 text-amber-400 absolute top-1 right-1" />
-                      )}
-                      <div className="w-6 h-6 rounded-full bg-black/40 overflow-hidden flex items-center justify-center text-[10px] shrink-0">
-                        {player.avatarUrl ? (
-                          <img src={player.avatarUrl} alt={player.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <span>{player.name.charAt(0)}</span>
-                        )}
-                      </div>
-                      <span className="truncate w-full text-[11px]">{player.name}</span>
-                    </button>
-                  );
-                })}
+                    return (
+                      <button
+                        key={player.id}
+                        type="button"
+                        onClick={() => handleSelectPlayer(player)}
+                        className={`p-2 rounded-xl text-xs font-bold transition-all text-center flex flex-col items-center gap-1 cursor-pointer ${
+                          isCurrent
+                            ? 'bg-emerald-500 text-black shadow-md font-black'
+                            : 'bg-white/5 hover:bg-white/10 text-zinc-300'
+                        }`}
+                      >
+                        <div className="w-6 h-6 rounded-full bg-black/40 overflow-hidden flex items-center justify-center text-[10px] shrink-0">
+                          {player.avatarUrl ? (
+                            <img src={player.avatarUrl} alt={player.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span>{player.name.charAt(0)}</span>
+                          )}
+                        </div>
+                        <span className="truncate w-full text-[11px]">{player.name}</span>
+                      </button>
+                    );
+                  })}
               </div>
             </div>
 
-            {/* Admin status vs Visitor status & PIN Form */}
+            {/* Admin status vs Visitor status: Password box ONLY visible on Guest mode */}
             <div className="mt-4">
               {isAdmin ? (
                 <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-400/30 text-amber-200 text-sm space-y-2">
                   <div className="flex items-center gap-2 font-bold text-amber-300">
                     <Crown className="w-4 h-4" />
-                    <span>دسترسی مدیر لیگ فعال است</span>
+                    <span>دسترسی مدیر لیگ فعال است (آرتا)</span>
                   </div>
-                  <p className="text-xs sm:text-sm text-zinc-300">
+                  <p className="text-xs text-zinc-300">
                     شما دسترسی کامل به ثبت نتایج مسابقات و کنترل لیگ جاری را دارید.
                   </p>
                   
@@ -296,7 +297,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                         onClick={() => {
                           onAdminLogout();
                         }}
-                        className="w-full py-2 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-zinc-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5"
+                        className="w-full py-2 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-zinc-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <LogOut className="w-3.5 h-3.5" />
                         <span>خروج از حساب مدیر</span>
@@ -304,20 +305,15 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                     )}
                   </div>
                 </div>
-              ) : (
-                <div className={`p-3.5 rounded-2xl border text-sm transition-all ${
-                  showAdminPinPrompt
-                    ? 'bg-amber-950/60 border-amber-400 ring-2 ring-amber-400/40 shadow-lg'
-                    : 'bg-black/40 border-white/10'
-                }`}>
+              ) : isGuestMode ? (
+                /* Password box ONLY appears when user is in Guest mode */
+                <div className="p-3.5 rounded-2xl border text-sm bg-black/40 border-white/10 transition-all">
                   <div className="flex items-center gap-2 text-zinc-300 mb-1 font-bold">
                     <Shield className="w-4 h-4 text-emerald-400" />
-                    <span>ورود به پنل مدیریت لیگ</span>
+                    <span>ورود به حساب مدیر کل (آرتا)</span>
                   </div>
                   <p className="text-xs text-zinc-400 mb-2.5">
-                    {showAdminPinPrompt
-                      ? 'برای فعال‌سازی دسترسی مدیر (آرتا)، رمز عبور مدیر را وارد کنید:'
-                      : 'برای دسترسی به قرعه‌کشی و ثبت نتایج، رمز عبور مدیر (آرتا) را وارد کنید.'}
+                    برای دسترسی به پنل مدیریت لیگ و حساب آرتا، رمز عبور را وارد کنید:
                   </p>
 
                   <form onSubmit={handleLoginSubmit} className="space-y-2.5">
@@ -344,21 +340,24 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                       aria-label="ورود مدیر"
                       className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-extrabold text-sm shadow hover:brightness-110 active:scale-95 transition-all cursor-pointer"
                     >
-                      ورود مدیر
+                      ورود به عنوان آرتا
                     </button>
                   </form>
                 </div>
-              )}
+              ) : null}
             </div>
 
-            {/* Quick Actions */}
-            <div className="mt-4">
+            {/* Prominently elevated close button */}
+            <div className="mt-4 pt-1">
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
-                className="w-full py-2 rounded-xl bg-white/10 hover:bg-white/15 text-zinc-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
+                onClick={() => {
+                  soundEngine.playClick();
+                  setIsOpen(false);
+                }}
+                className="w-full py-2.5 rounded-xl bg-white/15 hover:bg-white/20 active:scale-95 text-white text-xs font-bold transition-all cursor-pointer border border-white/10"
               >
-                بستن
+                بستن منو
               </button>
             </div>
           </div>

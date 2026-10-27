@@ -35,7 +35,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
       {/* Top-Right: Circular Profile Button & Sound Toggle */}
       <div className="flex items-center gap-2">
         <ProfileButton 
-          userName={activeUser ? activeUser.name : (isAdmin ? 'مدیر کل لیگ' : 'کاربر مهمان')} 
+          userName={activeUser ? activeUser.name : (isAdmin ? 'آرتا' : 'کاربر مهمان')} 
           rating={isAdmin ? 1500 : (activeUser ? 1350 : 1200)}
           avatarUrl={activeUser ? activeUser.avatarUrl : (isAdmin ? '/admin-avatar.png' : undefined)}
           isAdmin={isAdmin}
