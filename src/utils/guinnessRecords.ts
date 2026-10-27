@@ -2,10 +2,12 @@ import { ActiveLeague, ArchivedLeague } from '../types/league';
 import { RegisteredPlayer } from '../types/player';
 import { calculatePlayerCareerStats } from './playerStats';
 
+export type GuinnessIconType = 'flame' | 'swords' | 'crown' | 'target' | 'shield' | 'zap';
+
 export interface GuinnessRecordItem {
   id: string;
   title: string;
-  emoji: string;
+  iconType: GuinnessIconType;
   holderName: string;
   recordValue: string;
   description: string;
@@ -83,14 +85,14 @@ export function calculateGuinnessRecords(
     records.push({
       id: 'highest-scoring-match',
       title: 'پرگل‌ترین مسابقه تاریخ',
-      emoji: '⚽🔥',
-      holderName: `${highestScoring.p1} & ${highestScoring.p2}`,
+      iconType: 'flame',
+      holderName: `${highestScoring.p1} و ${highestScoring.p2}`,
       recordValue: `${highestScoring.totalGoals} گل (${highestScoring.s1} - ${highestScoring.s2})`,
       description: `در تقابل ${highestScoring.t1} و ${highestScoring.t2} (${highestScoring.leagueName})`,
       badgeColor: 'from-amber-500 to-yellow-400',
     });
 
-    // 2. سنگین‌ترین شکست / تحقیرآمیزترین برد
+    // 2. سنگین‌ترین اختلاف گل
     const biggestMargin = [...allMatches].sort((a, b) => b.diff - a.diff)[0];
     const winnerName = biggestMargin.s1 > biggestMargin.s2 ? biggestMargin.p1 : biggestMargin.p2;
     const loserName = biggestMargin.s1 > biggestMargin.s2 ? biggestMargin.p2 : biggestMargin.p1;
@@ -99,7 +101,7 @@ export function calculateGuinnessRecords(
     records.push({
       id: 'biggest-margin-win',
       title: 'سنگین‌ترین اختلاف گل',
-      emoji: '🌪️',
+      iconType: 'swords',
       holderName: winnerName,
       recordValue: `${biggestMargin.diff}+ تفاضل (${maxScore} - ${minScore})`,
       description: `پیروزی قاطع ${winnerName} مقابل ${loserName} (${biggestMargin.leagueName})`,
@@ -117,7 +119,7 @@ export function calculateGuinnessRecords(
     records.push({
       id: 'most-championships',
       title: 'پرافتخارترین قهرمان تاریخ',
-      emoji: '👑',
+      iconType: 'crown',
       holderName: mostChampionships.playerName,
       recordValue: `${mostChampionships.championships} جام قهرمانی`,
       description: 'بیشترین عنوان قهرمانی در ادوار مختلف مسابقات لیگ دوستانه',
@@ -131,7 +133,7 @@ export function calculateGuinnessRecords(
     records.push({
       id: 'all-time-top-scorer',
       title: 'آقای گل ادوار مسابقات',
-      emoji: '🎯',
+      iconType: 'target',
       holderName: topScorer.playerName,
       recordValue: `${topScorer.goalsFor} گل زده`,
       description: `میانگین ${(topScorer.goalsFor / Math.max(1, topScorer.totalMatches)).toFixed(1)} گل در هر مسابقه در ${topScorer.totalMatches} بازی`,
@@ -139,7 +141,7 @@ export function calculateGuinnessRecords(
     });
   }
 
-  // 5. بتن آرمه / مستحکم‌ترین خط دفاعی (کمترین میانگین گل خورده با حداقل ۲ بازی)
+  // 5. بتن آرمه / مستحکم‌ترین خط دفاعی
   const qualifiedDefenders = playerStatsList.filter((p) => p.totalMatches >= 2);
   if (qualifiedDefenders.length > 0) {
     const bestDefense = [...qualifiedDefenders].sort(
@@ -147,8 +149,8 @@ export function calculateGuinnessRecords(
     )[0];
     records.push({
       id: 'best-defense-wall',
-      title: 'صخره بتنی / نفوذناپذیرترین خط دفاع',
-      emoji: '🧱',
+      title: 'نفوذناپذیرترین خط دفاع',
+      iconType: 'shield',
       holderName: bestDefense.playerName,
       recordValue: `${(bestDefense.goalsAgainst / bestDefense.totalMatches).toFixed(1)} میانگین گل خورده`,
       description: `کمترین دریافت گل در هر مسابقه (${bestDefense.goalsAgainst} گل خورده در ${bestDefense.totalMatches} بازی)`,
@@ -162,7 +164,7 @@ export function calculateGuinnessRecords(
     records.push({
       id: 'highest-win-rate',
       title: 'بالاترین درصد پیروزی',
-      emoji: '⚡',
+      iconType: 'zap',
       holderName: bestWinRate.playerName,
       recordValue: `%${bestWinRate.winRate} نرخ پیروزی`,
       description: `${bestWinRate.wins} برد از ${bestWinRate.totalMatches} مسابقه رسمی`,

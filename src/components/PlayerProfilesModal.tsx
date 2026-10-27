@@ -8,7 +8,9 @@ import {
   Scale,
   Award,
   Flame,
-  Share2
+  Share2,
+  ChevronLeft,
+  Sparkles
 } from 'lucide-react';
 import { RegisteredPlayer } from '../types/player';
 import { ActiveLeague, ArchivedLeague } from '../types/league';
@@ -136,7 +138,7 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
                 title="تالار رکوردهای گینس مسابقات"
               >
                 <Award className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">رکوردهای گینس 🎖️</span>
+                <span className="hidden sm:inline">رکوردهای گینس</span>
                 <span className="sm:hidden">گینس</span>
               </button>
 
@@ -146,11 +148,11 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
                   soundEngine.playClick();
                   setIsPuskasOpen(true);
                 }}
-                className="py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-amber-600 to-yellow-500 hover:brightness-110 text-black font-extrabold text-xs flex items-center gap-1 shadow active:scale-95 transition-all"
+                className="py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-amber-600 to-yellow-500 hover:brightness-110 text-black font-extrabold text-xs flex items-center gap-1 shadow active:scale-95 transition-all cursor-pointer"
                 title="نظرسنجی جایزه پوشکاش"
               >
                 <Flame className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">جایزه پوشکاش ⚽</span>
+                <span className="hidden sm:inline">جایزه پوشکاش</span>
                 <span className="sm:hidden">پوشکاش</span>
               </button>
 
@@ -163,10 +165,10 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
                     setCompareName2(registeredPlayers[1]?.name || '');
                     setViewMode('compare');
                   }}
-                  className="py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-400 hover:brightness-110 text-black font-extrabold text-xs flex items-center gap-1 shadow active:scale-95 transition-all"
+                  className="py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-400 hover:brightness-110 text-black font-extrabold text-xs flex items-center gap-1 shadow active:scale-95 transition-all cursor-pointer"
                 >
                   <Scale className="w-3.5 h-3.5" />
-                  <span>مقایسه ۲ بازیکن ⚔️</span>
+                  <span>مقایسه ۲ بازیکن</span>
                 </button>
               )}
             </>
@@ -179,10 +181,10 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
                 soundEngine.playClick();
                 setIsPosterOpen(true);
               }}
-              className="py-1.5 sm:py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-black font-bold text-xs flex items-center gap-1.5 shadow active:scale-95 transition-all"
+              className="py-1.5 sm:py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-black font-bold text-xs flex items-center gap-1.5 shadow active:scale-95 transition-all cursor-pointer"
             >
               <Share2 className="w-3.5 h-3.5" />
-              <span>پوستر استوری 📸</span>
+              <span>پوستر استوری</span>
             </button>
           )}
 
@@ -248,8 +250,9 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
                         </span>
                       </div>
 
-                      <span className="text-xs text-emerald-400/80 font-semibold mt-1.5 block">
-                        مشاهده پروفایل و آمار ➔
+                      <span className="text-xs text-emerald-400 font-semibold mt-1.5 flex items-center justify-center gap-1">
+                        <span>مشاهده پروفایل و آمار</span>
+                        <ChevronLeft className="w-3.5 h-3.5" />
                       </span>
                     </div>
                   </button>
@@ -428,7 +431,7 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
           </div>
         )}
 
-        {/* VIEW 3: Head-to-Head Comparison Mode ⚔️ */}
+        {/* VIEW 3: Head-to-Head Comparison Mode */}
         {viewMode === 'compare' && (
           <div className="space-y-5 animate-fadeIn max-w-2xl mx-auto">
             
@@ -534,19 +537,21 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
                       <span className="text-xs text-zinc-400">این دو بازیکن هنوز هیچ مسابقه مستقیمی با یکدیگر نداشته‌اند.</span>
                     ) : h2hStats.leader ? (
                       <div>
-                        <span className="text-sm font-black text-amber-300 block">
-                          🔥 {h2hStats.leader} با اختلاف {h2hStats.winDiff} برد برتر است!
+                        <span className="text-sm font-black text-amber-300 flex items-center justify-center gap-1.5">
+                          <Sparkles className="w-4 h-4 text-amber-400" />
+                          <span>{h2hStats.leader} با اختلاف {h2hStats.winDiff} برد برتر است!</span>
                         </span>
-                        <span className="text-xs text-zinc-300 font-mono">
+                        <span className="text-xs text-zinc-300 font-mono block mt-1">
                           مجموع گل‌ها: {compareName1} {h2hStats.player1Goals} - {h2hStats.player2Goals} {compareName2} (تفاضل: {h2hStats.goalDiff > 0 ? `+${h2hStats.goalDiff}` : h2hStats.goalDiff})
                         </span>
                       </div>
                     ) : (
                       <div>
-                        <span className="text-sm font-black text-emerald-300 block">
-                          ⚖️ عملکرد هر دو بازیکن کاملاً برابر است!
+                        <span className="text-sm font-black text-emerald-300 flex items-center justify-center gap-1.5">
+                          <Scale className="w-4 h-4 text-emerald-400" />
+                          <span>عملکرد هر دو بازیکن در نبردهای مستقیم کاملاً برابر است!</span>
                         </span>
-                        <span className="text-xs text-zinc-300 font-mono">
+                        <span className="text-xs text-zinc-300 font-mono block mt-1">
                           مجموع گل‌ها: {h2hStats.player1Goals} - {h2hStats.player2Goals}
                         </span>
                       </div>

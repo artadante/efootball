@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Lock, CheckCircle2, User, Shield, AlertCircle, ListPlus, Users } from 'lucide-react';
+import { Sparkles, Lock, CheckCircle2, User, Shield, AlertCircle, ListPlus, Users, Ban, Disc } from 'lucide-react';
 import { ActiveLeague } from '../types/league';
 import { RegisteredPlayer, DEFAULT_FIXED_PLAYERS } from '../types/player';
 import { TeamSelectorModal } from './TeamSelectorModal';
@@ -87,7 +87,7 @@ export const DualWheel: React.FC<DualWheelProps> = ({
             <Lock className="w-8 h-8" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white">گردونه قفل است 🔒</h3>
+            <h3 className="text-lg font-bold text-white">گردونه قفل است</h3>
             <p className="text-sm text-zinc-300 mt-1">
               تمامی بازیکنان و تیم‌های <span className="font-bold text-emerald-400">{activeLeague.name}</span> تعیین شده‌اند. تا اتمام کامل بازی‌های لیگ، گردونه قفل خواهد بود.
             </p>
@@ -218,10 +218,10 @@ export const DualWheel: React.FC<DualWheelProps> = ({
               type="button"
               onClick={() => setIsPlayerSelectorOpen(true)}
               disabled={isSpinning}
-              className="w-full py-2.5 px-2 rounded-xl bg-gradient-to-r from-emerald-600/30 to-green-600/30 hover:from-emerald-600/40 hover:to-green-600/40 border border-emerald-400/50 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 shadow transition-all"
+              className="w-full py-2.5 px-2 rounded-xl bg-gradient-to-r from-emerald-600/30 to-green-600/30 hover:from-emerald-600/40 hover:to-green-600/40 border border-emerald-400/50 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 shadow transition-all cursor-pointer"
             >
               <Users className="w-4 h-4 text-emerald-400" />
-              <span>منوی انتخاب بازیکنان 👥</span>
+              <span>منوی انتخاب بازیکنان</span>
             </button>
 
             {/* Selected players preview tags */}
@@ -254,10 +254,10 @@ export const DualWheel: React.FC<DualWheelProps> = ({
               type="button"
               onClick={() => setIsTeamSelectorOpen(true)}
               disabled={isSpinning}
-              className="w-full py-2.5 px-2 rounded-xl bg-gradient-to-r from-emerald-600/30 to-green-600/30 hover:from-emerald-600/40 hover:to-green-600/40 border border-emerald-400/50 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 shadow transition-all"
+              className="w-full py-2.5 px-2 rounded-xl bg-gradient-to-r from-emerald-600/30 to-green-600/30 hover:from-emerald-600/40 hover:to-green-600/40 border border-emerald-400/50 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 shadow transition-all cursor-pointer"
             >
               <ListPlus className="w-4 h-4 text-emerald-400" />
-              <span>منوی انتخاب تیم‌ها 📋</span>
+              <span>منوی انتخاب تیم‌ها</span>
             </button>
 
             {/* Selected teams preview tags */}
@@ -282,7 +282,8 @@ export const DualWheel: React.FC<DualWheelProps> = ({
         {/* Pick & Ban indicator if active */}
         {bannedTeams.length > 0 && (
           <div className="py-1 px-2.5 rounded-xl bg-rose-950/40 border border-rose-500/30 text-[11px] text-rose-300 flex items-center gap-1.5 mb-2">
-            <span className="font-bold">🚫 تیم‌های بن‌شده:</span>
+            <Ban className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+            <span className="font-bold">تیم‌های بن‌شده:</span>
             <span className="truncate">{bannedTeams.join('، ')}</span>
           </div>
         )}
@@ -391,10 +392,10 @@ export const DualWheel: React.FC<DualWheelProps> = ({
           type="button"
           onClick={handleDualSpin}
           disabled={isSpinning || playerList.length === 0 || teamList.length === 0}
-          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-500 text-black font-extrabold text-base shadow-[0_0_25px_rgba(34,197,94,0.5)] hover:brightness-110 active:scale-95 disabled:opacity-40 transition-all flex items-center justify-center gap-2"
+          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-500 text-black font-extrabold text-base shadow-[0_0_25px_rgba(34,197,94,0.5)] hover:brightness-110 active:scale-95 disabled:opacity-40 transition-all flex items-center justify-center gap-2 cursor-pointer"
         >
-          <Sparkles className="w-4 h-4" />
-          <span>{isSpinning ? 'در حال چرخش دو گردونه...' : `چرخش برای بازیکن ${currentSlotNumber} 🎡`}</span>
+          <Disc className="w-4 h-4" />
+          <span>{isSpinning ? 'در حال چرخش دو گردونه...' : `چرخش برای بازیکن ${currentSlotNumber}`}</span>
         </button>
       </div>
 

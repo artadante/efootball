@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Trophy, X, Share2 } from 'lucide-react';
+import { Trophy, X, Camera, Crown } from 'lucide-react';
 import { soundEngine } from '../utils/soundEffects';
 
 interface ChampionshipCelebrationProps {
@@ -146,8 +146,10 @@ export const ChampionshipCelebration: React.FC<ChampionshipCelebrationProps> = (
           {leagueName}
         </span>
 
-        <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 drop-shadow-md">
-          🏆 قهرمان جدید مسابقات 🏆
+        <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 drop-shadow-md flex items-center justify-center gap-2">
+          <Crown className="w-6 h-6 text-amber-400" />
+          <span>قهرمان جدید مسابقات</span>
+          <Crown className="w-6 h-6 text-amber-400" />
         </h2>
 
         {/* Champion Avatar & Name */}
@@ -168,7 +170,7 @@ export const ChampionshipCelebration: React.FC<ChampionshipCelebrationProps> = (
 
         {/* Congratulation Message */}
         <p className="text-xs text-zinc-300 leading-relaxed max-w-xs mt-1 mb-5">
-          تبریک ویژه به {championName} برای نمایش بی‌نظیر، صلابت در تمام بازی‌ها و کسب مقتدرانه جام قهرمانی دورهمی! 🎉
+          تبریک ویژه به {championName} برای نمایش بی‌نظیر، صلابت در تمام بازی‌ها و کسب مقتدرانه جام قهرمانی دورهمی!
         </p>
 
         {/* Action Buttons */}
@@ -180,10 +182,10 @@ export const ChampionshipCelebration: React.FC<ChampionshipCelebrationProps> = (
                 onClose();
                 onOpenStoryPoster();
               }}
-              className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:brightness-110 active:scale-95 text-black font-black text-sm flex items-center justify-center gap-2 shadow-xl transition-all"
+              className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:brightness-110 active:scale-95 text-black font-black text-sm flex items-center justify-center gap-2 shadow-xl transition-all cursor-pointer"
             >
-              <Share2 className="w-4 h-4 text-black stroke-[2.5]" />
-              <span>ساخت پوستر قهرمانی برای استوری 📸</span>
+              <Camera className="w-4 h-4 text-black stroke-[2.5]" />
+              <span>ساخت پوستر قهرمانی برای استوری</span>
             </button>
           )}
 

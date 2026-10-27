@@ -105,7 +105,7 @@ export const PuskasPollModal: React.FC<PuskasPollModalProps> = ({
           <div className="flex items-center gap-2.5">
             <Award className="w-6 h-6 text-amber-400" />
             <div>
-              <h3 className="font-black text-lg text-white">نظرسنجی جایزه پوشکاش دورهمی ⚽</h3>
+              <h3 className="font-black text-lg text-white">نظرسنجی جایزه پوشکاش مسابقات</h3>
               <p className="text-xs text-zinc-400">رأی‌گیری برای زیباترین و خاطره‌انگیزترین گل فصل</p>
             </div>
           </div>

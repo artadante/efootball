@@ -17,6 +17,7 @@ import {
   Crown, 
   Medal, 
   ShieldAlert, 
+  ShieldCheck,
   X, 
   Swords, 
   Calendar, 
@@ -26,7 +27,15 @@ import {
   Trophy,
   Flame,
   Smartphone,
-  Users
+  Users,
+  Target,
+  Ban,
+  ClipboardList,
+  Network,
+  Disc,
+  Radio, 
+  Share2, 
+  Sparkles
 } from 'lucide-react';
 import { ActiveLeague, ArchivedLeague, StandingRow, ScheduledMatch } from './types/league';
 import { RegisteredPlayer, DEFAULT_FIXED_PLAYERS } from './types/player';
@@ -42,7 +51,6 @@ import { PlayerFormBadge } from './components/PlayerFormBadge';
 import { generateMatchdayNews } from './utils/newsGenerator';
 import { calculatePlayerCareerStats } from './utils/playerStats';
 import { advanceCupTree } from './utils/fixtureGenerator';
-import { Radio, Share2, Sparkles } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('table');
@@ -608,7 +616,7 @@ export const App: React.FC = () => {
       <PitchBackground />
 
       {/* Main Container - Responsive Centered Shell */}
-      <div className="relative z-10 w-full max-w-lg md:max-w-3xl lg:max-w-4xl mx-auto min-h-screen flex flex-col px-3.5 sm:px-6 pt-4 pb-28">
+      <div className="relative z-10 w-full max-w-lg md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto min-h-screen flex flex-col px-3.5 sm:px-6 pt-4 pb-28">
         
         {/* Top Header Bar */}
         <header className="flex items-center justify-between py-2 gap-2">
@@ -638,8 +646,9 @@ export const App: React.FC = () => {
               </span>
             ) : null}
             {isAdmin && (
-              <div className="flex items-center justify-center gap-1 text-[11px] text-amber-300 font-bold mt-0.5">
-                <span>👑 پنل مدیریت فعال</span>
+              <div className="flex items-center justify-center gap-1.5 text-[11px] text-amber-300 font-bold mt-0.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                <span>پنل مدیریت فعال</span>
               </div>
             )}
           </div>
@@ -657,6 +666,58 @@ export const App: React.FC = () => {
             </button>
           </div>
         </header>
+
+        {/* Desktop & Tablet Navigation Bar */}
+        <nav aria-label="منوی دسکتاپ" className="hidden md:flex items-center justify-center gap-2 my-2 p-1.5 rounded-2xl bg-black/45 border border-white/10 backdrop-blur-xl">
+          <button
+            type="button"
+            onClick={() => setActiveTab('wheel')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+              activeTab === 'wheel'
+                ? 'bg-gradient-to-r from-emerald-500 to-green-400 text-black shadow-lg shadow-emerald-500/20'
+                : 'text-zinc-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Disc className="w-4 h-4" />
+            <span>چرخونه</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('matches')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+              activeTab === 'matches'
+                ? 'bg-gradient-to-r from-emerald-500 to-green-400 text-black shadow-lg shadow-emerald-500/20'
+                : 'text-zinc-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Swords className="w-4 h-4" />
+            <span>برنامه بازی‌ها</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('table')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+              activeTab === 'table'
+                ? 'bg-gradient-to-r from-emerald-500 to-green-400 text-black shadow-lg shadow-emerald-500/20'
+                : 'text-zinc-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Trophy className="w-4 h-4" />
+            <span>{activeLeague?.mode === 'cup' ? 'جام حذفی' : 'جدول رده‌بندی'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('history')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+              activeTab === 'history'
+                ? 'bg-gradient-to-r from-emerald-500 to-green-400 text-black shadow-lg shadow-emerald-500/20'
+                : 'text-zinc-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <History className="w-4 h-4" />
+            <span>تاریخچه مسابقات</span>
+          </button>
+        </nav>
 
         {/* Dynamic Sports News Ticker with Dismiss Button */}
         {activeLeague && latestNews && (
@@ -737,18 +798,19 @@ export const App: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setIsPredictionModalOpen(true)}
-                        className="py-1 px-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-black font-extrabold text-xs flex items-center gap-1 shadow active:scale-95 transition-all"
+                        className="py-1 px-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-black font-extrabold text-xs flex items-center gap-1.5 shadow active:scale-95 transition-all"
                       >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>پیش‌بینی 🎯</span>
+                        <Target className="w-3.5 h-3.5 text-black" />
+                        <span>پیش‌بینی</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setIsPickBanOpen(true)}
-                        className="py-1 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-zinc-200 text-xs font-bold border border-white/10 transition-all"
+                        className="py-1 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-zinc-200 text-xs font-bold border border-white/10 transition-all flex items-center gap-1.5"
                       >
-                        <span>پیک/بن 🚫</span>
+                        <Ban className="w-3 h-3 text-rose-400" />
+                        <span>پیک و بن</span>
                       </button>
 
                       <span className="text-xs text-zinc-300 font-mono font-medium">
@@ -771,24 +833,26 @@ export const App: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setMatchesViewMode('list')}
-                        className={`flex-1 py-1.5 sm:py-2 rounded-xl font-extrabold transition-all ${
+                        className={`flex-1 py-1.5 sm:py-2 rounded-xl font-extrabold transition-all flex items-center justify-center gap-1.5 ${
                           matchesViewMode === 'list'
                             ? 'bg-emerald-500 text-black shadow'
                             : 'text-zinc-400 hover:text-white'
                         }`}
                       >
-                        لیست مسابقات 📋
+                        <ClipboardList className="w-4 h-4" />
+                        <span>لیست مسابقات</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => setMatchesViewMode('bracket')}
-                        className={`flex-1 py-1.5 sm:py-2 rounded-xl font-extrabold transition-all ${
+                        className={`flex-1 py-1.5 sm:py-2 rounded-xl font-extrabold transition-all flex items-center justify-center gap-1.5 ${
                           matchesViewMode === 'bracket'
                             ? 'bg-emerald-500 text-black shadow'
                             : 'text-zinc-400 hover:text-white'
                         }`}
                       >
-                        نمودار درختی جام 🌳
+                        <Network className="w-4 h-4" />
+                        <span>نمودار درختی جام</span>
                       </button>
                     </div>
 
@@ -833,16 +897,18 @@ export const App: React.FC = () => {
                         {/* All Matches Completed Celebration Banner */}
                         {activeLeague.matches.every(m => m.isPlayed) && !activeLeague.isFinished && (
                           <div className="p-3 mb-3 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-center space-y-2 animate-bounce">
-                            <span className="text-sm font-black text-amber-300 block">
-                              🎉 تمام مسابقات این لیگ با موفقیت به پایان رسید!
+                            <span className="text-sm font-black text-amber-300 flex items-center justify-center gap-1.5">
+                              <Trophy className="w-4 h-4 text-amber-300" />
+                              <span>تمام مسابقات این لیگ با موفقیت به پایان رسید!</span>
                             </span>
                             {isAdmin && (
                               <button
                                 type="button"
                                 onClick={handleFinishAndArchiveLeague}
-                                className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black text-xs shadow hover:scale-105 active:scale-95 transition-all"
+                                className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black text-xs shadow hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-1.5 mx-auto"
                               >
-                                ثبت نهایی و جشن قهرمانی 🏆
+                                <Trophy className="w-4 h-4" />
+                                <span>ثبت نهایی و جشن قهرمانی</span>
                               </button>
                             )}
                           </div>
@@ -886,7 +952,7 @@ export const App: React.FC = () => {
                                       title="ساخت استوری این مسابقه"
                                     >
                                       <Share2 className="w-3 h-3" />
-                                      <span>استوری 📸</span>
+                                      <span>استوری</span>
                                     </button>
 
                                     {m.isPlayed ? (
@@ -977,7 +1043,7 @@ export const App: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 3: LEAGUE TABLE & STANDINGS (جدول با آیکون تاج 👑 برای نفر اول) */}
+          {/* TAB 3: LEAGUE TABLE & STANDINGS */}
           {activeTab === 'table' && (
             <div className="space-y-4 animate-fadeIn my-auto w-full">
               <div className="rounded-3xl p-4 bg-emerald-950/50 border border-white/15 backdrop-blur-2xl shadow-xl">
@@ -986,7 +1052,7 @@ export const App: React.FC = () => {
                     <Medal className="w-5 h-5 text-emerald-400" />
                     <span>
                       {activeLeague?.mode === 'cup'
-                        ? 'نمودار درختی مسابقات جام حذفی 🏆'
+                        ? 'نمودار درختی مسابقات جام حذفی'
                         : `جدول رده‌بندی ${activeLeague?.name || 'لیگ'}`}
                     </span>
                   </h3>
@@ -1007,7 +1073,7 @@ export const App: React.FC = () => {
                       className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-black font-extrabold text-xs flex items-center gap-1 shadow active:scale-95 transition-all cursor-pointer"
                     >
                       <Share2 className="w-3.5 h-3.5" />
-                      <span>پوستر استوری جدول 📸</span>
+                      <span>پوستر استوری جدول</span>
                     </button>
                   )}
                 </div>
@@ -1070,7 +1136,7 @@ export const App: React.FC = () => {
                                   )}
                                 </td>
 
-                                {/* Player Name with Crown 👑 on the left side of the name, Form Arrow & Team Logo */}
+                                {/* Player Name with Crown icon on the left side of the name, Form Arrow & Team Logo */}
                                 <td className="py-3 text-start font-bold text-white">
                                   <div className="flex items-center gap-2">
                                     <TeamLogo teamName={row.team} className="w-6 h-6 shrink-0" />
@@ -1148,7 +1214,7 @@ export const App: React.FC = () => {
                           <span className="text-xs text-zinc-300">{archived.finishedAt}</span>
                         </div>
 
-                        {/* Champion Spotlight Badge with Crown 👑, Team Logo & Celebration */}
+                        {/* Champion Spotlight Badge with Crown, Team Logo & Celebration */}
                         <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-transparent border border-amber-400/30 flex items-center justify-between gap-3 flex-wrap">
                           <div className="flex items-center gap-3">
                             <div className="p-2.5 rounded-xl bg-amber-400/20 text-amber-300">
@@ -1177,10 +1243,10 @@ export const App: React.FC = () => {
                                 });
                                 setIsCelebrationOpen(true);
                               }}
-                              className="py-1 px-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-extrabold text-xs flex items-center gap-1 shadow active:scale-95 transition-all"
+                              className="py-1 px-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-extrabold text-xs flex items-center gap-1.5 shadow active:scale-95 transition-all"
                             >
                               <Trophy className="w-3.5 h-3.5" />
-                              <span>جشن قهرمانی 🏆</span>
+                              <span>جشن قهرمانی</span>
                             </button>
 
                             <button
@@ -1198,10 +1264,10 @@ export const App: React.FC = () => {
                                 });
                                 setIsStoryPosterOpen(true);
                               }}
-                              className="py-1 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-zinc-200 text-xs font-bold flex items-center gap-1 transition-all"
+                              className="py-1 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-zinc-200 text-xs font-bold flex items-center gap-1.5 transition-all"
                             >
                               <Share2 className="w-3.5 h-3.5" />
-                              <span>استوری 📸</span>
+                              <span>استوری</span>
                             </button>
 
                             <TeamLogo teamName={archived.championTeam} className="w-9 h-9 shrink-0" />

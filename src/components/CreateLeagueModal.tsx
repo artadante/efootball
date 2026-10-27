@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trophy, Swords, X, Shuffle, CheckCircle2, ChevronRight, Sparkles, ShieldAlert } from 'lucide-react';
+import { Trophy, Swords, X, Shuffle, CheckCircle2, ChevronRight, ShieldAlert, Ban, Star, Dices, FastForward, Disc } from 'lucide-react';
 import { CompetitionMode, ActiveLeague, LeaguePlayer } from '../types/league';
 import { generateFixtures } from '../utils/fixtureGenerator';
 import { soundEngine } from '../utils/soundEffects';
@@ -413,25 +413,25 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
                         type="button"
                         title="بن کردن این تیم"
                         onClick={() => handleToggleBan(t.name)}
-                        className={`p-1 rounded-lg text-[10px] font-bold cursor-pointer transition-all ${
+                        className={`p-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all flex items-center justify-center ${
                           isBanned
-                            ? 'bg-rose-500 text-white'
+                            ? 'bg-rose-500 text-white shadow'
                             : 'bg-white/5 hover:bg-rose-500/30 text-rose-300'
                         }`}
                       >
-                        🚫
+                        <Ban className="w-3.5 h-3.5" />
                       </button>
                       <button
                         type="button"
-                        title="پیک/اولویت این تیم"
+                        title="پیک و اولویت این تیم"
                         onClick={() => handleTogglePick(t.name)}
-                        className={`p-1 rounded-lg text-[10px] font-bold cursor-pointer transition-all ${
+                        className={`p-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all flex items-center justify-center ${
                           isPicked
-                            ? 'bg-emerald-500 text-black'
+                            ? 'bg-emerald-500 text-black shadow'
                             : 'bg-white/5 hover:bg-emerald-500/30 text-emerald-300'
                         }`}
                       >
-                        ⭐
+                        <Star className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
@@ -451,17 +451,18 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
               <button
                 type="button"
                 onClick={handleStartDraw}
-                className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-zinc-200 font-bold text-xs cursor-pointer"
+                className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-zinc-200 font-bold text-xs cursor-pointer flex items-center gap-1"
               >
-                رد شدن ⏭️
+                <span>رد شدن</span>
+                <FastForward className="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
                 onClick={handleStartDraw}
-                className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-extrabold text-xs sm:text-sm shadow hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
+                className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-extrabold text-xs sm:text-sm shadow hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>تأیید و شروع قرعه‌کشی 🎲</span>
+                <Dices className="w-4 h-4" />
+                <span>تأیید و شروع قرعه‌کشی</span>
               </button>
             </div>
           </div>
@@ -491,11 +492,11 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
                 <div>
-                  <h4 className="text-base font-bold text-white">قرعه‌کشی با موفقیت انجام شد! 🎉</h4>
+                  <h4 className="text-base font-bold text-white">قرعه‌کشی با موفقیت انجام شد!</h4>
                   <p className="text-xs sm:text-sm text-zinc-300 mt-1">
                     {mode === 'cup'
-                      ? 'نمودار درختی جام حذفی شکل گرفت. اکنون وارد چرخونه شوید تا تیم‌ها و بازیکنان را قرعه‌کشی کنید!'
-                      : 'بازی‌های رفت و برگشت ثبت شدند. اکنون وارد چرخونه شوید تا اسامی و تیم‌ها را بچرخانید!'}
+                      ? 'نمودار درختی جام حذفی شکل گرفت. اکنون وارد چرخونه شوید تا تیم‌ها و بازیکنان را مشخص کنید.'
+                      : 'بازی‌های رفت و برگشت ثبت شدند. اکنون وارد چرخونه شوید تا اسامی و تیم‌ها را بچرخانید.'}
                   </p>
                 </div>
 
@@ -504,8 +505,8 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
                   onClick={handleFinalize}
                   className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-500 text-black font-extrabold text-sm sm:text-base shadow-[0_0_25px_rgba(34,197,94,0.4)] hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Sparkles className="w-4 h-4" />
-                  <span>تأیید و ورود به چرخونه انتخاب تیم‌ها 🎡</span>
+                  <Disc className="w-4 h-4" />
+                  <span>تأیید و ورود به چرخونه انتخاب تیم‌ها</span>
                 </button>
               </div>
             ) : null}

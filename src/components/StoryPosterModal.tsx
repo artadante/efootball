@@ -77,7 +77,7 @@ export const StoryPosterModal: React.FC<StoryPosterModalProps> = ({
     ctx.textAlign = 'center';
     ctx.font = '900 24px Vazirmatn, system-ui, sans-serif';
     ctx.fillStyle = '#34d399';
-    ctx.fillText('⚡ EFOOTBALL FRIENDS LEAGUE ⚡', 360, 95);
+    ctx.fillText('EFOOTBALL FRIENDS LEAGUE', 360, 95);
 
     ctx.font = 'bold 18px Vazirmatn, system-ui, sans-serif';
     ctx.fillStyle = '#94a3b8';
@@ -133,13 +133,13 @@ export const StoryPosterModal: React.FC<StoryPosterModalProps> = ({
         let rankText = `#${s.rank}`;
         if (s.rank === 1) {
           rankColor = '#fbbf24';
-          rankText = '🥇';
+          rankText = 'TOP 1';
         } else if (s.rank === 2) {
           rankColor = '#e2e8f0';
-          rankText = '🥈';
+          rankText = 'TOP 2';
         } else if (s.rank === 3) {
           rankColor = '#f97316';
-          rankText = '🥉';
+          rankText = 'TOP 3';
         }
 
         ctx.textAlign = 'center';
@@ -182,7 +182,7 @@ export const StoryPosterModal: React.FC<StoryPosterModalProps> = ({
         ctx.textAlign = 'center';
         ctx.fillStyle = 'rgba(245, 158, 11, 0.9)';
         ctx.font = 'bold 18px Vazirmatn, system-ui, sans-serif';
-        ctx.fillText(`👑 صدرنشین جدول: ${standings[0].name} (${standings[0].team})`, 360, 1080);
+        ctx.fillText(`صدرنشین و مدعی قهرمانی: ${standings[0].name} (${standings[0].team})`, 360, 1080);
       }
     } else {
       // ===== MATCHDAY / MATCH RESULT POSTER =====
@@ -261,7 +261,7 @@ export const StoryPosterModal: React.FC<StoryPosterModalProps> = ({
     ctx.textAlign = 'center';
     ctx.fillStyle = '#34d399';
     ctx.font = 'bold 20px Vazirmatn, system-ui, sans-serif';
-    ctx.fillText('🏆 رقابت دوستانه گیمرهای دورهمی 🏆', 360, 1160);
+    ctx.fillText('رقابت‌های مسابقات دوستانه eFootball', 360, 1160);
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
     ctx.font = '16px Vazirmatn, system-ui, sans-serif';

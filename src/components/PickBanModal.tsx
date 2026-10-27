@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ShieldAlert, Sparkles, Check, Trash2 } from 'lucide-react';
+import { X, ShieldAlert, Sparkles, Check, Trash2, Ban, Star } from 'lucide-react';
 import { TEAMS_DATABASE, TeamInfo } from '../data/teams';
 import { TeamLogo } from './TeamLogo';
 import { soundEngine } from '../utils/soundEffects';
@@ -101,7 +101,7 @@ export const PickBanModal: React.FC<PickBanModalProps> = ({
           <div className="flex items-center gap-2.5">
             <ShieldAlert className="w-6 h-6 text-rose-400" />
             <div>
-              <h3 className="font-black text-lg sm:text-xl text-white">فاز پیک و بن تیم‌ها (اختیاری) 🚫</h3>
+              <h3 className="font-black text-lg sm:text-xl text-white">فاز پیک و بن تیم‌ها (اختیاری)</h3>
               <p className="text-xs text-zinc-400">هر بازیکن: ۱ تیم بن (ممنوع) و تا ۲ تیم منتخب</p>
             </div>
           </div>
@@ -206,13 +206,14 @@ export const PickBanModal: React.FC<PickBanModalProps> = ({
                     <button
                       type="button"
                       onClick={() => handleToggleBan(team.name)}
-                      className={`flex-1 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                      className={`flex-1 py-1 rounded-lg text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                         isBanned
                           ? 'bg-rose-500 text-white font-black'
                           : 'bg-white/10 hover:bg-rose-500/20 text-zinc-300 hover:text-rose-300'
                       }`}
                     >
-                      {isBanned ? '🚫 بن شد' : 'بن تیم'}
+                      <Ban className="w-2.5 h-2.5" />
+                      <span>{isBanned ? 'مسدود' : 'بن تیم'}</span>
                     </button>
 
                     {/* Pick button */}
@@ -220,13 +221,14 @@ export const PickBanModal: React.FC<PickBanModalProps> = ({
                       type="button"
                       disabled={isBanned}
                       onClick={() => handleTogglePick(team.name)}
-                      className={`flex-1 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                      className={`flex-1 py-1 rounded-lg text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                         isPicked
                           ? 'bg-emerald-400 text-black font-black'
                           : 'bg-white/10 hover:bg-emerald-500/20 text-zinc-300 hover:text-emerald-300 disabled:opacity-30'
                       }`}
                     >
-                      {isPicked ? '⭐ انتخاب' : 'پیک'}
+                      <Star className="w-2.5 h-2.5" />
+                      <span>{isPicked ? 'منتخب' : 'پیک'}</span>
                     </button>
                   </div>
                 </div>

@@ -203,13 +203,15 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                 <button
                   type="button"
                   onClick={() => handleSelectPlayer(null)}
-                  className={`p-2 rounded-xl text-xs font-bold transition-all text-center flex flex-col items-center gap-1 ${
+                  className={`p-2 rounded-xl text-xs font-bold transition-all text-center flex flex-col items-center gap-1 cursor-pointer ${
                     userName === 'کاربر مهمان' && !isAdmin
                       ? 'bg-emerald-500 text-black shadow-md'
                       : 'bg-white/5 hover:bg-white/10 text-zinc-300'
                   }`}
                 >
-                  <span className="w-6 h-6 rounded-full bg-black/40 flex items-center justify-center text-[10px]">👤</span>
+                  <span className="w-6 h-6 rounded-full bg-black/40 flex items-center justify-center text-zinc-400">
+                    <User className="w-3.5 h-3.5" />
+                  </span>
                   <span className="truncate w-full text-[11px]">مهمان</span>
                 </button>
 
@@ -267,10 +269,10 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                           setIsOpen(false);
                           onCreateLeague();
                         }}
-                        className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-500 hover:brightness-110 text-black font-extrabold text-sm flex items-center justify-center gap-1.5 shadow transition-all active:scale-95"
+                        className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-500 hover:brightness-110 text-black font-extrabold text-sm flex items-center justify-center gap-1.5 shadow transition-all active:scale-95 cursor-pointer"
                       >
                         <Plus className="w-4 h-4 stroke-[3]" />
-                        <span>ایجاد لیگ جدید و قرعه‌کشی 🏆</span>
+                        <span>ایجاد مسابقات جدید و قرعه‌کشی</span>
                       </button>
                     )}
 
@@ -281,10 +283,10 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                           setIsOpen(false);
                           onOpenLeagueControl();
                         }}
-                        className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-black font-extrabold text-sm flex items-center justify-center gap-1.5 shadow transition-all"
+                        className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-black font-extrabold text-sm flex items-center justify-center gap-1.5 shadow transition-all cursor-pointer"
                       >
                         <Settings2 className="w-4 h-4" />
-                        <span>کنترل لیگ در حال جریان ⚙️</span>
+                        <span>کنترل لیگ در حال جریان</span>
                       </button>
                     )}
 

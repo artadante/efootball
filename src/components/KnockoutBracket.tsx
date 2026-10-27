@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Swords, Crown, Sparkles } from 'lucide-react';
+import { Trophy, Swords, Crown, Sparkles, Shield, Edit3 } from 'lucide-react';
 import { ActiveLeague } from '../types/league';
 import { TeamLogo } from './TeamLogo';
 
@@ -16,7 +16,7 @@ export const KnockoutBracket: React.FC<KnockoutBracketProps> = ({
 }) => {
   const allMatches = activeLeague.matches;
 
-  // Group matches by round: Round 1 (یک‌چهارم/نیمه‌نهایی), Round 2, Round 3 (فینال)
+  // Group matches by round
   const roundsMap = new Map<number, typeof allMatches>();
   allMatches.forEach((m) => {
     const list = roundsMap.get(m.round) || [];
@@ -27,11 +27,11 @@ export const KnockoutBracket: React.FC<KnockoutBracketProps> = ({
   const roundNumbers = Array.from(roundsMap.keys()).sort((a, b) => a - b);
   const totalRounds = roundNumbers.length;
 
-  const getRoundTitle = (roundIdx: number, total: number) => {
-    if (roundIdx === total - 1) return 'فینال بزرگ 🏆';
-    if (roundIdx === total - 2) return 'نیمه‌نهایی ⚔️';
-    if (roundIdx === total - 3) return 'یک‌چهارم نهایی 🛡️';
-    return `دور ${roundIdx + 1}`;
+  const getRoundData = (roundIdx: number, total: number) => {
+    if (roundIdx === total - 1) return { title: 'فینال بزرگ', icon: Trophy, isFinal: true };
+    if (roundIdx === total - 2) return { title: 'نیمه‌نهایی', icon: Swords, isFinal: false };
+    if (roundIdx === total - 3) return { title: 'یک‌چهارم نهایی', icon: Shield, isFinal: false };
+    return { title: `دور ${roundIdx + 1}`, icon: Shield, isFinal: false };
   };
 
   const getPlayerInfo = (slotNum: number) => {
@@ -64,17 +64,17 @@ export const KnockoutBracket: React.FC<KnockoutBracketProps> = ({
     <div className="w-full space-y-4">
       {/* Champion Spotlight if tournament complete */}
       {championInfo && !championInfo.isPending && (
-        <div className="p-4 rounded-3xl bg-gradient-to-r from-amber-500/25 via-yellow-400/20 to-amber-500/25 border-2 border-amber-400/50 backdrop-blur-xl flex items-center justify-between gap-3 shadow-[0_0_30px_rgba(245,158,11,0.3)] animate-fadeIn">
+        <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/25 via-yellow-400/20 to-amber-500/25 border-2 border-amber-400/50 backdrop-blur-xl flex items-center justify-between gap-3 shadow-[0_0_30px_rgba(245,158,11,0.3)] animate-fadeIn">
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-2xl bg-amber-400/30 text-amber-300 shadow-inner">
               <Crown className="w-8 h-8 drop-shadow-[0_0_12px_#fbbf24] animate-bounce" />
             </div>
             <div>
-              <span className="text-xs text-amber-300 font-extrabold tracking-wider uppercase flex items-center gap-1">
+              <span className="text-xs text-amber-300 font-extrabold tracking-wider uppercase flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>قهرمان رسمی جام حذفی</span>
               </span>
-              <h3 className="text-xl sm:text-2xl font-black text-white mt-0.5">
+              <h3 className="text-lg sm:text-2xl font-black text-white mt-0.5">
                 {championInfo.name} ({championInfo.team})
               </h3>
             </div>
@@ -88,20 +88,22 @@ export const KnockoutBracket: React.FC<KnockoutBracketProps> = ({
         <div className="min-w-[650px] sm:min-w-[850px] flex items-center justify-between gap-6 relative">
           {roundNumbers.map((rNum, idx) => {
             const matches = roundsMap.get(rNum) || [];
-            const isFinal = idx === totalRounds - 1;
+            const roundData = getRoundData(idx, totalRounds);
+            const RoundIcon = roundData.icon;
 
             return (
               <div key={rNum} className="flex-1 flex flex-col justify-around gap-6 relative z-10">
                 {/* Round Header */}
                 <div className="text-center mb-2">
                   <span
-                    className={`inline-block py-1.5 px-3.5 rounded-full text-xs font-black border shadow-lg ${
-                      isFinal
+                    className={`inline-flex items-center gap-1.5 py-1.5 px-4 rounded-full text-xs font-black border shadow-lg ${
+                      roundData.isFinal
                         ? 'bg-amber-400/20 text-amber-300 border-amber-400/50 shadow-amber-400/20 animate-pulse'
                         : 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
                     }`}
                   >
-                    {getRoundTitle(idx, totalRounds)}
+                    <RoundIcon className="w-3.5 h-3.5" />
+                    <span>{roundData.title}</span>
                   </span>
                 </div>
 
@@ -131,7 +133,7 @@ export const KnockoutBracket: React.FC<KnockoutBracketProps> = ({
                           }
                         }}
                         className={`relative p-3.5 rounded-2xl border transition-all shadow-xl group ${
-                          isFinal
+                          roundData.isFinal
                             ? 'bg-amber-950/40 border-amber-400/50 hover:border-amber-300'
                             : 'bg-emerald-950/45 border-white/15 hover:border-emerald-400/50'
                         } ${
@@ -142,7 +144,7 @@ export const KnockoutBracket: React.FC<KnockoutBracketProps> = ({
                       >
                         {/* Match Meta Badge */}
                         <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10 text-[11px] text-zinc-400">
-                          <span className="font-mono">بازی #{idx + 1}-{mIdx + 1}</span>
+                          <span className="font-mono">مسابقه #{idx + 1}-{mIdx + 1}</span>
                           {m.isPlayed ? (
                             <span className="text-emerald-400 font-bold flex items-center gap-1">
                               <span>پایان یافته</span>
@@ -224,8 +226,9 @@ export const KnockoutBracket: React.FC<KnockoutBracketProps> = ({
                         </div>
 
                         {isAdmin && isPlayable && (
-                          <div className="mt-2 text-center text-[10px] text-emerald-400 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
-                            ✏️ کلیک برای ثبت نتیجه
+                          <div className="mt-2 text-center text-[10px] text-emerald-400 font-semibold opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                            <Edit3 className="w-3 h-3" />
+                            <span>ثبت یا ویرایش نتیجه</span>
                           </div>
                         )}
                       </div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { TrendingUp } from 'lucide-react';
 import { ActiveLeague } from '../types/league';
 
 interface PositionProgressionChartProps {
@@ -137,8 +138,11 @@ export const PositionProgressionChart: React.FC<PositionProgressionChartProps> =
     <div className="p-4 sm:p-5 rounded-3xl bg-black/45 border border-white/10 space-y-3 shadow-xl relative overflow-hidden">
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="font-black text-sm text-white">نمودار صعود و سقوط در طول فصل 📈</h4>
-          <span className="text-[11px] text-zinc-400">تغییرات رتبه هر بازیکن هفته به هفته</span>
+          <h4 className="font-black text-sm text-white flex items-center gap-1.5">
+            <TrendingUp className="w-4 h-4 text-emerald-400" />
+            <span>نمودار تغییرات رتبه در طول فصل</span>
+          </h4>
+          <span className="text-[11px] text-zinc-400">بررسی جایگاه و صعود/سقوط هفتگی بازیکنان</span>
         </div>
       </div>
 
@@ -170,7 +174,7 @@ export const PositionProgressionChart: React.FC<PositionProgressionChartProps> =
                   textAnchor="end"
                   fontFamily="system-ui"
                 >
-                  {r === 1 ? '🥇 ۱' : `${r}`}
+                  {r === 1 ? '1st' : `${r}`}
                 </text>
               </g>
             );

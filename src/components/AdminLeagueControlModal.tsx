@@ -11,7 +11,8 @@ import {
   Plus,
   Camera,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  CheckCircle2
 } from 'lucide-react';
 import { ActiveLeague } from '../types/league';
 import { RegisteredPlayer, DEFAULT_FIXED_PLAYERS } from '../types/player';
@@ -98,7 +99,7 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
               className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-extrabold text-sm shadow flex items-center justify-center gap-1.5"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
-              <span>ایجاد لیگ جدید و قرعه‌کشی 🏆</span>
+              <span>ایجاد مسابقات جدید و قرعه‌کشی</span>
             </button>
           )}
         </div>
@@ -534,7 +535,7 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
                   className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-extrabold text-xs shadow flex items-center justify-center gap-1.5 transition-all"
                 >
                   <Plus className="w-4 h-4 stroke-[3]" />
-                  <span>ایجاد لیگ جدید و قرعه‌کشی 🏆</span>
+                  <span>ایجاد مسابقات جدید و قرعه‌کشی</span>
                 </button>
               </div>
             )}
@@ -670,7 +671,10 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
               }}
               className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-extrabold text-base shadow-[0_0_20px_rgba(244,63,94,0.4)] transition-all"
             >
-              🏁 اتمام رسمی لیگ و انتقال به تاریخچه
+              <span className="flex items-center justify-center gap-2">
+                <CheckCircle2 className="w-5 h-5" />
+                <span>اتمام رسمی لیگ و انتقال به تاریخچه</span>
+              </span>
             </button>
           </div>
         )}

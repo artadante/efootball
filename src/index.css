@@ -18,26 +18,44 @@ body {
   font-family: 'Vazirmatn', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #041007;
+  color: #f8fafc;
+  overflow-x: hidden;
 }
 
 button, input, select, textarea, table {
   font-family: inherit;
 }
 
-/* Glassmorphism custom classes */
+/* Touch targets and minimum hit area */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Glassmorphism surfaces */
 .glass-panel {
-  background: rgba(8, 35, 16, 0.65);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(6, 26, 14, 0.72);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.7), inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.75), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .glass-card {
-  background: rgba(12, 42, 22, 0.55);
+  background: rgba(9, 36, 19, 0.55);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.6);
+}
+
+.glass-floating {
+  background: rgba(4, 18, 9, 0.85);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.85), 0 0 25px rgba(16, 185, 129, 0.12);
 }
 
 /* Hide scrollbar for clean mobile view */
@@ -65,4 +83,14 @@ button, input, select, textarea, table {
 .rotate-y-180 {
   transform: rotateY(180deg);
   -webkit-transform: rotateY(180deg);
+}
+
+/* Animations */
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.02); }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

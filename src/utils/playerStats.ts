@@ -174,14 +174,14 @@ export function calculatePlayerCareerStats(
 
 export function calculatePlayerNickname(stats: PlayerCareerStats): string {
   const matches = stats.totalMatches;
-  if (matches === 0) return 'ستاره جدید لیگ ✨';
-  if (stats.championships >= 2) return 'شکارچی جام‌ها 👑';
-  if (stats.goalsFor / matches >= 3) return 'ماشین گلزنی ⚽';
-  if (stats.goalsAgainst / matches <= 1.2 && matches >= 3) return 'صخره بتنی 🧤';
-  if (stats.winRate >= 70) return 'پادشاه میدان ⚡';
-  if (stats.draws >= 3 && stats.draws >= stats.wins) return 'سلطان تساوی 🤝';
-  if (stats.goalsAgainst >= 12 && stats.losses > stats.wins) return 'زنگ تفریح لیگ 🧯';
-  return 'جنگجوی میانه میدان ⚔️';
+  if (matches === 0) return 'ستاره جدید لیگ';
+  if (stats.championships >= 2) return 'شکارچی جام‌ها';
+  if (stats.goalsFor / matches >= 3) return 'ماشین گلزنی';
+  if (stats.goalsAgainst / matches <= 1.2 && matches >= 3) return 'صخره بتنی';
+  if (stats.winRate >= 70) return 'پادشاه میدان';
+  if (stats.draws >= 3 && stats.draws >= stats.wins) return 'استاد بازی‌های تساوی';
+  if (stats.goalsAgainst >= 12 && stats.losses > stats.wins) return 'مدافع تحت فشار';
+  return 'جنگجوی میانه میدان';
 }
 
 export interface HeadToHeadMatch {

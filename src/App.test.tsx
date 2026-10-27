@@ -10,10 +10,10 @@ describe('App Component Complete League & Dual Wheel Workflow', () => {
   it('renders all 4 tabs in order: چرخونه, بازی‌ها, جدول, تاریخچه', () => {
     render(<App />);
 
-    expect(screen.getByText('چرخونه')).toBeInTheDocument();
-    expect(screen.getByText('بازی‌ها')).toBeInTheDocument();
-    expect(screen.getByText('جدول')).toBeInTheDocument();
-    expect(screen.getByText('تاریخچه')).toBeInTheDocument();
+    expect(screen.getAllByText('چرخونه').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('بازی‌ها').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('جدول').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('تاریخچه').length).toBeGreaterThanOrEqual(1);
   });
 
   it('opens player profiles modal from top-left button and shows registered players', () => {
@@ -35,16 +35,16 @@ describe('App Component Complete League & Dual Wheel Workflow', () => {
   it('switches between all 4 tabs smoothly', () => {
     render(<App />);
 
-    fireEvent.click(screen.getByText('چرخونه'));
+    fireEvent.click(screen.getAllByText('چرخونه')[0]);
     expect(screen.getByText(/هنوز لیگی آغاز نشده است/i)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('بازی‌ها'));
+    fireEvent.click(screen.getAllByText('بازی‌ها')[0]);
     expect(screen.getByText(/برنامه و نتایج مسابقات/i)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('جدول'));
-    expect(screen.getByText(/جدول رده‌بندی/i)).toBeInTheDocument();
+    fireEvent.click(screen.getAllByText('جدول')[0]);
+    expect(screen.getAllByText(/جدول رده‌بندی/i).length).toBeGreaterThanOrEqual(1);
 
-    fireEvent.click(screen.getByText('تاریخچه'));
+    fireEvent.click(screen.getAllByText('تاریخچه')[0]);
     expect(screen.getByText(/تاریخچه و تالار افتخارات/i)).toBeInTheDocument();
   });
 

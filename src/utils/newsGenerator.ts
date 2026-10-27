@@ -1,8 +1,10 @@
 import { ActiveLeague } from '../types/league';
 
+export type NewsCategory = 'فوری' | 'تحلیل مسابقه' | 'حواشی و کل‌کل' | 'بیانیه رسمی';
+
 export interface SportsHeadline {
   id: string;
-  category: 'فوری 🚨' | 'تحلیل بازی ⚽' | 'حاشیه و کل‌کل 🔥' | 'بیانیه 🎙️';
+  category: NewsCategory;
   headline: string;
   subtitle: string;
   tag: string;
@@ -16,7 +18,7 @@ export function generateMatchdayNews(activeLeague: ActiveLeague | null): SportsH
     return [
       {
         id: 'news-welcome',
-        category: 'بیانیه 🎙️',
+        category: 'بیانیه رسمی',
         headline: 'فصل جدید مسابقات دوستانه eFootball کلید خورد!',
         subtitle: 'کارشناسان پیش‌بینی می‌کنند شاهد یکی از فشرده‌ترین رقابت‌های تاریخ این لیگ خواهیم بود.',
         tag: 'آغاز مسابقات',
@@ -33,7 +35,7 @@ export function generateMatchdayNews(activeLeague: ActiveLeague | null): SportsH
   if (playedMatches.length === 0) {
     news.push({
       id: 'news-ready',
-      category: 'فوری 🚨',
+      category: 'فوری',
       headline: `سوت آغاز ${activeLeague.name} به صدا درآمد`,
       subtitle: 'تمام بازیکنان با تیم‌های قرعه‌کشی‌شده در رختکن حاضر هستند؛ اولین نبرد به زودی آغاز می‌شود.',
       tag: 'پیش‌بازی',
@@ -63,27 +65,27 @@ export function generateMatchdayNews(activeLeague: ActiveLeague | null): SportsH
       const winTeam = score1 > score2 ? team1 : team2;
       news.push({
         id: `news-thrashing-${m.id}`,
-        category: 'فوری 🚨',
-        headline: `طوفان ${winner} در زمین! شکست سنگین ${loser} با اختلاف ${diff} گل!`,
-        subtitle: `خط آتشین ${winTeam} فرصتی برای تنفس حریف باقی نگذاشت؛ زنگ خطر در رختکن ${loser} به صدا درآمد.`,
-        tag: 'زلزله در جدول',
+        category: 'فوری',
+        headline: `طوفان ${winner} در زمین! پیروزی قاطع مقابل ${loser} با اختلاف ${diff} گل`,
+        subtitle: `خط آتشین ${winTeam} فرصتی برای تنفس حریف باقی نگذاشت؛ خط دفاعی ${loser} به چالش کشیده شد.`,
+        tag: 'تغییرات جدول',
         timeAgo: `هفته ${m.round}`,
       });
     } else if (score1 === score2) {
       news.push({
         id: `news-draw-${m.id}`,
-        category: 'تحلیل بازی ⚽',
+        category: 'تحلیل مسابقه',
         headline: `توقف نفس‌گیر ${name1} و ${name2} در شبی پر از هیجان (${score1} - ${score2})`,
         subtitle: `تقسیم امتیازات در نبرد حساس ${team1} و ${team2}، فرصت طلایی را به رقبای صدر جدول هدیه داد.`,
-        tag: 'تساوی مصلحتی',
+        tag: 'تساوی حساس',
         timeAgo: `هفته ${m.round}`,
       });
     } else if (totalGoals >= 5) {
       news.push({
         id: `news-fiesta-${m.id}`,
-        category: 'حاشیه و کل‌کل 🔥',
-        headline: `جشنواره گل در دورهمی! تماشاگران از بازی دیوانه‌وار ${name1} و ${name2} به وجد آمدند`,
-        subtitle: `ثبت ${totalGoals} گل در یک مسابقه؛ دفاع هر دو تیم مرخصی رفته بود!`,
+        category: 'حواشی و کل‌کل',
+        headline: `جشنواره گل در دورهمی! تماشاگران از بازی تماشایی ${name1} و ${name2} به وجد آمدند`,
+        subtitle: `ثبت ${totalGoals} گل در یک مسابقه؛ یک نبرد کاملاً تهاجمی و پرشور.`,
         tag: 'فوتبال تهاجمی',
         timeAgo: `هفته ${m.round}`,
       });
@@ -92,10 +94,10 @@ export function generateMatchdayNews(activeLeague: ActiveLeague | null): SportsH
       const loser = score1 > score2 ? name2 : name1;
       news.push({
         id: `news-close-${m.id}`,
-        category: 'حاشیه و کل‌کل 🔥',
-        headline: `پیروزی میلی‌متری ${winner} در ثانیه‌های پایانی مقابل ${loser}`,
-        subtitle: `${winner} با چنگ و دندان سه امتیاز ارزشمند را از چنگ ${loser} بیرون کشید.`,
-        tag: 'نبرد شانه به شانه',
+        category: 'حواشی و کل‌کل',
+        headline: `پیروزی میلی‌متری ${winner} در دقایق پایانی مسابقه برابر ${loser}`,
+        subtitle: `${winner} با حفظ تمرکز دفاعی سه امتیاز ارزشمند را از چنگ ${loser} بیرون کشید.`,
+        tag: 'رقابت شانه به شانه',
         timeAgo: `هفته ${m.round}`,
       });
     }

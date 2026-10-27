@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Trophy, CheckCircle2 } from 'lucide-react';
+import { X, Target, Trophy, CheckCircle2 } from 'lucide-react';
 import { ScheduledMatch, LeaguePlayer } from '../types/league';
 import { TeamLogo } from './TeamLogo';
 import { soundEngine } from '../utils/soundEffects';
@@ -139,8 +139,8 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-amber-400" />
-            <h3 className="font-black text-lg text-white">پیش‌بینی و کل‌کل مسابقات 🎯</h3>
+            <Target className="w-5 h-5 text-amber-400" />
+            <h3 className="font-black text-lg text-white">پیش‌بینی نتایج مسابقات</h3>
           </div>
           <button
             type="button"
@@ -212,13 +212,13 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setPredWinner('draw')}
-                      className={`py-2 px-2 rounded-xl text-xs font-bold transition-all ${
+                      className={`py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         predWinner === 'draw'
                           ? 'bg-amber-400 text-black shadow-lg font-black'
                           : 'bg-white/10 text-zinc-300 hover:bg-white/15'
                       }`}
                     >
-                      مساوی 🤝
+                      نتیجه تساوی
                     </button>
                     <button
                       type="button"
@@ -269,7 +269,10 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                     <span>پیش‌بینی با موفقیت ثبت شد!</span>
                   </>
                 ) : (
-                  <span>ثبت پیش‌بینی من 🎯</span>
+                  <span className="flex items-center gap-1.5">
+                    <Target className="w-4 h-4" />
+                    <span>ثبت پیش‌بینی من</span>
+                  </span>
                 )}
               </button>
             </form>
