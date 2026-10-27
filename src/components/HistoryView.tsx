@@ -1,0 +1,152 @@
+import React from 'react';
+import { History, Archive, Crown, Trophy } from 'lucide-react';
+import { ArchivedLeague } from '../types/league';
+import { RegisteredPlayer } from '../types/player';
+import { TeamLogo } from './TeamLogo';
+import { soundEngine } from '../utils/soundEffects';
+
+export interface HistoryViewProps {
+  archivedLeagues: ArchivedLeague[];
+  registeredPlayers: RegisteredPlayer[];
+  onOpenCelebration: (data: {
+    championName: string;
+    championTeam: string;
+    leagueName: string;
+    avatarUrl?: string;
+  }) => void;
+}
+
+export const HistoryView: React.FC<HistoryViewProps> = ({
+  archivedLeagues,
+  registeredPlayers,
+  onOpenCelebration,
+}) => {
+  return (
+    <div className="space-y-3 animate-fadeIn my-auto w-full">
+      <div className="rounded-2xl p-3 sm:p-4 bg-emerald-950/50 border border-white/15 backdrop-blur-2xl shadow-xl">
+        <div className="flex items-center justify-between mb-2.5 px-1">
+          <h3 className="font-bold text-sm sm:text-base text-emerald-300 flex items-center gap-1.5 sm:gap-2">
+            <History className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+            <span>تاریخچه و تالار افتخارات لیگ‌ها</span>
+          </h3>
+        </div>
+
+        {archivedLeagues.length === 0 ? (
+          <div className="py-10 text-center space-y-2">
+            <Archive className="w-8 h-8 mx-auto text-zinc-500" />
+            <p className="text-sm text-zinc-300 font-medium">هنوز هیچ لیگی به اتمام نرسیده است.</p>
+            <p className="text-xs text-zinc-400">
+              وقتی تمام بازی‌های یک لیگ انجام شود، نتایج کامل و جدول رده‌بندی به اینجا منتقل می‌شود.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {archivedLeagues.map((archived) => (
+              <div
+                key={archived.id}
+                className="p-3 sm:p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-2.5"
+              >
+                {/* League Title & Date */}
+                <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+                  <h4 className="font-bold text-sm sm:text-base text-white">{archived.name}</h4>
+                  <span className="text-[11px] sm:text-xs text-zinc-400">{archived.finishedAt}</span>
+                </div>
+
+                {/* Champion Spotlight Badge with Crown, Team Logo & Celebration */}
+                <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-transparent border border-amber-400/30 flex items-center justify-between gap-2.5 flex-wrap">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-amber-400/20 text-amber-300">
+                      <Crown className="w-5 h-5 drop-shadow-[0_0_8px_#fbbf24]" />
+                    </div>
+                    <div>
+                      <span className="text-[11px] text-amber-300 font-bold uppercase tracking-wider block">
+                        قهرمان مسابقات
+                      </span>
+                      <span className="text-sm sm:text-base font-black text-white">
+                        {archived.championName} ({archived.championTeam})
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundEngine.playClick();
+                        onOpenCelebration({
+                          championName: archived.championName,
+                          championTeam: archived.championTeam,
+                          leagueName: archived.name,
+                          avatarUrl: registeredPlayers.find((p) => p.name === archived.championName)?.avatarUrl,
+                        });
+                      }}
+                      className="py-1 px-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-extrabold text-xs flex items-center gap-1.5 shadow active:scale-95 transition-all cursor-pointer"
+                    >
+                      <Trophy className="w-3.5 h-3.5" />
+                      <span>جشن قهرمانی</span>
+                    </button>
+
+                    <TeamLogo teamName={archived.championTeam} className="w-9 h-9 shrink-0" />
+                  </div>
+                </div>
+
+                {/* Final Standings Table in History */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-center text-xs sm:text-sm">
+                    <thead>
+                      <tr className="text-zinc-300 border-b border-white/10 pb-1 text-xs font-bold">
+                        <th className="py-1.5 text-start">#</th>
+                        <th className="py-1.5 text-start">بازیکن</th>
+                        <th className="py-1.5">بازی</th>
+                        <th className="py-1.5">برد</th>
+                        <th className="py-1.5">تفاضل</th>
+                        <th className="py-1.5 font-bold text-emerald-400">امتیاز</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {archived.standings.map((s) => (
+                        <tr key={s.name}>
+                          <td className="py-2 text-start font-bold text-zinc-300 text-xs sm:text-sm">{s.rank}</td>
+                          <td className="py-2 text-start font-bold text-white flex items-center gap-1.5 text-xs sm:text-sm">
+                            <TeamLogo teamName={s.team} className="w-4 h-4 shrink-0" />
+                            <span>{s.name}</span>
+                            {s.rank === 1 && <Crown className="w-4 h-4 text-amber-400" />}
+                          </td>
+                          <td className="py-2 text-zinc-200">{s.played}</td>
+                          <td className="py-2 text-zinc-200">{s.won}</td>
+                          <td className="py-2 text-zinc-200 font-mono dir-ltr">{s.goalDiff}</td>
+                          <td className="py-2 font-black text-emerald-400 font-mono text-sm sm:text-base">{s.points}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Collapsible/List of Match Results under the table */}
+                <div className="pt-2 border-t border-white/10">
+                  <span className="text-xs text-zinc-300 font-bold mb-2 block">
+                    نتایج مسابقات ثبت‌شده ({archived.matches.length} بازی):
+                  </span>
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto no-scrollbar">
+                    {archived.matches.map((m) => (
+                      <div
+                        key={m.id}
+                        className="flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-white/5 text-xs font-medium"
+                      >
+                        <span className="text-white truncate max-w-[100px]">{m.player1}</span>
+                        <span className="font-mono font-black text-emerald-400 text-sm">
+                          {m.score1} - {m.score2}
+                        </span>
+                        <span className="text-white truncate max-w-[100px]">{m.player2}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
