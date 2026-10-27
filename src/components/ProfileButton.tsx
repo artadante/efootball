@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, X, Shield, KeyRound, Crown, LogOut } from 'lucide-react';
+import { User, X, Shield, KeyRound, Crown, LogOut, Settings2 } from 'lucide-react';
 
 interface ProfileButtonProps {
   userName?: string;
@@ -9,6 +9,7 @@ interface ProfileButtonProps {
   isAdmin?: boolean;
   onAdminLogin?: (pin: string) => boolean | void;
   onAdminLogout?: () => void;
+  onOpenLeagueControl?: () => void;
 }
 
 export const ProfileButton: React.FC<ProfileButtonProps> = ({
@@ -19,6 +20,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
   isAdmin = false,
   onAdminLogin,
   onAdminLogout,
+  onOpenLeagueControl,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [pinInput, setPinInput] = useState('');
@@ -142,11 +144,25 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                     <span>دسترسی مدیر لیگ فعال است</span>
                   </div>
                   <p className="text-[11px] text-zinc-300">
-                    شما دسترسی کامل به ثبت نتایج مسابقات و مدیریت بازی‌ها دارید.
+                    شما دسترسی کامل به ثبت نتایج مسابقات و کنترل لیگ جاری را دارید.
                   </p>
                   
                   {/* Admin Actions */}
                   <div className="pt-2 flex flex-col gap-2">
+                    {onOpenLeagueControl && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsOpen(false);
+                          onOpenLeagueControl();
+                        }}
+                        className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-black font-extrabold text-xs flex items-center justify-center gap-1.5 shadow transition-all"
+                      >
+                        <Settings2 className="w-4 h-4" />
+                        <span>کنترل لیگ در حال جریان ⚙️</span>
+                      </button>
+                    )}
+
                     {onAdminLogout && (
                       <button
                         type="button"
@@ -168,7 +184,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                     <span>حالت مهمان / تماشاگر</span>
                   </div>
                   <p className="text-[11px] text-zinc-400 mb-3">
-                    کاربران عادی فقط امکان مشاهده جدول و تاریخچه را دارند. برای ثبت مسابقه، با رمز ادمین وارد شوید.
+                    کاربران عادی فقط امکان مشاهده جدول و تاریخچه را دارند. برای مدیریت مسابقات، با رمز ادمین وارد شوید.
                   </p>
 
                   <form onSubmit={handleLoginSubmit} className="space-y-2">

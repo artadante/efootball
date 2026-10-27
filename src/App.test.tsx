@@ -51,4 +51,21 @@ describe('App Component Complete League & Dual Wheel Workflow', () => {
     fireEvent.click(screen.getByText('تاریخچه'));
     expect(screen.getByText(/تاریخچه و تالار افتخارات/i)).toBeInTheDocument();
   });
+
+  it('allows admin to open league control modal from profile drawer', () => {
+    localStorage.setItem('efootball_is_admin', 'true');
+    render(<App />);
+
+    // Profile button for admin
+    const profileBtn = screen.getByRole('button', { name: /پروفایل مدیر کل لیگ/i });
+    fireEvent.click(profileBtn);
+
+    // Click "کنترل لیگ در حال جریان"
+    const controlBtn = screen.getByRole('button', { name: /کنترل لیگ در حال جریان/i });
+    expect(controlBtn).toBeInTheDocument();
+    fireEvent.click(controlBtn);
+
+    // League control modal opens
+    expect(screen.getByRole('dialog', { name: '' })).toBeInTheDocument();
+  });
 });

@@ -4,6 +4,7 @@ import { LiquidBottomNav, TabType } from './components/LiquidBottomNav';
 import { ProfileButton } from './components/ProfileButton';
 import { CreateLeagueModal } from './components/CreateLeagueModal';
 import { DualWheel } from './components/DualWheel';
+import { AdminLeagueControlModal } from './components/AdminLeagueControlModal';
 import { 
   Plus, 
   Crown, 
@@ -25,6 +26,7 @@ export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('table');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState(false);
+  const [isAdminLeagueControlOpen, setIsAdminLeagueControlOpen] = useState(false);
   const [scoreEditMatchId, setScoreEditMatchId] = useState<string | null>(null);
   const [scoreInput1, setScoreInput1] = useState<number | string>(0);
   const [scoreInput2, setScoreInput2] = useState<number | string>(0);
@@ -251,6 +253,82 @@ export const App: React.FC = () => {
     setScoreEditMatchId(null);
   };
 
+  // Handle admin manual update of player slot (name & team)
+  const handleAdminUpdatePlayer = (slot: number, name: string, team: string) => {
+    if (!activeLeague) return;
+
+    const updatedPlayers = activeLeague.players.map((p) => {
+      if (p.slot === slot) {
+        return { ...p, name, team };
+      }
+      return p;
+    });
+
+    const allCompleted = updatedPlayers.every((p) => p.name && p.team);
+
+    const updatedLeague: ActiveLeague = {
+      ...activeLeague,
+      players: updatedPlayers,
+      wheelCompleted: allCompleted,
+    };
+
+    saveActiveLeague(updatedLeague);
+  };
+
+  // Handle admin update match score
+  const handleAdminUpdateMatchScore = (matchId: string, score1: number, score2: number) => {
+    if (!activeLeague) return;
+
+    const updatedMatches = activeLeague.matches.map((m) => {
+      if (m.id === matchId) {
+        return {
+          ...m,
+          score1,
+          score2,
+          isPlayed: true,
+          playedAt: new Date().toLocaleDateString('fa-IR'),
+        };
+      }
+      return m;
+    });
+
+    const allMatchesFinished = updatedMatches.every((m) => m.isPlayed);
+
+    const updatedLeague: ActiveLeague = {
+      ...activeLeague,
+      matches: updatedMatches,
+      isFinished: allMatchesFinished,
+    };
+
+    saveActiveLeague(updatedLeague);
+  };
+
+  // Handle admin reset match back to unplayed
+  const handleAdminResetMatch = (matchId: string) => {
+    if (!activeLeague) return;
+
+    const updatedMatches = activeLeague.matches.map((m) => {
+      if (m.id === matchId) {
+        return {
+          ...m,
+          score1: null,
+          score2: null,
+          isPlayed: false,
+          playedAt: undefined,
+        };
+      }
+      return m;
+    });
+
+    const updatedLeague: ActiveLeague = {
+      ...activeLeague,
+      matches: updatedMatches,
+      isFinished: false,
+    };
+
+    saveActiveLeague(updatedLeague);
+  };
+
   // Finalize & Archive League to History
   const handleFinishAndArchiveLeague = () => {
     if (!activeLeague) return;
@@ -316,6 +394,7 @@ export const App: React.FC = () => {
             isAdmin={isAdmin}
             onAdminLogin={handleAdminLogin}
             onAdminLogout={handleAdminLogout}
+            onOpenLeagueControl={() => setIsAdminLeagueControlOpen(true)}
           />
 
           {/* Center: Admin status / Active League Name */}
@@ -599,16 +678,16 @@ export const App: React.FC = () => {
                               )}
                             </td>
 
-                            {/* Player Name with Crown 👑 for 1st place! */}
+                            {/* Player Name with Crown 👑 on the left side of the name */}
                             <td className="py-3 text-start font-bold text-white">
                               <div className="flex items-center gap-1.5">
-                                {row.rank === 1 && (
-                                  <Crown className="w-4 h-4 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)] animate-pulse" />
-                                )}
                                 <div>
                                   <span className="block text-white font-bold">{row.name}</span>
                                   <span className="block text-[10px] text-zinc-400 font-normal">{row.team}</span>
                                 </div>
+                                {row.rank === 1 && (
+                                  <Crown className="w-4 h-4 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)] animate-pulse" />
+                                )}
                               </div>
                             </td>
 
@@ -700,8 +779,8 @@ export const App: React.FC = () => {
                                 <tr key={s.name}>
                                   <td className="py-1.5 text-start font-bold text-zinc-400">{s.rank}</td>
                                   <td className="py-1.5 text-start font-bold text-white flex items-center gap-1">
-                                    {s.rank === 1 && <Crown className="w-3.5 h-3.5 text-amber-400" />}
                                     <span>{s.name}</span>
+                                    {s.rank === 1 && <Crown className="w-3.5 h-3.5 text-amber-400" />}
                                   </td>
                                   <td className="py-1.5 text-zinc-300">{s.played}</td>
                                   <td className="py-1.5 text-zinc-300">{s.won}</td>
@@ -888,6 +967,17 @@ export const App: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Modal 4: Admin League Control (End early, edit players/teams, edit match scores) */}
+      <AdminLeagueControlModal
+        isOpen={isAdminLeagueControlOpen}
+        onClose={() => setIsAdminLeagueControlOpen(false)}
+        activeLeague={activeLeague}
+        onUpdatePlayer={handleAdminUpdatePlayer}
+        onUpdateMatchScore={handleAdminUpdateMatchScore}
+        onResetMatch={handleAdminResetMatch}
+        onEndLeagueEarly={handleFinishAndArchiveLeague}
+      />
 
       {/* 2. Liquid Glass Bottom Navigation Bar (چرخونه - بازی‌ها - جدول - تاریخچه) */}
       <LiquidBottomNav
