@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trophy, Award, Shield, Zap, Sparkles } from 'lucide-react';
+import { Trophy, Award, Shield, Zap, Sparkles, RefreshCw } from 'lucide-react';
 import { PlayerCareerStats } from '../types/player';
 import { soundEngine } from '../utils/soundEffects';
 
@@ -50,20 +50,32 @@ export const FutCard: React.FC<FutCardProps> = ({
     <div
       onClick={handleCardClick}
       title="برای چرخش کارت کلیک کنید"
-      className={`relative w-64 sm:w-72 h-[380px] sm:h-[420px] cursor-pointer perspective-[1000px] select-none mx-auto ${className}`}
+      className={`relative w-64 sm:w-72 h-[390px] sm:h-[430px] cursor-pointer perspective-1000 select-none mx-auto ${className}`}
     >
       <div
-        className={`w-full h-full relative transition-transform duration-700 transform-style-preserve-3d ${
-          isFlipped ? 'rotate-y-180' : ''
-        }`}
+        className="w-full h-full relative preserve-3d"
+        style={{
+          transformStyle: 'preserve-3d',
+          WebkitTransformStyle: 'preserve-3d',
+          transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+          transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
       >
         {/* FRONT OF THE CARD */}
         <div
-          className="absolute inset-0 w-full h-full backface-hidden rounded-[2.5rem] p-4 text-amber-100 flex flex-col justify-between overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9),0_0_40px_rgba(245,158,11,0.35)] border-2 border-amber-300/60 bg-gradient-to-b from-[#3a2806] via-[#1a1202] to-[#0d0901]"
+          className="absolute inset-0 w-full h-full backface-hidden rounded-[2.5rem] p-4 text-amber-100 flex flex-col justify-between overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.95),0_0_35px_rgba(245,158,11,0.3)] border-2 border-amber-300/60 bg-[#120d03]"
+          style={{
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            transform: 'rotateY(0deg)',
+            pointerEvents: isFlipped ? 'none' : 'auto',
+            opacity: isFlipped ? 0 : 1,
+            transition: 'opacity 0.25s ease',
+          }}
         >
           {/* Card Metallic Foil Pattern & Holographic Sheen */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#3a2806] via-[#1a1202] to-[#0d0901]" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-400/25 via-yellow-600/10 to-transparent pointer-events-none" />
-          <div className="absolute -inset-full bg-gradient-to-tr from-transparent via-white/10 to-transparent transform rotate-45 pointer-events-none" />
 
           {/* Top Row: OVR, Position, Club */}
           <div className="relative z-10 flex items-start justify-between">
@@ -82,14 +94,14 @@ export const FutCard: React.FC<FutCardProps> = ({
             {/* Emblem badge */}
             <div className="flex flex-col items-center gap-1">
               <div className="p-1.5 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 shadow">
-                <Sparkles className="w-4 h-4 text-amber-300 animate-spin-slow" />
+                <Sparkles className="w-4 h-4 text-amber-300" />
               </div>
               <span className="text-[10px] font-black text-amber-300/80 tracking-wider">SPECIAL</span>
             </div>
           </div>
 
           {/* Player Avatar */}
-          <div className="relative z-10 flex justify-center -mt-6">
+          <div className="relative z-10 flex justify-center -mt-4">
             <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full p-1.5 bg-gradient-to-tr from-amber-400 via-yellow-200 to-amber-500 shadow-[0_0_30px_rgba(245,158,11,0.6)]">
               <div className="w-full h-full rounded-full bg-slate-950 overflow-hidden flex items-center justify-center font-black text-4xl text-amber-300">
                 {stats.avatarUrl ? (
@@ -102,7 +114,7 @@ export const FutCard: React.FC<FutCardProps> = ({
           </div>
 
           {/* Player Name & Auto Nickname */}
-          <div className="relative z-10 text-center -mt-2">
+          <div className="relative z-10 text-center -mt-1">
             <h3 className="text-2xl sm:text-3xl font-black tracking-wider text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
               {stats.playerName}
             </h3>
@@ -140,22 +152,33 @@ export const FutCard: React.FC<FutCardProps> = ({
           </div>
 
           {/* Card Footer Hint */}
-          <div className="relative z-10 text-center text-[10px] text-amber-300/60 pb-1">
-            <span>↺ برای مشاهده افتخارات کلیک کنید</span>
+          <div className="relative z-10 text-center text-[10px] text-amber-300/70 pb-0.5 flex items-center justify-center gap-1">
+            <RefreshCw className="w-3 h-3" />
+            <span>برای مشاهده کارنامه و افتخارات کلیک کنید</span>
           </div>
         </div>
 
         {/* BACK OF THE CARD */}
         <div
-          className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-[2.5rem] p-5 text-white flex flex-col justify-between overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.9),0_0_40px_rgba(245,158,11,0.25)] border-2 border-amber-300/50 bg-gradient-to-b from-[#1c1404] via-[#0f0b02] to-[#050401]"
+          className="absolute inset-0 w-full h-full backface-hidden rounded-[2.5rem] p-5 text-white flex flex-col justify-between overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.95),0_0_35px_rgba(245,158,11,0.25)] border-2 border-amber-300/50 bg-[#0f0b02]"
+          style={{
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            transform: 'rotateY(180deg)',
+            pointerEvents: !isFlipped ? 'none' : 'auto',
+            opacity: !isFlipped ? 0 : 1,
+            transition: 'opacity 0.25s ease',
+          }}
         >
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1c1404] via-[#0f0b02] to-[#050401]" />
+
           <div className="relative z-10 text-center border-b border-amber-400/20 pb-3">
             <span className="text-xs text-amber-400 font-bold uppercase tracking-widest block">تالار کارنامه شخصی</span>
             <h4 className="text-xl font-black text-white mt-0.5">{stats.playerName}</h4>
           </div>
 
           <div className="relative z-10 space-y-2.5 my-auto text-xs">
-            <div className="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/5">
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
               <span className="flex items-center gap-1.5 text-zinc-300">
                 <Trophy className="w-4 h-4 text-amber-400" />
                 <span>جام‌های قهرمانی:</span>
@@ -163,7 +186,7 @@ export const FutCard: React.FC<FutCardProps> = ({
               <span className="font-mono font-black text-amber-300 text-sm">{stats.championships} جام</span>
             </div>
 
-            <div className="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/5">
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
               <span className="flex items-center gap-1.5 text-zinc-300">
                 <Zap className="w-4 h-4 text-emerald-400" />
                 <span>تعداد بازی رسمی:</span>
@@ -171,7 +194,7 @@ export const FutCard: React.FC<FutCardProps> = ({
               <span className="font-mono font-black text-white text-sm">{stats.totalMatches} مسابقه</span>
             </div>
 
-            <div className="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/5">
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
               <span className="flex items-center gap-1.5 text-zinc-300">
                 <Award className="w-4 h-4 text-cyan-400" />
                 <span>نرخ پیروزی:</span>
@@ -179,7 +202,7 @@ export const FutCard: React.FC<FutCardProps> = ({
               <span className="font-mono font-black text-cyan-300 text-sm">%{stats.winRate}</span>
             </div>
 
-            <div className="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/5">
+            <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/5">
               <span className="flex items-center gap-1.5 text-zinc-300">
                 <Shield className="w-4 h-4 text-rose-400" />
                 <span>تفاضل گل کل:</span>
@@ -194,7 +217,10 @@ export const FutCard: React.FC<FutCardProps> = ({
 
           <div className="relative z-10 text-center pt-2 border-t border-amber-400/20">
             <span className="text-[11px] text-amber-300/80 font-bold block">« eFootball Ultimate Card »</span>
-            <span className="text-[10px] text-zinc-500 mt-0.5 block">↺ کلیک برای برگشت به روی کارت</span>
+            <span className="text-[10px] text-zinc-400 mt-0.5 flex items-center justify-center gap-1">
+              <RefreshCw className="w-3 h-3" />
+              <span>کلیک برای برگشت به روی کارت</span>
+            </span>
           </div>
         </div>
       </div>

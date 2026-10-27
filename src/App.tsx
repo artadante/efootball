@@ -41,6 +41,7 @@ import { ChampionshipCelebration } from './components/ChampionshipCelebration';
 import { PlayerFormBadge } from './components/PlayerFormBadge';
 import { generateMatchdayNews } from './utils/newsGenerator';
 import { calculatePlayerCareerStats } from './utils/playerStats';
+import { advanceCupTree } from './utils/fixtureGenerator';
 import { Radio, Share2, Sparkles } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -100,16 +101,39 @@ export const App: React.FC = () => {
   // Story poster modal
   const [isStoryPosterOpen, setIsStoryPosterOpen] = useState(false);
   const [storyPosterParams, setStoryPosterParams] = useState<{
+    posterType?: 'match' | 'table';
     title?: string;
-    player1Name: string;
-    player1Team: string;
-    player2Name: string;
-    player2Team: string;
+    player1Name?: string;
+    player1Team?: string;
+    player2Name?: string;
+    player2Team?: string;
     score1?: number | null;
     score2?: number | null;
     isPlayed?: boolean;
     leagueName?: string;
+    standings?: StandingRow[];
   } | null>(null);
+
+  // Dismissed news persistence (single view per user/device)
+  const DISMISSED_NEWS_KEY = 'efootball_dismissed_news';
+  const [dismissedNewsIds, setDismissedNewsIds] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(DISMISSED_NEWS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const handleDismissNews = (newsId: string) => {
+    const updated = [...dismissedNewsIds, newsId];
+    setDismissedNewsIds(updated);
+    try {
+      localStorage.setItem(DISMISSED_NEWS_KEY, JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+  };
 
   // Admin authentication (persisted)
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
@@ -321,6 +345,9 @@ export const App: React.FC = () => {
   // Handle new league created from modal
   const handleLeagueCreated = (newLeague: ActiveLeague) => {
     saveActiveLeague(newLeague);
+    if (newLeague.mode === 'cup') {
+      setMatchesViewMode('bracket');
+    }
     setActiveTab('wheel'); // Redirect immediately to wheel to spin players and teams!
   };
 
@@ -379,11 +406,19 @@ export const App: React.FC = () => {
       return m;
     });
 
-    const allMatchesFinished = updatedMatches.every((m) => m.isPlayed);
+    let finalMatches = updatedMatches;
+    if (activeLeague.mode === 'cup') {
+      finalMatches = advanceCupTree(updatedMatches);
+    }
+
+    const allMatchesFinished =
+      activeLeague.mode === 'cup'
+        ? finalMatches[finalMatches.length - 1]?.isPlayed || false
+        : finalMatches.every((m) => m.isPlayed);
 
     const updatedLeague: ActiveLeague = {
       ...activeLeague,
-      matches: updatedMatches,
+      matches: finalMatches,
       isFinished: allMatchesFinished,
     };
 
@@ -430,11 +465,19 @@ export const App: React.FC = () => {
       return m;
     });
 
-    const allMatchesFinished = updatedMatches.every((m) => m.isPlayed);
+    let finalMatches = updatedMatches;
+    if (activeLeague.mode === 'cup') {
+      finalMatches = advanceCupTree(updatedMatches);
+    }
+
+    const allMatchesFinished =
+      activeLeague.mode === 'cup'
+        ? finalMatches[finalMatches.length - 1]?.isPlayed || false
+        : finalMatches.every((m) => m.isPlayed);
 
     const updatedLeague: ActiveLeague = {
       ...activeLeague,
-      matches: updatedMatches,
+      matches: finalMatches,
       isFinished: allMatchesFinished,
     };
 
@@ -473,7 +516,21 @@ export const App: React.FC = () => {
 
     soundEngine.playFanfare();
 
-    const champion = standings[0];
+    let championName = standings[0]?.name || 'نامشخص';
+    let championTeam = standings[0]?.team || 'نامشخص';
+
+    if (activeLeague.mode === 'cup') {
+      const finalM = activeLeague.matches[activeLeague.matches.length - 1];
+      if (finalM && finalM.isPlayed && typeof finalM.score1 === 'number' && typeof finalM.score2 === 'number') {
+        const champSlot = finalM.score1 >= finalM.score2 ? finalM.player1Slot : finalM.player2Slot;
+        const champP = activeLeague.players.find((p) => p.slot === champSlot);
+        if (champP && champP.name) {
+          championName = champP.name;
+          championTeam = champP.team || 'نامشخص';
+        }
+      }
+    }
+
     const completedMatches = activeLeague.matches.map((m) => {
       const p1 = getPlayerLabel(m.player1Slot);
       const p2 = getPlayerLabel(m.player2Slot);
@@ -495,8 +552,8 @@ export const App: React.FC = () => {
       name: activeLeague.name,
       mode: activeLeague.mode,
       finishedAt: new Date().toLocaleDateString('fa-IR'),
-      championName: champion?.name || 'نامشخص',
-      championTeam: champion?.team || 'نامشخص',
+      championName,
+      championTeam,
       standings: [...standings],
       matches: completedMatches,
     };
@@ -506,10 +563,10 @@ export const App: React.FC = () => {
 
     // Trigger celebration modal
     setCelebrationData({
-      championName: champion?.name || 'نامشخص',
-      championTeam: champion?.team || 'نامشخص',
+      championName,
+      championTeam,
       leagueName: activeLeague.name,
-      avatarUrl: registeredPlayers.find((p) => p.name === champion?.name)?.avatarUrl,
+      avatarUrl: registeredPlayers.find((p) => p.name === championName)?.avatarUrl,
     });
     setIsCelebrationOpen(true);
 
@@ -542,7 +599,8 @@ export const App: React.FC = () => {
     : [];
 
   const newsHeadlines = generateMatchdayNews(activeLeague);
-  const latestNews = newsHeadlines[0];
+  const visibleHeadlines = newsHeadlines.filter((n) => !dismissedNewsIds.includes(n.id));
+  const latestNews = visibleHeadlines[0] || null;
 
   return (
     <div className="relative min-h-screen w-full bg-[#041308] text-white flex flex-col justify-between selection:bg-emerald-500 selection:text-black">
@@ -600,17 +658,31 @@ export const App: React.FC = () => {
           </div>
         </header>
 
-        {/* Dynamic Sports News Ticker */}
+        {/* Dynamic Sports News Ticker with Dismiss Button */}
         {activeLeague && latestNews && (
-          <div className="mt-2 p-2.5 rounded-2xl bg-black/50 border border-white/10 backdrop-blur-md flex items-center gap-2.5 text-xs shadow-lg animate-fadeIn">
-            <div className="py-1 px-2.5 rounded-xl bg-rose-500/20 text-rose-300 font-black shrink-0 border border-rose-500/30 flex items-center gap-1">
-              <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
-              <span>{latestNews.category}</span>
+          <div className="mt-2 p-2.5 rounded-2xl bg-black/50 border border-white/10 backdrop-blur-md flex items-center justify-between gap-2.5 text-xs shadow-lg animate-fadeIn">
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <div className="py-1 px-2.5 rounded-xl bg-rose-500/20 text-rose-300 font-black shrink-0 border border-rose-500/30 flex items-center gap-1">
+                <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+                <span>{latestNews.category}</span>
+              </div>
+              <div className="flex-1 min-w-0 truncate">
+                <span className="font-extrabold text-white truncate block">{latestNews.headline}</span>
+                <span className="text-[10px] text-zinc-400 truncate block">{latestNews.subtitle}</span>
+              </div>
             </div>
-            <div className="flex-1 min-w-0 truncate">
-              <span className="font-extrabold text-white truncate block">{latestNews.headline}</span>
-              <span className="text-[10px] text-zinc-400 truncate block">{latestNews.subtitle}</span>
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                soundEngine.playClick();
+                handleDismissNews(latestNews.id);
+              }}
+              title="حذف و عدم نمایش مجدد این خبر"
+              aria-label="حذف خبر"
+              className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-zinc-400 hover:text-white flex items-center justify-center shrink-0 cursor-pointer transition-all"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
 
@@ -912,26 +984,27 @@ export const App: React.FC = () => {
                 <div className="flex items-center justify-between mb-3 px-1 flex-wrap gap-2">
                   <h3 className="font-bold text-base text-emerald-300 flex items-center gap-2">
                     <Medal className="w-5 h-5 text-emerald-400" />
-                    <span>جدول رده‌بندی {activeLeague?.name || 'لیگ'}</span>
+                    <span>
+                      {activeLeague?.mode === 'cup'
+                        ? 'نمودار درختی مسابقات جام حذفی 🏆'
+                        : `جدول رده‌بندی ${activeLeague?.name || 'لیگ'}`}
+                    </span>
                   </h3>
 
-                  {standings.length > 0 && (
+                  {activeLeague?.mode !== 'cup' && standings.length > 0 && (
                     <button
                       type="button"
                       onClick={() => {
                         soundEngine.playClick();
                         setStoryPosterParams({
+                          posterType: 'table',
                           title: 'LEAGUE STANDINGS',
-                          player1Name: standings[0]?.name || 'CHAMPION',
-                          player1Team: standings[0]?.team || '',
-                          player2Name: standings[1]?.name || 'RUNNER UP',
-                          player2Team: standings[1]?.team || '',
-                          isPlayed: true,
                           leagueName: activeLeague?.name,
+                          standings: standings,
                         });
                         setIsStoryPosterOpen(true);
                       }}
-                      className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-black font-extrabold text-xs flex items-center gap-1 shadow active:scale-95 transition-all"
+                      className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-black font-extrabold text-xs flex items-center gap-1 shadow active:scale-95 transition-all cursor-pointer"
                     >
                       <Share2 className="w-3.5 h-3.5" />
                       <span>پوستر استوری جدول 📸</span>
@@ -939,7 +1012,19 @@ export const App: React.FC = () => {
                   )}
                 </div>
 
-                {standings.length === 0 ? (
+                {activeLeague?.mode === 'cup' ? (
+                  <div className="space-y-4 animate-fadeIn">
+                    <KnockoutBracket
+                      activeLeague={activeLeague}
+                      isAdmin={isAdmin}
+                      onEditMatch={(mId) => {
+                        setScoreEditMatchId(mId);
+                        setScoreInput1(0);
+                        setScoreInput2(0);
+                      }}
+                    />
+                  </div>
+                ) : standings.length === 0 ? (
                   <div className="py-12 text-center space-y-2">
                     <Trophy className="w-8 h-8 mx-auto text-zinc-500" />
                     <p className="text-sm text-zinc-300 font-medium">هنوز مسابقه‌ای در جدول ثبت نشده است.</p>
@@ -1402,6 +1487,8 @@ export const App: React.FC = () => {
         <StoryPosterModal
           isOpen={isStoryPosterOpen}
           onClose={() => setIsStoryPosterOpen(false)}
+          posterType={storyPosterParams.posterType}
+          standings={storyPosterParams.standings}
           title={storyPosterParams.title}
           player1Name={storyPosterParams.player1Name}
           player1Team={storyPosterParams.player1Team}
@@ -1443,6 +1530,7 @@ export const App: React.FC = () => {
         <LiquidBottomNav
           activeTab={activeTab}
           onTabChange={setActiveTab}
+          mode={activeLeague?.mode}
         />
       )}
     </div>

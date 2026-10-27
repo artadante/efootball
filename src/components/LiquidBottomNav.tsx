@@ -1,16 +1,19 @@
 import React from 'react';
 import { Trophy, History, Disc, Swords } from 'lucide-react';
+import { CompetitionMode } from '../types/league';
 
 export type TabType = 'wheel' | 'matches' | 'table' | 'history';
 
 interface LiquidBottomNavProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
+  mode?: CompetitionMode;
 }
 
 export const LiquidBottomNav: React.FC<LiquidBottomNavProps> = ({
   activeTab,
   onTabChange,
+  mode = 'league',
 }) => {
   const tabs = [
     {
@@ -27,9 +30,9 @@ export const LiquidBottomNav: React.FC<LiquidBottomNavProps> = ({
     },
     {
       id: 'table' as TabType,
-      label: 'جدول',
+      label: mode === 'cup' ? 'جام حذفی' : 'جدول',
       icon: Trophy,
-      aria: 'جدول رده‌بندی لیگ',
+      aria: mode === 'cup' ? 'نمودار درختی مسابقات حذفی' : 'جدول رده‌بندی لیگ',
     },
     {
       id: 'history' as TabType,
