@@ -2,51 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { PitchBackground } from './components/PitchBackground';
 import { LiquidBottomNav, TabType } from './components/LiquidBottomNav';
 import { ProfileButton } from './components/ProfileButton';
+import { CreateLeagueModal } from './components/CreateLeagueModal';
+import { DualWheel } from './components/DualWheel';
 import { 
-  Flame, 
-  Sparkles, 
-  Smartphone, 
-  X, 
+  Plus, 
+  Crown, 
   Medal, 
   ShieldAlert, 
-  Trash2, 
-  Plus, 
+  X, 
   Swords, 
-  History,
-  Calendar
+  Calendar, 
+  History, 
+  CheckCircle2, 
+  Archive,
+  Trophy,
+  Flame,
+  Smartphone
 } from 'lucide-react';
-import { supabase, isSupabaseConfigured, DbStanding } from './lib/supabase';
-
-interface StandingRow {
-  rank: number;
-  name: string;
-  played: number;
-  won: number;
-  drawn: number;
-  lost: number;
-  goalsFor: number;
-  goalsAgainst: number;
-  points: number;
-}
-
-interface MatchRecord {
-  id: string;
-  player1: string;
-  team1: string;
-  score1: number;
-  score2: number;
-  player2: string;
-  team2: string;
-  date: string;
-}
+import { ActiveLeague, ArchivedLeague, StandingRow } from './types/league';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('table');
-  const [isAddMatchModalOpen, setIsAddMatchModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState(false);
+  const [scoreEditMatchId, setScoreEditMatchId] = useState<string | null>(null);
+  const [scoreInput1, setScoreInput1] = useState<number | string>(0);
+  const [scoreInput2, setScoreInput2] = useState<number | string>(0);
+  const [legFilter, setLegFilter] = useState<'all' | 1 | 2>('all');
   const [showPwaTip, setShowPwaTip] = useState(true);
 
-  // Admin authentication state (saved in localStorage)
+  // Admin authentication (persisted)
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
     return localStorage.getItem('efootball_is_admin') === 'true';
   });
@@ -54,25 +39,32 @@ export const App: React.FC = () => {
   const [unlockPinInput, setUnlockPinInput] = useState('');
   const [unlockError, setUnlockError] = useState('');
 
-  // Standings & matches state
-  const [standings, setStandings] = useState<StandingRow[]>([]);
-  const [matches, setMatches] = useState<MatchRecord[]>(() => {
-    const saved = localStorage.getItem('efootball_local_matches');
+  // Active League state (saved in localStorage)
+  const [activeLeague, setActiveLeague] = useState<ActiveLeague | null>(() => {
+    const saved = localStorage.getItem('efootball_active_league');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  // Archived Leagues in History
+  const [archivedLeagues, setArchivedLeagues] = useState<ArchivedLeague[]>(() => {
+    const saved = localStorage.getItem('efootball_archived_leagues');
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Calculate standings directly from matches
+  // Standings table calculation
+  const [standings, setStandings] = useState<StandingRow[]>([]);
+
+  // Update standings whenever active league or match scores change
   useEffect(() => {
-    if (matches.length === 0) {
+    if (!activeLeague || activeLeague.players.length === 0) {
       setStandings([]);
       return;
     }
 
-    const playerNames = Array.from(
-      new Set(matches.flatMap(m => [m.player1, m.player2]))
-    );
+    const calculated: StandingRow[] = activeLeague.players.map((player) => {
+      const pName = player.name || `بازیکن ${player.slot}`;
+      const pTeam = player.team || `تیم ${player.slot}`;
 
-    const calculated: StandingRow[] = playerNames.map(playerName => {
       let played = 0;
       let won = 0;
       let drawn = 0;
@@ -81,28 +73,30 @@ export const App: React.FC = () => {
       let goalsAgainst = 0;
       let points = 0;
 
-      matches.forEach(m => {
-        if (m.player1 === playerName) {
+      activeLeague.matches.forEach((m) => {
+        if (!m.isPlayed || m.score1 === null || m.score2 === null) return;
+
+        if (m.player1Slot === player.slot) {
           played += 1;
-          goalsFor += m.score1;
-          goalsAgainst += m.score2;
-          if (m.score1 > m.score2) {
+          goalsFor += m.score1!;
+          goalsAgainst += m.score2!;
+          if (m.score1! > m.score2!) {
             won += 1;
             points += 3;
-          } else if (m.score1 === m.score2) {
+          } else if (m.score1! === m.score2!) {
             drawn += 1;
             points += 1;
           } else {
             lost += 1;
           }
-        } else if (m.player2 === playerName) {
+        } else if (m.player2Slot === player.slot) {
           played += 1;
-          goalsFor += m.score2;
-          goalsAgainst += m.score1;
-          if (m.score2 > m.score1) {
+          goalsFor += m.score2!;
+          goalsAgainst += m.score1!;
+          if (m.score2! > m.score1!) {
             won += 1;
             points += 3;
-          } else if (m.score1 === m.score2) {
+          } else if (m.score1! === m.score2!) {
             drawn += 1;
             points += 1;
           } else {
@@ -113,13 +107,15 @@ export const App: React.FC = () => {
 
       return {
         rank: 1,
-        name: playerName,
+        name: pName,
+        team: pTeam,
         played,
         won,
         drawn,
         lost,
         goalsFor,
         goalsAgainst,
+        goalDiff: goalsFor - goalsAgainst,
         points,
       };
     });
@@ -127,77 +123,31 @@ export const App: React.FC = () => {
     // Sort by points desc, then goal difference desc, then goalsFor desc
     calculated.sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
-      const gdA = a.goalsFor - a.goalsAgainst;
-      const gdB = b.goalsFor - b.goalsAgainst;
-      if (gdB !== gdA) return gdB - gdA;
+      if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
       return b.goalsFor - a.goalsFor;
     });
 
     const ranked = calculated.map((row, idx) => ({ ...row, rank: idx + 1 }));
     setStandings(ranked);
-  }, [matches]);
+  }, [activeLeague]);
 
-  // Load from Supabase if credentials are provided
-  useEffect(() => {
-    const client = supabase;
-    if (!isSupabaseConfigured || !client) return;
+  // Save active league to localStorage
+  const saveActiveLeague = (league: ActiveLeague | null) => {
+    setActiveLeague(league);
+    if (league) {
+      localStorage.setItem('efootball_active_league', JSON.stringify(league));
+    } else {
+      localStorage.removeItem('efootball_active_league');
+    }
+  };
 
-    const fetchLiveSupabaseData = async () => {
-      try {
-        const { data: standingsData } = await client.from('league_standings').select('*');
-        if (standingsData && standingsData.length > 0) {
-          const mappedStandings: StandingRow[] = (standingsData as DbStanding[]).map((s, idx) => ({
-            rank: idx + 1,
-            name: s.player_name,
-            played: s.played,
-            won: s.won,
-            drawn: s.drawn,
-            lost: s.lost,
-            goalsFor: s.goals_for,
-            goalsAgainst: s.goals_against,
-            points: s.points,
-          }));
-          setStandings(mappedStandings);
-        }
+  // Save archived leagues to localStorage
+  const saveArchivedLeagues = (list: ArchivedLeague[]) => {
+    setArchivedLeagues(list);
+    localStorage.setItem('efootball_archived_leagues', JSON.stringify(list));
+  };
 
-        const { data: matchesData } = await client
-          .from('matches')
-          .select('id, team1, team2, score1, score2, played_at, p1:player1_id(name), p2:player2_id(name)')
-          .order('played_at', { ascending: false });
-
-        if (matchesData) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const mappedMatches: MatchRecord[] = matchesData.map((m: any) => ({
-            id: m.id,
-            player1: m.p1?.name || 'بازیکن ۱',
-            team1: m.team1,
-            score1: m.score1,
-            score2: m.score2,
-            player2: m.p2?.name || 'بازیکن ۲',
-            team2: m.team2,
-            date: new Date(m.played_at).toLocaleDateString('fa-IR'),
-          }));
-          setMatches(mappedMatches);
-        }
-      } catch (err) {
-        console.warn('Supabase fetch error, fallback to local state', err);
-      }
-    };
-
-    fetchLiveSupabaseData();
-
-    const channel = client
-      .channel('schema-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, () => {
-        fetchLiveSupabaseData();
-      })
-      .subscribe();
-
-    return () => {
-      client.removeChannel(channel);
-    };
-  }, []);
-
+  // Admin login handlers
   const handleAdminLogin = (pin: string) => {
     if (pin === adminPin) {
       setIsAdmin(true);
@@ -213,13 +163,8 @@ export const App: React.FC = () => {
     localStorage.removeItem('efootball_is_admin');
   };
 
-  // Match form state
-  const [p1, setP1] = useState('');
-  const [p2, setP2] = useState('');
-  const [s1, setS1] = useState<number | string>('');
-  const [s2, setS2] = useState<number | string>('');
-
-  const handleOpenAddMatch = () => {
+  // Handle top-left '+' Click
+  const handleTopPlusClick = () => {
     if (!isAdmin) {
       setUnlockPinInput('');
       setUnlockError('');
@@ -227,129 +172,132 @@ export const App: React.FC = () => {
       return;
     }
 
-    setP1('');
-    setP2('');
-    setS1('');
-    setS2('');
-    setIsAddMatchModalOpen(true);
+    if (activeLeague && !activeLeague.isFinished) {
+      if (!confirm(`لیگ «${activeLeague.name}» هم‌اکنون در حال برگزاری است. آیا می‌خواهید لیگ جدیدی ایجاد کرده و این لیگ را جایگزین کنید؟`)) {
+        return;
+      }
+    }
+
+    setIsCreateModalOpen(true);
   };
 
-  const handleCreateMatch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const p1Trimmed = p1.trim();
-    const p2Trimmed = p2.trim();
+  // Handle new league created from modal
+  const handleLeagueCreated = (newLeague: ActiveLeague) => {
+    saveActiveLeague(newLeague);
+    setActiveTab('wheel'); // Redirect immediately to wheel to spin players and teams!
+  };
 
-    if (!p1Trimmed || !p2Trimmed) {
-      alert('لطفاً نام هر دو بازیکن را وارد کنید.');
-      return;
-    }
+  // Handle slot assignment from DualWheel
+  const handleSlotAssigned = (slotNumber: number, playerName: string, teamName: string) => {
+    if (!activeLeague) return;
 
-    if (p1Trimmed.toLowerCase() === p2Trimmed.toLowerCase()) {
-      alert('نام دو بازیکن نمی‌تواند یکسان باشد.');
-      return;
-    }
+    const updatedPlayers = activeLeague.players.map((p) => {
+      if (p.slot === slotNumber) {
+        return { ...p, name: playerName, team: teamName };
+      }
+      return p;
+    });
 
-    const numScore1 = Number(s1) || 0;
-    const numScore2 = Number(s2) || 0;
+    const allCompleted = updatedPlayers.every((p) => p.name && p.team);
 
-    const newRecord: MatchRecord = {
-      id: Date.now().toString(),
-      player1: p1Trimmed,
-      team1: 'انتخابی',
-      score1: numScore1,
-      score2: numScore2,
-      player2: p2Trimmed,
-      team2: 'انتخابی',
-      date: 'هم‌اکنون',
+    const updatedLeague: ActiveLeague = {
+      ...activeLeague,
+      players: updatedPlayers,
+      wheelCompleted: allCompleted,
     };
 
-    const updatedMatches = [newRecord, ...matches];
-    setMatches(updatedMatches);
-    localStorage.setItem('efootball_local_matches', JSON.stringify(updatedMatches));
-    setIsAddMatchModalOpen(false);
+    saveActiveLeague(updatedLeague);
+  };
 
-    if (isSupabaseConfigured && supabase) {
-      try {
-        let { data: p1Data } = await supabase.from('players').select('id').eq('name', p1Trimmed).maybeSingle();
-        if (!p1Data) {
-          const { data: inserted1 } = await supabase.from('players').insert([{ name: p1Trimmed }]).select('id').single();
-          p1Data = inserted1;
-        }
+  // Helper to get player/team label by slot
+  const getPlayerLabel = (slot: number) => {
+    const p = activeLeague?.players.find((pl) => pl.slot === slot);
+    return {
+      name: p?.name || `بازیکن ${slot}`,
+      team: p?.team || `تیم ${slot}`,
+      isAssigned: Boolean(p?.name && p?.team),
+    };
+  };
 
-        let { data: p2Data } = await supabase.from('players').select('id').eq('name', p2Trimmed).maybeSingle();
-        if (!p2Data) {
-          const { data: inserted2 } = await supabase.from('players').insert([{ name: p2Trimmed }]).select('id').single();
-          p2Data = inserted2;
-        }
+  // Handle submitting match score
+  const handleSaveScore = (matchId: string) => {
+    if (!activeLeague || !isAdmin) return;
 
-        if (p1Data && p2Data) {
-          await supabase.from('matches').insert([{
-            player1_id: p1Data.id,
-            player2_id: p2Data.id,
-            team1: 'انتخابی',
-            team2: 'انتخابی',
-            score1: numScore1,
-            score2: numScore2,
-          }]);
-        }
-      } catch (err) {
-        console.error('Error inserting match into Supabase', err);
+    const s1 = Number(scoreInput1);
+    const s2 = Number(scoreInput2);
+
+    const updatedMatches = activeLeague.matches.map((m) => {
+      if (m.id === matchId) {
+        return {
+          ...m,
+          score1: s1,
+          score2: s2,
+          isPlayed: true,
+          playedAt: new Date().toLocaleDateString('fa-IR'),
+        };
       }
-    }
+      return m;
+    });
+
+    const allMatchesFinished = updatedMatches.every((m) => m.isPlayed);
+
+    const updatedLeague: ActiveLeague = {
+      ...activeLeague,
+      matches: updatedMatches,
+      isFinished: allMatchesFinished,
+    };
+
+    saveActiveLeague(updatedLeague);
+    setScoreEditMatchId(null);
   };
 
-  const handleDeleteMatch = async (matchId: string) => {
-    if (!isAdmin) return;
-    if (!confirm('آیا مطمئن هستید که می‌خواهید این مسابقه حذف شود؟')) return;
+  // Finalize & Archive League to History
+  const handleFinishAndArchiveLeague = () => {
+    if (!activeLeague) return;
 
-    const filtered = matches.filter(m => m.id !== matchId);
-    setMatches(filtered);
-    localStorage.setItem('efootball_local_matches', JSON.stringify(filtered));
+    const champion = standings[0];
+    const completedMatches = activeLeague.matches.map((m) => {
+      const p1 = getPlayerLabel(m.player1Slot);
+      const p2 = getPlayerLabel(m.player2Slot);
+      return {
+        id: m.id,
+        leg: m.leg,
+        round: m.round,
+        player1: p1.name,
+        team1: p1.team,
+        score1: m.score1 ?? 0,
+        score2: m.score2 ?? 0,
+        player2: p2.name,
+        team2: p2.team,
+      };
+    });
 
-    if (isSupabaseConfigured && supabase) {
-      try {
-        await supabase.from('matches').delete().eq('id', matchId);
-      } catch (e) {
-        console.error('Error deleting match from Supabase', e);
-      }
-    }
+    const newArchived: ArchivedLeague = {
+      id: activeLeague.id,
+      name: activeLeague.name,
+      mode: activeLeague.mode,
+      finishedAt: new Date().toLocaleDateString('fa-IR'),
+      championName: champion?.name || 'نامشخص',
+      championTeam: champion?.team || 'نامشخص',
+      standings: [...standings],
+      matches: completedMatches,
+    };
+
+    const updatedArchive = [newArchived, ...archivedLeagues];
+    saveArchivedLeagues(updatedArchive);
+
+    // Clear active league to unlock wheel and allow starting a fresh league
+    saveActiveLeague(null);
+    setActiveTab('history');
   };
 
-  // Lucky wheel state
-  const teamsWheel = [
-    'رئال مادرید 🇪🇸',
-    'منچسترسیتی 🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-    'بارسلونا 🇪🇸',
-    'بایرن مونیخ 🇩🇪',
-    'آرسنال 🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-    'اینتر میلان 🇮🇹',
-    'پاری سن ژرمن 🇫🇷',
-    'لیورپول 🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-  ];
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [wheelAngle, setWheelAngle] = useState(0);
-  const [selectedWheelPrize, setSelectedWheelPrize] = useState<string | null>(null);
-
-  const handleSpinWheel = async () => {
-    if (isSpinning) return;
-    setIsSpinning(true);
-    setSelectedWheelPrize(null);
-
-    const randomRotations = 5 + Math.floor(Math.random() * 5);
-    const randomExtraDegrees = Math.floor(Math.random() * 360);
-    const newAngle = wheelAngle + randomRotations * 360 + randomExtraDegrees;
-
-    setWheelAngle(newAngle);
-
-    setTimeout(async () => {
-      setIsSpinning(false);
-      const normalizedDegree = (360 - (newAngle % 360)) % 360;
-      const segmentSize = 360 / teamsWheel.length;
-      const index = Math.floor(normalizedDegree / segmentSize);
-      const chosen = teamsWheel[index];
-      setSelectedWheelPrize(chosen);
-    }, 3200);
-  };
+  // Filtered matches for "بازی‌ها" tab
+  const displayedMatches = activeLeague
+    ? activeLeague.matches.filter((m) => {
+        if (legFilter === 'all') return true;
+        return m.leg === legFilter;
+      })
+    : [];
 
   return (
     <div className="relative min-h-screen w-full bg-[#041308] text-white flex flex-col justify-between selection:bg-emerald-500 selection:text-black">
@@ -370,20 +318,27 @@ export const App: React.FC = () => {
             onAdminLogout={handleAdminLogout}
           />
 
-          {/* Center: Admin status badge if logged in */}
-          {isAdmin && (
-            <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-300 text-[11px] font-bold shadow-sm">
-              <span>👑 پنل مدیریت فعال</span>
-            </div>
-          )}
+          {/* Center: Admin status / Active League Name */}
+          <div className="text-center">
+            {activeLeague ? (
+              <span className="text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-green-200 to-emerald-400">
+                {activeLeague.name}
+              </span>
+            ) : null}
+            {isAdmin && (
+              <div className="flex items-center justify-center gap-1 text-[10px] text-amber-300 font-bold mt-0.5">
+                <span>👑 پنل مدیریت فعال</span>
+              </div>
+            )}
+          </div>
 
-          {/* Top-Left: '+' Button for registering match */}
+          {/* Top-Left: '+' Button for creating league or competition */}
           <button
             type="button"
-            onClick={handleOpenAddMatch}
+            onClick={handleTopPlusClick}
             aria-label="ثبت مسابقه"
             className="w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-emerald-600 via-green-500 to-emerald-400 text-black flex items-center justify-center shadow-[0_0_18px_rgba(34,197,94,0.4)] active:scale-95 hover:scale-105 transition-all focus:outline-none"
-            title="ثبت مسابقه جدید"
+            title="ایجاد لیگ جدید و قرعه‌کشی"
           >
             <Plus className="w-6 h-6 stroke-[2.75] text-slate-950" />
           </button>
@@ -391,7 +346,7 @@ export const App: React.FC = () => {
 
         {/* PWA Helper Banner */}
         {showPwaTip && (
-          <div className="mt-3 p-3 rounded-2xl bg-emerald-950/70 border border-emerald-500/20 backdrop-blur-xl flex items-center justify-between text-xs text-emerald-200/90 shadow-lg animate-fadeIn">
+          <div className="mt-2.5 p-3 rounded-2xl bg-emerald-950/70 border border-emerald-500/20 backdrop-blur-xl flex items-center justify-between text-xs text-emerald-200/90 shadow-lg animate-fadeIn">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-300">
                 <Smartphone className="w-4 h-4" />
@@ -413,130 +368,203 @@ export const App: React.FC = () => {
         )}
 
         {/* Dynamic Views Content based on active tab: چرخونه - بازی‌ها - جدول - تاریخچه */}
-        <main className="mt-4 flex-1">
-          {/* TAB 1: LUCKY WHEEL (چرخونه) */}
+        <main className="mt-3 flex-1">
+          
+          {/* TAB 1: DUAL WHEEL (چرخونه) */}
           {activeTab === 'wheel' && (
-            <div className="space-y-4 animate-fadeIn">
-              <div className="p-5 rounded-3xl bg-emerald-950/60 border border-white/15 backdrop-blur-2xl shadow-xl text-center">
-                <div className="flex items-center justify-center gap-2 text-emerald-400 mb-1">
-                  <Sparkles className="w-5 h-5 text-amber-400" />
-                  <h3 className="text-base font-bold text-white">چرخونه شانس و انتخاب تیم</h3>
-                </div>
-                <p className="text-xs text-zinc-300">
-                  قبل از شروع هر بازی برای انتخاب رندوم تیم یا جریمه چرخونه رو بچرخونید!
-                </p>
-
-                {/* Rotating Wheel Circle */}
-                <div className="relative w-64 h-64 mx-auto my-6 flex items-center justify-center">
-                  <div className="absolute -top-3 z-30 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[20px] border-t-amber-400 drop-shadow-[0_2px_8px_rgba(245,158,11,0.8)]" />
-
-                  <div
-                    className="relative w-full h-full rounded-full border-4 border-amber-400/80 shadow-[0_0_35px_rgba(34,197,94,0.4)] overflow-hidden transition-all duration-[3200ms] ease-out flex items-center justify-center"
-                    style={{
-                      transform: `rotate(${wheelAngle}deg)`,
-                      background: 'conic-gradient(#064e3b 0deg 45deg, #022c22 45deg 90deg, #065f46 90deg 135deg, #047857 135deg 180deg, #064e3b 180deg 225deg, #022c22 225deg 270deg, #065f46 270deg 315deg, #047857 315deg 360deg)',
-                    }}
-                  >
-                    <div className="absolute z-20 w-14 h-14 rounded-full bg-emerald-950 border-2 border-amber-400 flex items-center justify-center shadow-lg text-amber-400 font-black text-xs">
-                      eFootball
-                    </div>
-
-                    {teamsWheel.map((team, idx) => {
-                      const angle = idx * 45 + 22.5;
-                      return (
-                        <div
-                          key={team}
-                          className="absolute text-[10px] font-bold text-emerald-100 select-none text-center truncate max-w-[85px]"
-                          style={{
-                            transform: `rotate(${angle}deg) translate(80px) rotate(90deg)`,
-                          }}
-                        >
-                          {team.split(' ')[0]}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {selectedWheelPrize && (
-                  <div className="p-3 mb-4 rounded-2xl bg-amber-400/15 border border-amber-400/40 text-amber-300 text-sm font-extrabold animate-bounce">
-                    🎉 تیم انتخاب‌شده: {selectedWheelPrize}
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  onClick={handleSpinWheel}
-                  disabled={isSpinning}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-500 text-black font-extrabold text-sm shadow-[0_0_25px_rgba(34,197,94,0.5)] hover:scale-[1.02] active:scale-95 disabled:opacity-50 transition-all"
-                >
-                  {isSpinning ? 'در حال چرخیدن...' : 'بچرخون! 🎡'}
-                </button>
-              </div>
-            </div>
+            <DualWheel
+              activeLeague={activeLeague}
+              onSlotAssigned={handleSlotAssigned}
+            />
           )}
 
-          {/* TAB 2: MATCHES / FIXTURES (بازی‌ها) */}
+          {/* TAB 2: MATCHES / FIXTURES (بازی‌ها - تقسیم به نیم‌فصل اول و دوم) */}
           {activeTab === 'matches' && (
-            <div className="space-y-4 animate-fadeIn">
+            <div className="space-y-3 animate-fadeIn">
               <div className="rounded-3xl p-4 bg-emerald-950/50 border border-white/15 backdrop-blur-2xl shadow-xl">
+                
+                {/* Header with Title and Leg Filter */}
                 <div className="flex items-center justify-between mb-3 px-1">
                   <h3 className="font-bold text-sm text-emerald-300 flex items-center gap-2">
                     <Swords className="w-4 h-4 text-emerald-400" />
-                    <span>برنامه و وضعیت مسابقات</span>
+                    <span>برنامه و نتایج مسابقات</span>
                   </h3>
-                  <span className="text-[11px] text-zinc-400 font-mono">
-                    {matches.length} مسابقه ثبت‌شده
-                  </span>
+                  {activeLeague && (
+                    <span className="text-[11px] text-zinc-400 font-mono">
+                      {activeLeague.matches.filter(m => m.isPlayed).length} / {activeLeague.matches.length} بازی
+                    </span>
+                  )}
                 </div>
 
-                {matches.length === 0 ? (
+                {!activeLeague ? (
                   <div className="py-12 text-center space-y-2">
                     <Calendar className="w-8 h-8 mx-auto text-zinc-500" />
-                    <p className="text-xs text-zinc-400 font-medium">
-                      هنوز مسابقه‌ای ثبت نشده است.
-                    </p>
-                    <p className="text-[11px] text-zinc-500">
-                      برای ثبت مسابقه جدید، از دکمه + در بالای صفحه استفاده کنید.
-                    </p>
+                    <p className="text-xs text-zinc-400 font-medium">هنوز لیگی تعریف نشده است.</p>
+                    <p className="text-[11px] text-zinc-500">برای ایجاد لیگ و قرعه‌کشی، دکمه + بالا را بزنید.</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {/* Latest Featured Match */}
-                    <div className="p-3.5 rounded-2xl bg-black/40 border border-emerald-500/20 backdrop-blur-md">
-                      <div className="flex items-center justify-between text-[11px] text-emerald-400 font-bold mb-2">
-                        <span>آخرین بازی انجام‌شده</span>
-                        <span className="text-zinc-400 font-normal">{matches[0].date}</span>
-                      </div>
-                      <div className="flex items-center justify-between py-1">
-                        <span className="font-extrabold text-white text-sm">{matches[0].player1}</span>
-                        <span className="px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 font-mono font-black text-base">
-                          {matches[0].score1} - {matches[0].score2}
-                        </span>
-                        <span className="font-extrabold text-white text-sm">{matches[0].player2}</span>
-                      </div>
+                  <>
+                    {/* Leg Filter Tabs (نیم‌فصل اول / دوم) */}
+                    <div className="flex p-1 bg-black/40 rounded-2xl border border-white/10 mb-3 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setLegFilter('all')}
+                        className={`flex-1 py-1.5 rounded-xl font-medium transition-all ${
+                          legFilter === 'all'
+                            ? 'bg-emerald-500 text-black font-bold shadow'
+                            : 'text-zinc-400 hover:text-white'
+                        }`}
+                      >
+                        همه بازی‌ها
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLegFilter(1)}
+                        className={`flex-1 py-1.5 rounded-xl font-medium transition-all ${
+                          legFilter === 1
+                            ? 'bg-emerald-500 text-black font-bold shadow'
+                            : 'text-zinc-400 hover:text-white'
+                        }`}
+                      >
+                        نیم‌فصل ۱ (رفت)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLegFilter(2)}
+                        className={`flex-1 py-1.5 rounded-xl font-medium transition-all ${
+                          legFilter === 2
+                            ? 'bg-emerald-500 text-black font-bold shadow'
+                            : 'text-zinc-400 hover:text-white'
+                        }`}
+                      >
+                        نیم‌فصل ۲ (برگشت)
+                      </button>
                     </div>
-                  </div>
+
+                    {/* All Matches Completed Celebration Banner */}
+                    {activeLeague.matches.every(m => m.isPlayed) && !activeLeague.isFinished && (
+                      <div className="p-3 mb-3 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-center space-y-2 animate-bounce">
+                        <span className="text-xs font-extrabold text-amber-300 block">
+                          🎉 تمام مسابقات این لیگ با موفقیت به پایان رسید!
+                        </span>
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={handleFinishAndArchiveLeague}
+                            className="py-2 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-extrabold text-xs shadow hover:scale-105 active:scale-95 transition-all"
+                          >
+                            ثبت نهایی و بایگانی در تاریخچه 📜
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Match Cards List */}
+                    <div className="space-y-2.5 max-h-[460px] overflow-y-auto no-scrollbar pr-0.5">
+                      {displayedMatches.map((m) => {
+                        const p1 = getPlayerLabel(m.player1Slot);
+                        const p2 = getPlayerLabel(m.player2Slot);
+
+                        return (
+                          <div
+                            key={m.id}
+                            className={`p-3 rounded-2xl border transition-all ${
+                              m.isPlayed
+                                ? 'bg-black/35 border-white/10'
+                                : 'bg-emerald-950/40 border-emerald-500/20 hover:border-emerald-400/40'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between text-[10px] text-zinc-400 mb-1.5">
+                              <span>هفته {m.round} • {m.leg === 1 ? 'دور رفت' : 'دور برگشت'}</span>
+                              {m.isPlayed ? (
+                                <span className="text-emerald-400 font-bold flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  <span>انجام شده</span>
+                                </span>
+                              ) : (
+                                <span className="text-amber-400/90 font-medium">در انتظار برگزاری</span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              {/* Player 1 (Home) */}
+                              <div className="flex-1 text-start">
+                                <span className="block font-bold text-xs text-white truncate max-w-[100px]">
+                                  {p1.name}
+                                </span>
+                                <span className="text-[10px] text-emerald-400/80 block truncate max-w-[100px]">
+                                  {p1.team}
+                                </span>
+                              </div>
+
+                              {/* Score or Action Button */}
+                              <div className="px-3 text-center">
+                                {m.isPlayed ? (
+                                  <div className="px-3 py-1 rounded-xl bg-black/60 border border-white/10 font-mono font-black text-base text-emerald-400 tracking-wider">
+                                    {m.score1} - {m.score2}
+                                  </div>
+                                ) : (
+                                  isAdmin ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setScoreEditMatchId(m.id);
+                                        setScoreInput1(0);
+                                        setScoreInput2(0);
+                                      }}
+                                      className="py-1 px-3 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-400/40 text-[11px] font-bold transition-all"
+                                    >
+                                      ثبت نتیجه
+                                    </button>
+                                  ) : (
+                                    <span className="text-xs text-zinc-500 font-mono font-bold">VS</span>
+                                  )
+                                )}
+                              </div>
+
+                              {/* Player 2 (Away) */}
+                              <div className="flex-1 text-end">
+                                <span className="block font-bold text-xs text-white truncate max-w-[100px]">
+                                  {p2.name}
+                                </span>
+                                <span className="text-[10px] text-emerald-400/80 block truncate max-w-[100px]">
+                                  {p2.team}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
                 )}
               </div>
             </div>
           )}
 
-          {/* TAB 3: LEAGUE TABLE & STANDINGS (جدول) */}
+          {/* TAB 3: LEAGUE TABLE & STANDINGS (جدول با آیکون تاج 👑 برای نفر اول) */}
           {activeTab === 'table' && (
             <div className="space-y-4 animate-fadeIn">
               <div className="rounded-3xl p-4 bg-emerald-950/50 border border-white/15 backdrop-blur-2xl shadow-xl">
                 <div className="flex items-center justify-between mb-3 px-1">
                   <h3 className="font-bold text-sm text-emerald-300 flex items-center gap-2">
                     <Medal className="w-4 h-4 text-emerald-400" />
-                    <span>جدول رده‌بندی لیگ</span>
+                    <span>جدول رده‌بندی {activeLeague?.name || 'لیگ'}</span>
                   </h3>
+                  {standings.length > 0 && (
+                    <span className="text-[11px] text-zinc-400 font-mono">
+                      {standings.length} بازیکن
+                    </span>
+                  )}
                 </div>
 
                 {standings.length === 0 ? (
                   <div className="py-12 text-center space-y-2">
-                    <Medal className="w-8 h-8 mx-auto text-zinc-500" />
+                    <Trophy className="w-8 h-8 mx-auto text-zinc-500" />
                     <p className="text-xs text-zinc-400 font-medium">هنوز مسابقه‌ای در جدول ثبت نشده است.</p>
+                    <p className="text-[11px] text-zinc-500">
+                      برای شروع با زدن دکمه + در بالا، لیگ را ایجاد و قرعه‌کشی کنید.
+                    </p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -544,9 +572,11 @@ export const App: React.FC = () => {
                       <thead>
                         <tr className="text-zinc-400 border-b border-white/10 pb-2 font-medium">
                           <th className="py-2 text-start px-2">#</th>
-                          <th className="py-2 text-start">بازیکن</th>
+                          <th className="py-2 text-start">بازیکن و تیم</th>
                           <th className="py-2">بازی</th>
                           <th className="py-2">برد</th>
+                          <th className="py-2">مساوی</th>
+                          <th className="py-2">باخت</th>
                           <th className="py-2">تفاضل</th>
                           <th className="py-2 font-bold text-emerald-400">امتیاز</th>
                         </tr>
@@ -556,11 +586,11 @@ export const App: React.FC = () => {
                           <tr
                             key={row.name}
                             className={`hover:bg-white/5 transition-colors ${
-                              row.rank === 1 && row.points > 0 ? 'bg-emerald-500/10' : ''
+                              row.rank === 1 ? 'bg-amber-400/5' : ''
                             }`}
                           >
                             <td className="py-3 px-2 text-start font-bold">
-                              {row.rank === 1 && row.points > 0 ? (
+                              {row.rank === 1 ? (
                                 <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-400/20 text-amber-300 text-[11px]">
                                   ۱
                                 </span>
@@ -568,15 +598,28 @@ export const App: React.FC = () => {
                                 <span className="text-zinc-400">{row.rank}</span>
                               )}
                             </td>
-                            <td className="py-3 text-start font-bold text-white flex items-center gap-2">
-                              <span>{row.name}</span>
+
+                            {/* Player Name with Crown 👑 for 1st place! */}
+                            <td className="py-3 text-start font-bold text-white">
+                              <div className="flex items-center gap-1.5">
+                                {row.rank === 1 && (
+                                  <Crown className="w-4 h-4 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)] animate-pulse" />
+                                )}
+                                <div>
+                                  <span className="block text-white font-bold">{row.name}</span>
+                                  <span className="block text-[10px] text-zinc-400 font-normal">{row.team}</span>
+                                </div>
+                              </div>
                             </td>
+
                             <td className="py-3 text-zinc-300">{row.played}</td>
                             <td className="py-3 text-zinc-300">{row.won}</td>
+                            <td className="py-3 text-zinc-300">{row.drawn}</td>
+                            <td className="py-3 text-zinc-300">{row.lost}</td>
                             <td className="py-3 font-mono text-[11px] text-zinc-300 dir-ltr">
-                              {row.goalsFor - row.goalsAgainst > 0 ? `+${row.goalsFor - row.goalsAgainst}` : row.goalsFor - row.goalsAgainst}
+                              {row.goalDiff > 0 ? `+${row.goalDiff}` : row.goalDiff}
                             </td>
-                            <td className="py-3 font-extrabold text-sm text-emerald-400">
+                            <td className="py-3 font-extrabold text-sm text-emerald-400 font-mono">
                               {row.points}
                             </td>
                           </tr>
@@ -589,68 +632,109 @@ export const App: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 4: MATCH HISTORY (تاریخچه - با طراحی هماهنگ با باکس جدول لیگ) */}
+          {/* TAB 4: ARCHIVED HISTORY (تاریخچه با ذخیره لیگ‌های پایان‌یافته و نتایج) */}
           {activeTab === 'history' && (
             <div className="space-y-4 animate-fadeIn">
               <div className="rounded-3xl p-4 bg-emerald-950/50 border border-white/15 backdrop-blur-2xl shadow-xl">
                 <div className="flex items-center justify-between mb-3 px-1">
                   <h3 className="font-bold text-sm text-emerald-300 flex items-center gap-2">
                     <History className="w-4 h-4 text-emerald-400" />
-                    <span>تاریخچه مسابقات</span>
+                    <span>تاریخچه و تالار افتخارات لیگ‌ها</span>
                   </h3>
                   <span className="text-[11px] text-zinc-400 font-mono">
-                    ({matches.length} بازی ثبت‌شده)
+                    ({archivedLeagues.length} لیگ بایگانی‌شده)
                   </span>
                 </div>
 
-                {matches.length === 0 ? (
+                {archivedLeagues.length === 0 ? (
                   <div className="py-12 text-center space-y-2">
-                    <History className="w-8 h-8 mx-auto text-zinc-500" />
-                    <p className="text-xs text-zinc-400 font-medium">هنوز هیچ مسابقه‌ای ثبت نشده است.</p>
+                    <Archive className="w-8 h-8 mx-auto text-zinc-500" />
+                    <p className="text-xs text-zinc-400 font-medium">هنوز هیچ لیگی به اتمام نرسیده است.</p>
+                    <p className="text-[11px] text-zinc-500">
+                      وقتی تمام بازی‌های یک لیگ انجام شود، نتایج کامل و جدول رده‌بندی به اینجا منتقل می‌شود.
+                    </p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-center text-xs">
-                      <thead>
-                        <tr className="text-zinc-400 border-b border-white/10 pb-2 font-medium">
-                          <th className="py-2 text-start px-2">میزبان</th>
-                          <th className="py-2">نتیجه</th>
-                          <th className="py-2 text-end px-2">مهمان</th>
-                          <th className="py-2 text-center">زمان</th>
-                          {isAdmin && <th className="py-2 text-end">حذف</th>}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/5">
-                        {matches.map((m) => (
-                          <tr key={m.id} className="hover:bg-white/5 transition-colors">
-                            <td className="py-3 px-2 text-start font-bold text-white">
-                              {m.player1}
-                            </td>
-                            <td className="py-3 font-mono font-black text-sm text-emerald-400 whitespace-nowrap">
-                              {m.score1} - {m.score2}
-                            </td>
-                            <td className="py-3 px-2 text-end font-bold text-white">
-                              {m.player2}
-                            </td>
-                            <td className="py-3 text-[11px] text-zinc-400 font-medium whitespace-nowrap">
-                              {m.date}
-                            </td>
-                            {isAdmin && (
-                              <td className="py-3 text-end">
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteMatch(m.id)}
-                                  className="text-zinc-500 hover:text-rose-400 p-1 transition-colors"
-                                  title="حذف مسابقه"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </td>
-                            )}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="space-y-6">
+                    {archivedLeagues.map((archived) => (
+                      <div
+                        key={archived.id}
+                        className="p-4 rounded-2xl bg-black/40 border border-white/10 space-y-3"
+                      >
+                        {/* League Title & Date */}
+                        <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                          <h4 className="font-bold text-sm text-white">{archived.name}</h4>
+                          <span className="text-[11px] text-zinc-400">{archived.finishedAt}</span>
+                        </div>
+
+                        {/* Champion Spotlight Badge with Crown 👑 */}
+                        <div className="p-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-transparent border border-amber-400/30 flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-amber-400/20 text-amber-300">
+                            <Crown className="w-5 h-5 drop-shadow-[0_0_8px_#fbbf24]" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-amber-300 font-bold uppercase tracking-wider block">
+                              قهرمان مسابقات
+                            </span>
+                            <span className="text-sm font-extrabold text-white">
+                              {archived.championName} ({archived.championTeam})
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Final Standings Table in History */}
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-center text-xs">
+                            <thead>
+                              <tr className="text-zinc-400 border-b border-white/10 pb-1 text-[11px]">
+                                <th className="py-1 text-start">#</th>
+                                <th className="py-1 text-start">بازیکن</th>
+                                <th className="py-1">بازی</th>
+                                <th className="py-1">برد</th>
+                                <th className="py-1">تفاضل</th>
+                                <th className="py-1 font-bold text-emerald-400">امتیاز</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                              {archived.standings.map((s) => (
+                                <tr key={s.name}>
+                                  <td className="py-1.5 text-start font-bold text-zinc-400">{s.rank}</td>
+                                  <td className="py-1.5 text-start font-bold text-white flex items-center gap-1">
+                                    {s.rank === 1 && <Crown className="w-3.5 h-3.5 text-amber-400" />}
+                                    <span>{s.name}</span>
+                                  </td>
+                                  <td className="py-1.5 text-zinc-300">{s.played}</td>
+                                  <td className="py-1.5 text-zinc-300">{s.won}</td>
+                                  <td className="py-1.5 text-zinc-300 font-mono dir-ltr">{s.goalDiff}</td>
+                                  <td className="py-1.5 font-bold text-emerald-400 font-mono">{s.points}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Collapsible/List of Match Results under the table */}
+                        <div className="pt-2 border-t border-white/10">
+                          <span className="text-[11px] text-zinc-400 font-bold mb-1.5 block">
+                            نتایج مسابقات ثبت‌شده ({archived.matches.length} بازی):
+                          </span>
+                          <div className="space-y-1.5 max-h-36 overflow-y-auto no-scrollbar">
+                            {archived.matches.map((m) => (
+                              <div
+                                key={m.id}
+                                className="flex items-center justify-between py-1 px-2 rounded-lg bg-white/5 text-[11px]"
+                              >
+                                <span className="text-white truncate max-w-[80px]">{m.player1}</span>
+                                <span className="font-mono font-bold text-emerald-400">
+                                  {m.score1} - {m.score2}
+                                </span>
+                                <span className="text-white truncate max-w-[80px]">{m.player2}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -659,7 +743,14 @@ export const App: React.FC = () => {
         </main>
       </div>
 
-      {/* Modal 1: Visitor Prompt to Enter Admin PIN */}
+      {/* Modal 1: Create League Wizard (Triggered by '+') */}
+      <CreateLeagueModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onLeagueCreated={handleLeagueCreated}
+      />
+
+      {/* Modal 2: Visitor Prompt to Enter Admin PIN */}
       {isAdminAuthModalOpen && (
         <div
           role="dialog"
@@ -683,7 +774,7 @@ export const App: React.FC = () => {
 
             <div className="mt-3 text-center">
               <p className="text-xs text-zinc-300">
-                فقط مدیر لیگ امکان ثبت نتیجه مسابقه را دارد. اگر شما مدیر هستید، رمز عبور را وارد کنید:
+                فقط مدیر لیگ امکان ساخت لیگ و ثبت نتایج را دارد. اگر شما مدیر هستید، رمز عبور را وارد کنید:
               </p>
 
               <form 
@@ -723,86 +814,76 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* Modal 2: New Match Modal (Admin Only - Simple Freeform Player Entry) */}
-      {isAddMatchModalOpen && (
+      {/* Modal 3: Enter Match Score */}
+      {scoreEditMatchId && (
         <div
           role="dialog"
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
         >
-          <div className="relative w-full max-w-sm rounded-3xl p-6 bg-emerald-950/95 border border-emerald-500/30 backdrop-blur-2xl shadow-2xl text-white">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <h3 className="text-base font-bold text-emerald-300 flex items-center gap-2">
-                <Flame className="w-5 h-5 text-amber-400" />
-                <span>ثبت نتیجه مسابقه جدید</span>
+          <div className="relative w-full max-w-xs rounded-3xl p-5 bg-emerald-950/95 border border-emerald-500/30 backdrop-blur-2xl shadow-2xl text-white">
+            <div className="flex items-center justify-between pb-2 border-b border-white/10">
+              <h3 className="text-sm font-bold text-emerald-300 flex items-center gap-1.5">
+                <Flame className="w-4 h-4 text-amber-400" />
+                <span>ثبت نتیجه مسابقه</span>
               </h3>
               <button
                 type="button"
-                onClick={() => setIsAddMatchModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20"
+                onClick={() => setScoreEditMatchId(null)}
+                className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateMatch} className="mt-4 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                {/* Player 1 Selection */}
-                <div>
-                  <label className="block text-xs text-zinc-300 mb-1 font-medium">بازیکن ۱ (میزبان)</label>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSaveScore(scoreEditMatchId);
+              }}
+              className="mt-4 space-y-4"
+            >
+              <div className="flex items-center justify-between gap-3 text-center">
+                <div className="flex-1">
+                  <span className="block text-xs font-bold text-white mb-1 truncate">
+                    {getPlayerLabel(activeLeague?.matches.find(m => m.id === scoreEditMatchId)?.player1Slot || 1).name}
+                  </span>
                   <input
-                    type="text"
-                    value={p1}
-                    onChange={(e) => setP1(e.target.value)}
-                    className="w-full py-2 px-2.5 rounded-xl bg-black/50 border border-white/15 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400"
-                    placeholder="نام بازیکن ۱"
+                    type="number"
+                    min="0"
+                    max="50"
+                    value={scoreInput1}
+                    onChange={(e) => setScoreInput1(e.target.value)}
+                    className="w-full py-2 text-center rounded-xl bg-black/50 border border-white/15 font-mono text-lg font-bold text-emerald-400 focus:outline-none focus:border-emerald-400"
                     required
                     autoFocus
                   />
-                  <input
-                    type="number"
-                    min="0"
-                    max="50"
-                    value={s1}
-                    onChange={(e) => setS1(e.target.value)}
-                    className="mt-2 w-full py-2 text-center rounded-xl bg-black/50 border border-white/15 font-mono text-lg font-bold text-emerald-400 focus:outline-none focus:border-emerald-400"
-                    placeholder="گل"
-                    required
-                  />
                 </div>
 
-                {/* Player 2 Selection */}
-                <div>
-                  <label className="block text-xs text-zinc-300 mb-1 font-medium">بازیکن ۲ (مهمان)</label>
-                  <input
-                    type="text"
-                    value={p2}
-                    onChange={(e) => setP2(e.target.value)}
-                    className="w-full py-2 px-2.5 rounded-xl bg-black/50 border border-white/15 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400"
-                    placeholder="نام بازیکن ۲"
-                    required
-                  />
+                <span className="text-sm font-bold text-zinc-500 font-mono mt-4">-</span>
+
+                <div className="flex-1">
+                  <span className="block text-xs font-bold text-white mb-1 truncate">
+                    {getPlayerLabel(activeLeague?.matches.find(m => m.id === scoreEditMatchId)?.player2Slot || 2).name}
+                  </span>
                   <input
                     type="number"
                     min="0"
                     max="50"
-                    value={s2}
-                    onChange={(e) => setS2(e.target.value)}
-                    className="mt-2 w-full py-2 text-center rounded-xl bg-black/50 border border-white/15 font-mono text-lg font-bold text-emerald-400 focus:outline-none focus:border-emerald-400"
-                    placeholder="گل"
+                    value={scoreInput2}
+                    onChange={(e) => setScoreInput2(e.target.value)}
+                    className="w-full py-2 text-center rounded-xl bg-black/50 border border-white/15 font-mono text-lg font-bold text-emerald-400 focus:outline-none focus:border-emerald-400"
                     required
                   />
                 </div>
               </div>
 
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-bold text-sm shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:brightness-110 active:scale-95 transition-all"
-                >
-                  ثبت رسمی در جدول لیگ
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-bold text-xs shadow hover:brightness-110 active:scale-95 transition-all"
+              >
+                ذخیره نتیجه در جدول
+              </button>
             </form>
           </div>
         </div>

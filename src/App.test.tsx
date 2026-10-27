@@ -2,62 +2,53 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import App from './App';
 
-describe('App Component with Top-Left Plus and 4-Tab Navigation', () => {
+describe('App Component Complete League & Dual Wheel Workflow', () => {
   beforeEach(() => {
     localStorage.clear();
   });
 
-  it('renders all 4 tabs in bottom nav and top header elements', () => {
+  it('renders all 4 tabs in order: چرخونه, بازی‌ها, جدول, تاریخچه', () => {
     render(<App />);
 
-    // Bottom navigation tabs
     expect(screen.getByText('چرخونه')).toBeInTheDocument();
     expect(screen.getByText('بازی‌ها')).toBeInTheDocument();
     expect(screen.getByText('جدول')).toBeInTheDocument();
     expect(screen.getByText('تاریخچه')).toBeInTheDocument();
-
-    // Top-left + button
-    const plusButton = screen.getByRole('button', { name: /ثبت مسابقه/i });
-    expect(plusButton).toBeInTheDocument();
   });
 
-  it('switches views properly when clicking bottom tabs', () => {
+  it('requires admin PIN arta6996 to create a league with + button', () => {
     render(<App />);
 
-    // Default tab is table (جدول)
-    expect(screen.getByText(/جدول رده‌بندی لیگ/i)).toBeInTheDocument();
+    const plusBtn = screen.getByRole('button', { name: /ثبت مسابقه/i });
+    fireEvent.click(plusBtn);
 
-    // Switch to matches (بازی‌ها)
-    fireEvent.click(screen.getByText('بازی‌ها'));
-    expect(screen.getByText(/برنامه و وضعیت مسابقات/i)).toBeInTheDocument();
-
-    // Switch to wheel (چرخونه)
-    fireEvent.click(screen.getByText('چرخونه'));
-    expect(screen.getByText(/چرخونه شانس و انتخاب تیم/i)).toBeInTheDocument();
-
-    // Switch to history (تاریخچه)
-    fireEvent.click(screen.getByText('تاریخچه'));
-    expect(screen.getByText(/تاریخچه مسابقات/i)).toBeInTheDocument();
-  });
-
-  it('triggers admin PIN challenge when clicking top-left plus button as visitor', () => {
-    render(<App />);
-
-    const plusButton = screen.getByRole('button', { name: /ثبت مسابقه/i });
-    fireEvent.click(plusButton);
-
-    expect(screen.getByText(/فقط مدیر لیگ امکان ثبت نتیجه مسابقه را دارد/i)).toBeInTheDocument();
-  });
-
-  it('unlocks admin capabilities when entering correct password arta6996', () => {
-    render(<App />);
-
-    fireEvent.click(screen.getByRole('button', { name: /پروفایل/i }));
+    // Prompt for admin pin
+    expect(screen.getByText(/دسترسی مدیر لازم است/i)).toBeInTheDocument();
 
     const pinInput = screen.getByPlaceholderText('رمز عبور مدیر');
     fireEvent.change(pinInput, { target: { value: 'arta6996' } });
-    fireEvent.click(screen.getByRole('button', { name: /ورود مدیر/i }));
+    fireEvent.click(screen.getByRole('button', { name: /تایید رمز و ورود/i }));
 
-    expect(screen.getByText(/دسترسی مدیر لیگ فعال است/i)).toBeInTheDocument();
+    // Now click + again, it opens the create league wizard!
+    fireEvent.click(plusBtn);
+    expect(screen.getByText(/راه‌اندازی مسابقات جدید/i)).toBeInTheDocument();
+    expect(screen.getByText(/۱. لیگ عادی فوتبال/i)).toBeInTheDocument();
+    expect(screen.getByText(/۲. جام حذفی/i)).toBeInTheDocument();
+  });
+
+  it('switches between all 4 tabs smoothly', () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByText('چرخونه'));
+    expect(screen.getByText(/هنوز لیگی آغاز نشده است/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('بازی‌ها'));
+    expect(screen.getByText(/برنامه و نتایج مسابقات/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('جدول'));
+    expect(screen.getByText(/جدول رده‌بندی/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('تاریخچه'));
+    expect(screen.getByText(/تاریخچه و تالار افتخارات/i)).toBeInTheDocument();
   });
 });
