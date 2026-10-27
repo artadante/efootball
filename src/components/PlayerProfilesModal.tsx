@@ -115,7 +115,7 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
         
         {/* VIEW 1: All Players Directory - Full page, large logo and prominent name side-by-side */}
         {viewMode === 'list' && (
-          <div className="space-y-4">
+          <div className="space-y-4 pb-12">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-4">
               {registeredPlayers.map((player) => (
                 <button
@@ -125,13 +125,13 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
                     setSelectedPlayer(player);
                     setViewMode('profile');
                   }}
-                  className="p-4 sm:p-5 rounded-3xl bg-emerald-950/45 border border-white/15 hover:border-emerald-400/60 hover:bg-emerald-900/30 transition-all flex items-center gap-4 text-start group active:scale-95 shadow-xl"
+                  className="relative overflow-hidden w-full p-4 sm:p-5 rounded-3xl bg-emerald-950/50 border border-white/15 hover:border-emerald-400/60 hover:bg-emerald-900/40 transition-all flex items-center gap-4 text-start group active:scale-95 shadow-xl cursor-pointer"
                 >
                   {/* Large Logo / Avatar */}
-                  <div className="w-18 h-18 sm:w-22 sm:h-22 rounded-full p-1 bg-gradient-to-tr from-emerald-400 via-green-300 to-emerald-500 shadow-[0_0_20px_rgba(34,197,94,0.35)] shrink-0 group-hover:scale-105 transition-all">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 min-w-[5rem] min-h-[5rem] sm:min-w-[6rem] sm:min-h-[6rem] rounded-full p-1 bg-gradient-to-tr from-emerald-400 via-green-300 to-emerald-500 shadow-[0_0_20px_rgba(34,197,94,0.35)] shrink-0 group-hover:scale-105 transition-all flex items-center justify-center overflow-hidden">
                     <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center overflow-hidden font-black text-2xl sm:text-3xl text-emerald-300">
                       {player.avatarUrl ? (
-                        <img src={player.avatarUrl} alt={player.name} className="w-full h-full object-cover" />
+                        <img src={player.avatarUrl} alt={player.name} className="w-full h-full object-cover rounded-full" />
                       ) : (
                         <span>{player.name.charAt(0)}</span>
                       )}
@@ -139,11 +139,11 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
                   </div>
 
                   {/* Large Name */}
-                  <div className="flex-1 truncate">
+                  <div className="flex-1 min-w-0">
                     <span className="block text-xl sm:text-2xl font-black text-white group-hover:text-emerald-300 transition-colors truncate">
                       {player.name}
                     </span>
-                    <span className="text-xs text-emerald-400/80 font-semibold mt-1 block">
+                    <span className="text-xs text-emerald-400/80 font-semibold mt-1.5 block">
                       مشاهده پروفایل و آمار ➔
                     </span>
                   </div>
@@ -159,10 +159,10 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
             
             {/* Player Hero Header */}
             <div className="p-5 rounded-3xl bg-emerald-950/50 border border-white/15 flex flex-col items-center text-center shadow-xl">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full p-1 bg-gradient-to-tr from-emerald-400 via-green-300 to-amber-300 shadow-[0_0_30px_rgba(34,197,94,0.4)] mb-3">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 min-w-[6rem] min-h-[6rem] rounded-full p-1 bg-gradient-to-tr from-emerald-400 via-green-300 to-amber-300 shadow-[0_0_30px_rgba(34,197,94,0.4)] mb-3 shrink-0 flex items-center justify-center overflow-hidden">
                 <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center overflow-hidden font-black text-3xl sm:text-4xl text-emerald-300">
                   {selectedPlayer.avatarUrl ? (
-                    <img src={selectedPlayer.avatarUrl} alt={selectedPlayer.name} className="w-full h-full object-cover" />
+                    <img src={selectedPlayer.avatarUrl} alt={selectedPlayer.name} className="w-full h-full object-cover rounded-full" />
                   ) : (
                     <span>{selectedPlayer.name.charAt(0)}</span>
                   )}
@@ -354,17 +354,17 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
                   <div className="flex items-center justify-between gap-3 text-center">
                     
                     {/* Player 1 Avatar & Name */}
-                    <div className="flex-1 flex flex-col items-center">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-1 bg-gradient-to-tr from-emerald-400 to-green-300 shadow-lg mb-2">
+                    <div className="flex-1 flex flex-col items-center min-w-0">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 min-w-[4rem] min-h-[4rem] rounded-full p-1 bg-gradient-to-tr from-emerald-400 to-green-300 shadow-lg mb-2 shrink-0 flex items-center justify-center overflow-hidden">
                         <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center font-bold text-xl sm:text-2xl text-emerald-300 overflow-hidden">
                           {playerObj1?.avatarUrl ? (
-                            <img src={playerObj1.avatarUrl} alt={compareName1} className="w-full h-full object-cover" />
+                            <img src={playerObj1.avatarUrl} alt={compareName1} className="w-full h-full object-cover rounded-full" />
                           ) : (
                             <span>{compareName1.charAt(0)}</span>
                           )}
                         </div>
                       </div>
-                      <span className="font-black text-base sm:text-lg text-white">{compareName1}</span>
+                      <span className="font-black text-base sm:text-lg text-white truncate max-w-full">{compareName1}</span>
                       <span className="text-xl sm:text-2xl font-black font-mono text-emerald-400 mt-1">
                         {h2hStats.player1Wins} برد
                       </span>
@@ -384,17 +384,17 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
                     </div>
 
                     {/* Player 2 Avatar & Name */}
-                    <div className="flex-1 flex flex-col items-center">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-1 bg-gradient-to-tr from-emerald-400 to-green-300 shadow-lg mb-2">
+                    <div className="flex-1 flex flex-col items-center min-w-0">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 min-w-[4rem] min-h-[4rem] rounded-full p-1 bg-gradient-to-tr from-emerald-400 to-green-300 shadow-lg mb-2 shrink-0 flex items-center justify-center overflow-hidden">
                         <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center font-bold text-xl sm:text-2xl text-emerald-300 overflow-hidden">
                           {playerObj2?.avatarUrl ? (
-                            <img src={playerObj2.avatarUrl} alt={compareName2} className="w-full h-full object-cover" />
+                            <img src={playerObj2.avatarUrl} alt={compareName2} className="w-full h-full object-cover rounded-full" />
                           ) : (
                             <span>{compareName2.charAt(0)}</span>
                           )}
                         </div>
                       </div>
-                      <span className="font-black text-base sm:text-lg text-white">{compareName2}</span>
+                      <span className="font-black text-base sm:text-lg text-white truncate max-w-full">{compareName2}</span>
                       <span className="text-xl sm:text-2xl font-black font-mono text-emerald-400 mt-1">
                         {h2hStats.player2Wins} برد
                       </span>

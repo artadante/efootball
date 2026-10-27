@@ -1074,10 +1074,12 @@ export const App: React.FC = () => {
       />
 
       {/* 2. Liquid Glass Bottom Navigation Bar (چرخونه - بازی‌ها - جدول - تاریخچه) */}
-      <LiquidBottomNav
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
+      {!isProfilesModalOpen && (
+        <LiquidBottomNav
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+      )}
     </div>
   );
 };

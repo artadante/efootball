@@ -115,7 +115,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
             {/* Avatar & Name */}
             <div className="flex flex-col items-center mt-4">
               <div 
-                className={`w-18 h-18 rounded-full p-1 shadow-lg ${
+                className={`w-20 h-20 rounded-full p-1 shadow-lg shrink-0 overflow-hidden flex items-center justify-center ${
                   isAdmin
                     ? 'bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-200 shadow-amber-500/30'
                     : 'bg-gradient-to-tr from-emerald-500 to-green-300 shadow-emerald-500/30'
@@ -123,7 +123,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
               >
                 <div className="w-full h-full rounded-full bg-emerald-950 flex items-center justify-center text-2xl font-extrabold text-emerald-300 border border-white/20 overflow-hidden">
                   {effectiveAvatar ? (
-                    <img src={effectiveAvatar} alt={userName} className="w-full h-full object-cover" />
+                    <img src={effectiveAvatar} alt={userName} className="w-full h-full object-cover rounded-full" />
                   ) : (
                     <span>{initial}</span>
                   )}
