@@ -136,12 +136,6 @@ LEFT JOIN match_results mr ON p.id = mr.player_id
 GROUP BY p.id, p.name, p.rating, p.favorite_team
 ORDER BY points DESC, goal_diff DESC, goals_for DESC;
 
--- 7. INITIAL SEED DATA (Friends group initial roster)
-INSERT INTO public.players (name, rating, favorite_team)
-VALUES 
-    ('علی', 1420, 'رئال مادرید 🇪🇸'),
-    ('رضا', 1380, 'منچسترسیتی 🏴󠁧󠁢󠁥󠁮󠁧󠁿'),
-    ('آرش', 1310, 'بارسلونا 🇪🇸'),
-    ('مهدی', 1250, 'آرسنال 🏴󠁧󠁢󠁥󠁮󠁧󠁿'),
-    ('سجاد', 1220, 'بایرن مونیخ 🇩🇪')
-ON CONFLICT (name) DO NOTHING;
+-- 7. OPTIONAL INITIAL SEED DATA
+-- Schema is clean and ready. Players and matches can be registered directly by the Admin from the app UI.
+

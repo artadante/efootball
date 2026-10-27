@@ -3,7 +3,6 @@ import { PitchBackground } from './components/PitchBackground';
 import { LiquidBottomNav, TabType } from './components/LiquidBottomNav';
 import { ProfileButton } from './components/ProfileButton';
 import { 
-  Crown, 
   Flame, 
   Calendar, 
   Sparkles, 
@@ -11,9 +10,13 @@ import {
   X, 
   Medal,
   Cloud,
-  Database
+  Database,
+  UserPlus,
+  ShieldAlert,
+  Trash2,
+  Users
 } from 'lucide-react';
-import { supabase, isSupabaseConfigured, DbStanding } from './lib/supabase';
+import { supabase, isSupabaseConfigured, DbStanding, DbPlayer } from './lib/supabase';
 
 interface StandingRow {
   rank: number;
@@ -38,39 +41,136 @@ interface MatchRecord {
   date: string;
 }
 
+interface Player {
+  id: string;
+  name: string;
+  favoriteTeam: string;
+  rating: number;
+}
+
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('league');
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isAddMatchModalOpen, setIsAddMatchModalOpen] = useState(false);
+  const [isAddPlayerModalOpen, setIsAddPlayerModalOpen] = useState(false);
+  const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState(false);
   const [showPwaTip, setShowPwaTip] = useState(true);
 
-  // Friendly league standings state
-  const [standings, setStandings] = useState<StandingRow[]>([
-    { rank: 1, name: 'علی', played: 6, won: 5, drawn: 0, lost: 1, goalsFor: 14, goalsAgainst: 6, points: 15 },
-    { rank: 2, name: 'رضا', played: 6, won: 4, drawn: 1, lost: 1, goalsFor: 12, goalsAgainst: 7, points: 13 },
-    { rank: 3, name: 'آرش', played: 6, won: 2, drawn: 2, lost: 2, goalsFor: 9, goalsAgainst: 9, points: 8 },
-    { rank: 4, name: 'مهدی', played: 6, won: 1, drawn: 1, lost: 4, goalsFor: 6, goalsAgainst: 13, points: 4 },
-    { rank: 5, name: 'سجاد', played: 6, won: 0, drawn: 2, lost: 4, goalsFor: 5, goalsAgainst: 11, points: 2 },
-  ]);
+  // Admin authentication state (saved in localStorage)
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    return localStorage.getItem('efootball_is_admin') === 'true';
+  });
+  const [adminPin] = useState<string>(() => {
+    return localStorage.getItem('efootball_admin_pin') || '1234';
+  });
+  const [unlockPinInput, setUnlockPinInput] = useState('');
+  const [unlockError, setUnlockError] = useState('');
 
-  const [matches, setMatches] = useState<MatchRecord[]>([
-    { id: '1', player1: 'علی', team1: 'رئال مادرید', score1: 3, score2: 1, player2: 'مهدی', team2: 'آرسنال', date: 'دیشب' },
-    { id: '2', player1: 'رضا', team1: 'منچسترسیتی', score1: 2, score2: 2, player2: 'آرش', team2: 'بارسلونا', date: '۲ روز پیش' },
-    { id: '3', player1: 'علی', team1: 'اینتر', score1: 4, score2: 0, player2: 'سجاد', team2: 'بایرن مونیخ', date: '۳ روز پیش' },
-  ]);
+  // Clean state (no hardcoded fake players or matches)
+  const [players, setPlayers] = useState<Player[]>(() => {
+    const saved = localStorage.getItem('efootball_local_players');
+    return saved ? JSON.parse(saved) : [];
+  });
 
-  // Load from Supabase if configured
+  const [standings, setStandings] = useState<StandingRow[]>([]);
+  const [matches, setMatches] = useState<MatchRecord[]>(() => {
+    const saved = localStorage.getItem('efootball_local_matches');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Calculate standings from matches and players
+  useEffect(() => {
+    if (players.length === 0) {
+      setStandings([]);
+      return;
+    }
+
+    const calculated: StandingRow[] = players.map(player => {
+      let played = 0;
+      let won = 0;
+      let drawn = 0;
+      let lost = 0;
+      let goalsFor = 0;
+      let goalsAgainst = 0;
+      let points = 0;
+
+      matches.forEach(m => {
+        if (m.player1 === player.name) {
+          played += 1;
+          goalsFor += m.score1;
+          goalsAgainst += m.score2;
+          if (m.score1 > m.score2) {
+            won += 1;
+            points += 3;
+          } else if (m.score1 === m.score2) {
+            drawn += 1;
+            points += 1;
+          } else {
+            lost += 1;
+          }
+        } else if (m.player2 === player.name) {
+          played += 1;
+          goalsFor += m.score2;
+          goalsAgainst += m.score1;
+          if (m.score2 > m.score1) {
+            won += 1;
+            points += 3;
+          } else if (m.score1 === m.score2) {
+            drawn += 1;
+            points += 1;
+          } else {
+            lost += 1;
+          }
+        }
+      });
+
+      return {
+        rank: 1,
+        name: player.name,
+        played,
+        won,
+        drawn,
+        lost,
+        goalsFor,
+        goalsAgainst,
+        points,
+      };
+    });
+
+    // Sort by points desc, then goal difference desc, then goalsFor desc
+    calculated.sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      const gdA = a.goalsFor - a.goalsAgainst;
+      const gdB = b.goalsFor - b.goalsAgainst;
+      if (gdB !== gdA) return gdB - gdA;
+      return b.goalsFor - a.goalsFor;
+    });
+
+    const ranked = calculated.map((row, idx) => ({ ...row, rank: idx + 1 }));
+    setStandings(ranked);
+  }, [players, matches]);
+
+  // Load from Supabase if credentials are provided
   useEffect(() => {
     const client = supabase;
     if (!isSupabaseConfigured || !client) return;
 
     const fetchLiveSupabaseData = async () => {
       try {
-        // Fetch standings view
-        const { data: standingsData, error: standingsErr } = await client
-          .from('league_standings')
-          .select('*');
+        // Fetch players
+        const { data: playersData } = await client.from('players').select('*');
+        if (playersData && playersData.length > 0) {
+          const mappedPlayers: Player[] = (playersData as DbPlayer[]).map(p => ({
+            id: p.id,
+            name: p.name,
+            favoriteTeam: p.favorite_team,
+            rating: p.rating,
+          }));
+          setPlayers(mappedPlayers);
+        }
 
-        if (!standingsErr && standingsData && standingsData.length > 0) {
+        // Fetch standings view
+        const { data: standingsData } = await client.from('league_standings').select('*');
+        if (standingsData && standingsData.length > 0) {
           const mappedStandings: StandingRow[] = (standingsData as DbStanding[]).map((s, idx) => ({
             rank: idx + 1,
             name: s.player_name,
@@ -86,12 +186,12 @@ export const App: React.FC = () => {
         }
 
         // Fetch matches
-        const { data: matchesData, error: matchesErr } = await client
+        const { data: matchesData } = await client
           .from('matches')
           .select('id, team1, team2, score1, score2, played_at, p1:player1_id(name), p2:player2_id(name)')
           .order('played_at', { ascending: false });
 
-        if (!matchesErr && matchesData) {
+        if (matchesData) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const mappedMatches: MatchRecord[] = matchesData.map((m: any) => ({
             id: m.id,
@@ -106,22 +206,21 @@ export const App: React.FC = () => {
           setMatches(mappedMatches);
         }
       } catch (err) {
-        console.warn('Supabase fetch error, fallback to offline local state', err);
+        console.warn('Supabase fetch error, fallback to local state', err);
       }
     };
 
     fetchLiveSupabaseData();
 
-    // Subscribe to realtime matches changes
+    // Subscribe to realtime matches & players changes
     const channel = client
       .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'matches' },
-        () => {
-          fetchLiveSupabaseData();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, () => {
+        fetchLiveSupabaseData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, () => {
+        fetchLiveSupabaseData();
+      })
       .subscribe();
 
     return () => {
@@ -129,55 +228,89 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Lucky wheel state
-  const teamsWheel = [
-    'رئال مادرید 🇪🇸',
-    'منچسترسیتی 🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-    'بارسلونا 🇪🇸',
-    'بایرن مونیخ 🇩🇪',
-    'آرسنال 🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-    'اینتر میلان 🇮🇹',
-    'پاری سن ژرمن 🇫🇷',
-    'لیورپول 🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-  ];
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [wheelAngle, setWheelAngle] = useState(0);
-  const [selectedWheelPrize, setSelectedWheelPrize] = useState<string | null>(null);
+  // Admin login / logout handlers
+  const handleAdminLogin = (pin: string) => {
+    if (pin === adminPin) {
+      setIsAdmin(true);
+      localStorage.setItem('efootball_is_admin', 'true');
+      setIsAdminAuthModalOpen(false);
+      return true;
+    }
+    return false;
+  };
+
+  const handleAdminLogout = () => {
+    setIsAdmin(false);
+    localStorage.removeItem('efootball_is_admin');
+  };
+
+  // Add new player form
+  const [newPlayerName, setNewPlayerName] = useState('');
+  const [newPlayerTeam, setNewPlayerTeam] = useState('رئال مادرید 🇪🇸');
+
+  const handleAddPlayerSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = newPlayerName.trim();
+    if (!trimmed) return;
+
+    if (players.some(p => p.name.toLowerCase() === trimmed.toLowerCase())) {
+      alert('این بازیکن از قبل در لیست وجود دارد.');
+      return;
+    }
+
+    const newP: Player = {
+      id: Date.now().toString(),
+      name: trimmed,
+      favoriteTeam: newPlayerTeam,
+      rating: 1200,
+    };
+
+    const updated = [...players, newP];
+    setPlayers(updated);
+    localStorage.setItem('efootball_local_players', JSON.stringify(updated));
+    setNewPlayerName('');
+    setIsAddPlayerModalOpen(false);
+
+    // Write to Supabase if connected
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('players').insert([{
+          name: trimmed,
+          favorite_team: newPlayerTeam,
+          rating: 1200,
+        }]);
+      } catch (err) {
+        console.error('Failed to insert player to Supabase', err);
+      }
+    }
+  };
 
   // New match form state
-  const [p1, setP1] = useState('علی');
-  const [p2, setP2] = useState('رضا');
-  const [s1, setS1] = useState(2);
-  const [s2, setS2] = useState(1);
+  const [p1, setP1] = useState('');
+  const [p2, setP2] = useState('');
+  const [s1, setS1] = useState(0);
+  const [s2, setS2] = useState(0);
 
-  const handleSpinWheel = async () => {
-    if (isSpinning) return;
-    setIsSpinning(true);
-    setSelectedWheelPrize(null);
+  const handleOpenAddMatch = () => {
+    if (!isAdmin) {
+      // Prompt for admin pin
+      setUnlockPinInput('');
+      setUnlockError('');
+      setIsAdminAuthModalOpen(true);
+      return;
+    }
 
-    const randomRotations = 5 + Math.floor(Math.random() * 5);
-    const randomExtraDegrees = Math.floor(Math.random() * 360);
-    const newAngle = wheelAngle + randomRotations * 360 + randomExtraDegrees;
+    if (players.length < 2) {
+      alert('برای ثبت مسابقه حداقل ۲ بازیکن باید در سیستم تعریف شده باشند.');
+      setIsAddPlayerModalOpen(true);
+      return;
+    }
 
-    setWheelAngle(newAngle);
-
-    setTimeout(async () => {
-      setIsSpinning(false);
-      const normalizedDegree = (360 - (newAngle % 360)) % 360;
-      const segmentSize = 360 / teamsWheel.length;
-      const index = Math.floor(normalizedDegree / segmentSize);
-      const chosen = teamsWheel[index];
-      setSelectedWheelPrize(chosen);
-
-      // Optional: record spin to Supabase if available
-      if (isSupabaseConfigured && supabase) {
-        try {
-          await supabase.from('wheel_spins').insert([{ prize: chosen }]);
-        } catch (e) {
-          console.warn('Failed recording wheel spin to Supabase', e);
-        }
-      }
-    }, 3200);
+    setP1(players[0].name);
+    setP2(players[1].name);
+    setS1(0);
+    setS2(0);
+    setIsAddMatchModalOpen(true);
   };
 
   const handleCreateMatch = async (e: React.FormEvent) => {
@@ -198,48 +331,10 @@ export const App: React.FC = () => {
       date: 'هم‌اکنون',
     };
 
-    // Client-side instant optimistic update
-    setMatches([newRecord, ...matches]);
-
-    setStandings(prev => {
-      return prev.map(row => {
-        if (row.name === p1) {
-          const won = s1 > s2 ? 1 : 0;
-          const drawn = s1 === s2 ? 1 : 0;
-          const lost = s1 < s2 ? 1 : 0;
-          const points = won ? 3 : drawn ? 1 : 0;
-          return {
-            ...row,
-            played: row.played + 1,
-            won: row.won + won,
-            drawn: row.drawn + drawn,
-            lost: row.lost + lost,
-            goalsFor: row.goalsFor + s1,
-            goalsAgainst: row.goalsAgainst + s2,
-            points: row.points + points,
-          };
-        }
-        if (row.name === p2) {
-          const won = s2 > s1 ? 1 : 0;
-          const drawn = s1 === s2 ? 1 : 0;
-          const lost = s2 < s1 ? 1 : 0;
-          const points = won ? 3 : drawn ? 1 : 0;
-          return {
-            ...row,
-            played: row.played + 1,
-            won: row.won + won,
-            drawn: row.drawn + drawn,
-            lost: row.lost + lost,
-            goalsFor: row.goalsFor + s2,
-            goalsAgainst: row.goalsAgainst + s1,
-            points: row.points + points,
-          };
-        }
-        return row;
-      }).sort((a, b) => b.points - a.points || (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst));
-    });
-
-    setIsAddModalOpen(false);
+    const updatedMatches = [newRecord, ...matches];
+    setMatches(updatedMatches);
+    localStorage.setItem('efootball_local_matches', JSON.stringify(updatedMatches));
+    setIsAddMatchModalOpen(false);
 
     // If Supabase is connected, write to Postgres
     if (isSupabaseConfigured && supabase) {
@@ -263,6 +358,59 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleDeleteMatch = async (matchId: string) => {
+    if (!isAdmin) return;
+    if (!confirm('آیا مطمئن هستید که می‌خواهید این نتیجه حذف شود؟')) return;
+
+    const filtered = matches.filter(m => m.id !== matchId);
+    setMatches(filtered);
+    localStorage.setItem('efootball_local_matches', JSON.stringify(filtered));
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('matches').delete().eq('id', matchId);
+      } catch (e) {
+        console.error('Error deleting match from Supabase', e);
+      }
+    }
+  };
+
+  // Lucky wheel state
+  const teamsWheel = [
+    'رئال مادرید 🇪🇸',
+    'منچسترسیتی 🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+    'بارسلونا 🇪🇸',
+    'بایرن مونیخ 🇩🇪',
+    'آرسنال 🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+    'اینتر میلان 🇮🇹',
+    'پاری سن ژرمن 🇫🇷',
+    'لیورپول 🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+  ];
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [wheelAngle, setWheelAngle] = useState(0);
+  const [selectedWheelPrize, setSelectedWheelPrize] = useState<string | null>(null);
+
+  const handleSpinWheel = async () => {
+    if (isSpinning) return;
+    setIsSpinning(true);
+    setSelectedWheelPrize(null);
+
+    const randomRotations = 5 + Math.floor(Math.random() * 5);
+    const randomExtraDegrees = Math.floor(Math.random() * 360);
+    const newAngle = wheelAngle + randomRotations * 360 + randomExtraDegrees;
+
+    setWheelAngle(newAngle);
+
+    setTimeout(async () => {
+      setIsSpinning(false);
+      const normalizedDegree = (360 - (newAngle % 360)) % 360;
+      const segmentSize = 360 / teamsWheel.length;
+      const index = Math.floor(normalizedDegree / segmentSize);
+      const chosen = teamsWheel[index];
+      setSelectedWheelPrize(chosen);
+    }, 3200);
+  };
+
   return (
     <div className="relative min-h-screen w-full bg-[#041308] text-white flex flex-col justify-between selection:bg-emerald-500 selection:text-black">
       {/* 1. Football Pitch Visual Background */}
@@ -274,7 +422,14 @@ export const App: React.FC = () => {
         {/* Top Header Bar */}
         <header className="flex items-center justify-between py-2">
           {/* Circular Profile Button at corner */}
-          <ProfileButton userName="علی رضایی" rating={1420} favoriteTeam="رئال مادرید" />
+          <ProfileButton 
+            userName={isAdmin ? 'مدیر کل لیگ' : 'کاربر مهمان'} 
+            rating={isAdmin ? 1500 : 1200}
+            isAdmin={isAdmin}
+            onAdminLogin={handleAdminLogin}
+            onAdminLogout={handleAdminLogout}
+            onAddPlayer={() => setIsAddPlayerModalOpen(true)}
+          />
 
           {/* Center Title Badge */}
           <div className="text-center">
@@ -283,7 +438,7 @@ export const App: React.FC = () => {
             </h1>
             <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-400/90 font-medium mt-0.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>فصل دوستانه ۱۴۰۵</span>
+              <span>{isAdmin ? '👑 حالت مدیریت فعال' : 'فصل دوستانه ۱۴۰۵'}</span>
             </div>
           </div>
 
@@ -304,7 +459,7 @@ export const App: React.FC = () => {
           </div>
         </header>
 
-        {/* PWA "Add to Home Screen" Helper Banner */}
+        {/* PWA Helper Banner */}
         {showPwaTip && (
           <div className="mt-3 p-3 rounded-2xl bg-emerald-950/70 border border-emerald-500/20 backdrop-blur-xl flex items-center justify-between text-xs text-emerald-200/90 shadow-lg animate-fadeIn">
             <div className="flex items-center gap-2.5">
@@ -312,7 +467,7 @@ export const App: React.FC = () => {
                 <Smartphone className="w-4 h-4" />
               </div>
               <div>
-                <p className="font-semibold text-white">نصب مثل اپلیکیشن موبایل</p>
+                <p className="font-semibold text-white">نصب روی گوشی</p>
                 <p className="text-[11px] text-emerald-300/70">در مرورگر گزینه Add to Home Screen را بزنید</p>
               </div>
             </div>
@@ -332,43 +487,7 @@ export const App: React.FC = () => {
           {/* TAB 1: LEAGUE TABLE & STANDINGS */}
           {activeTab === 'league' && (
             <div className="space-y-4 animate-fadeIn">
-              {/* Leader Highlight Card */}
-              <div className="p-4 rounded-3xl bg-gradient-to-br from-emerald-950/80 via-emerald-900/40 to-black/60 border border-emerald-500/25 backdrop-blur-xl shadow-[0_12px_30px_rgba(0,0,0,0.5),0_0_20px_rgba(34,197,94,0.15)]">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-black font-black text-xl shadow-[0_0_15px_rgba(245,158,11,0.5)]">
-                      <Crown className="w-6 h-6 stroke-[2.5]" />
-                    </div>
-                    <div>
-                      <span className="text-[11px] text-amber-300 font-bold uppercase tracking-wider">صدرنشین فعلی</span>
-                      <h2 className="text-lg font-extrabold text-white">{standings[0]?.name}</h2>
-                    </div>
-                  </div>
-                  <div className="text-end">
-                    <span className="text-2xl font-black text-emerald-400">{standings[0]?.points}</span>
-                    <span className="text-xs text-zinc-400 block font-medium">امتیاز</span>
-                  </div>
-                </div>
-
-                {/* Quick League Stats Bar */}
-                <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-white/10 text-center text-xs">
-                  <div>
-                    <span className="text-zinc-400 block text-[11px]">تعداد دوستان</span>
-                    <span className="font-bold text-white text-sm">{standings.length} نفر</span>
-                  </div>
-                  <div>
-                    <span className="text-zinc-400 block text-[11px]">بازی انجام‌شده</span>
-                    <span className="font-bold text-white text-sm">{matches.length} بازی</span>
-                  </div>
-                  <div>
-                    <span className="text-zinc-400 block text-[11px]">همگام‌سازی</span>
-                    <span className="font-bold text-emerald-400 text-sm">
-                      {isSupabaseConfigured ? 'ابری Realtime' : 'محلی'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
+              
               {/* Standings Table Card */}
               <div className="rounded-3xl p-4 bg-emerald-950/50 border border-white/15 backdrop-blur-2xl shadow-xl">
                 <div className="flex items-center justify-between mb-3 px-1">
@@ -376,68 +495,85 @@ export const App: React.FC = () => {
                     <Medal className="w-4 h-4 text-emerald-400" />
                     <span>جدول رده‌بندی لیگ</span>
                   </h3>
-                  <span className="text-[11px] text-zinc-400">فصل اول</span>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => setIsAddPlayerModalOpen(true)}
+                      className="text-[11px] font-bold text-emerald-300 hover:text-emerald-200 flex items-center gap-1 bg-emerald-500/20 px-2 py-1 rounded-lg transition-all"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" />
+                      <span>افزودن بازیکن</span>
+                    </button>
+                  )}
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-center text-xs">
-                    <thead>
-                      <tr className="text-zinc-400 border-b border-white/10 pb-2 font-medium">
-                        <th className="py-2 text-start px-2">#</th>
-                        <th className="py-2 text-start">بازیکن</th>
-                        <th className="py-2">بازی</th>
-                        <th className="py-2">برد</th>
-                        <th className="py-2">تفاضل</th>
-                        <th className="py-2 font-bold text-emerald-400">امتیاز</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {standings.map((row) => (
-                        <tr
-                          key={row.name}
-                          className={`hover:bg-white/5 transition-colors ${
-                            row.rank === 1 ? 'bg-emerald-500/10' : ''
-                          }`}
-                        >
-                          <td className="py-3 px-2 text-start font-bold">
-                            {row.rank === 1 ? (
-                              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-400/20 text-amber-300 text-[11px]">
-                                ۱
-                              </span>
-                            ) : (
-                              <span className="text-zinc-400">{row.rank}</span>
-                            )}
-                          </td>
-                          <td className="py-3 text-start font-bold text-white flex items-center gap-2">
-                            <span>{row.name}</span>
-                          </td>
-                          <td className="py-3 text-zinc-300">{row.played}</td>
-                          <td className="py-3 text-zinc-300">{row.won}</td>
-                          <td className="py-3 font-mono text-[11px] text-zinc-300 dir-ltr">
-                            {row.goalsFor - row.goalsAgainst > 0 ? `+${row.goalsFor - row.goalsAgainst}` : row.goalsFor - row.goalsAgainst}
-                          </td>
-                          <td className="py-3 font-extrabold text-sm text-emerald-400">
-                            {row.points}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Upcoming Feature Match Announcement */}
-              <div className="p-3.5 rounded-2xl bg-black/40 border border-white/10 backdrop-blur-md flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2.5">
-                  <Calendar className="w-4 h-4 text-emerald-400" />
-                  <div>
-                    <span className="font-semibold text-white">بازی حساس بعدی:</span>
-                    <span className="text-zinc-300 mr-1.5">علی مقابل رضا</span>
+                {standings.length === 0 ? (
+                  <div className="py-10 text-center space-y-3">
+                    <div className="w-12 h-12 rounded-full bg-emerald-900/40 border border-emerald-500/20 mx-auto flex items-center justify-center text-emerald-400">
+                      <Users className="w-6 h-6" />
+                    </div>
+                    <p className="text-xs text-zinc-300 font-medium">هنوز بازیکنی به لیگ اضافه نشده است.</p>
+                    {isAdmin ? (
+                      <button
+                        type="button"
+                        onClick={() => setIsAddPlayerModalOpen(true)}
+                        className="py-2 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all"
+                      >
+                        ➕ افزودن اولین بازیکن لیگ
+                      </button>
+                    ) : (
+                      <p className="text-[11px] text-zinc-500">
+                        برای شروع لیگ، مدیر باید بازیکنان را اضافه کند.
+                      </p>
+                    )}
                   </div>
-                </div>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
-                  امشب ساعت ۲۲:۳۰
-                </span>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-center text-xs">
+                      <thead>
+                        <tr className="text-zinc-400 border-b border-white/10 pb-2 font-medium">
+                          <th className="py-2 text-start px-2">#</th>
+                          <th className="py-2 text-start">بازیکن</th>
+                          <th className="py-2">بازی</th>
+                          <th className="py-2">برد</th>
+                          <th className="py-2">تفاضل</th>
+                          <th className="py-2 font-bold text-emerald-400">امتیاز</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {standings.map((row) => (
+                          <tr
+                            key={row.name}
+                            className={`hover:bg-white/5 transition-colors ${
+                              row.rank === 1 && row.points > 0 ? 'bg-emerald-500/10' : ''
+                            }`}
+                          >
+                            <td className="py-3 px-2 text-start font-bold">
+                              {row.rank === 1 && row.points > 0 ? (
+                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-400/20 text-amber-300 text-[11px]">
+                                  ۱
+                                </span>
+                              ) : (
+                                <span className="text-zinc-400">{row.rank}</span>
+                              )}
+                            </td>
+                            <td className="py-3 text-start font-bold text-white flex items-center gap-2">
+                              <span>{row.name}</span>
+                            </td>
+                            <td className="py-3 text-zinc-300">{row.played}</td>
+                            <td className="py-3 text-zinc-300">{row.won}</td>
+                            <td className="py-3 font-mono text-[11px] text-zinc-300 dir-ltr">
+                              {row.goalsFor - row.goalsAgainst > 0 ? `+${row.goalsFor - row.goalsAgainst}` : row.goalsFor - row.goalsAgainst}
+                            </td>
+                            <td className="py-3 font-extrabold text-sm text-emerald-400">
+                              {row.points}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -454,12 +590,10 @@ export const App: React.FC = () => {
                   قبل از شروع هر بازی برای انتخاب رندوم تیم یا جریمه چرخونه رو بچرخونید!
                 </p>
 
-                {/* Graphical Wheel Canvas Simulation */}
+                {/* Rotating Wheel Circle */}
                 <div className="relative w-64 h-64 mx-auto my-6 flex items-center justify-center">
-                  {/* Top Pointer Indicator */}
                   <div className="absolute -top-3 z-30 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[20px] border-t-amber-400 drop-shadow-[0_2px_8px_rgba(245,158,11,0.8)]" />
 
-                  {/* Rotating Wheel Circle */}
                   <div
                     className="relative w-full h-full rounded-full border-4 border-amber-400/80 shadow-[0_0_35px_rgba(34,197,94,0.4)] overflow-hidden transition-all duration-[3200ms] ease-out flex items-center justify-center"
                     style={{
@@ -467,12 +601,10 @@ export const App: React.FC = () => {
                       background: 'conic-gradient(#064e3b 0deg 45deg, #022c22 45deg 90deg, #065f46 90deg 135deg, #047857 135deg 180deg, #064e3b 180deg 225deg, #022c22 225deg 270deg, #065f46 270deg 315deg, #047857 315deg 360deg)',
                     }}
                   >
-                    {/* Wheel Center Button */}
                     <div className="absolute z-20 w-14 h-14 rounded-full bg-emerald-950 border-2 border-amber-400 flex items-center justify-center shadow-lg text-amber-400 font-black text-xs">
                       eFootball
                     </div>
 
-                    {/* Team labels placed radially */}
                     {teamsWheel.map((team, idx) => {
                       const angle = idx * 45 + 22.5;
                       return (
@@ -490,14 +622,12 @@ export const App: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Result Announcement */}
                 {selectedWheelPrize && (
                   <div className="p-3 mb-4 rounded-2xl bg-amber-400/15 border border-amber-400/40 text-amber-300 text-sm font-extrabold animate-bounce">
                     🎉 تیم انتخاب‌شده: {selectedWheelPrize}
                   </div>
                 )}
 
-                {/* Spin Button */}
                 <button
                   type="button"
                   onClick={handleSpinWheel}
@@ -520,45 +650,188 @@ export const App: React.FC = () => {
                 <span className="text-xs text-zinc-400">آخرین نتایج</span>
               </div>
 
-              {matches.map((m) => (
-                <div
-                  key={m.id}
-                  className="p-4 rounded-2xl bg-emerald-950/60 border border-white/10 backdrop-blur-xl shadow-lg flex items-center justify-between hover:border-emerald-500/30 transition-all"
-                >
-                  {/* Player 1 */}
-                  <div className="flex-1 text-center">
-                    <span className="block font-bold text-sm text-white">{m.player1}</span>
-                    <span className="text-[10px] text-zinc-400">{m.team1}</span>
-                  </div>
-
-                  {/* Score Badge */}
-                  <div className="px-3 py-1.5 rounded-xl bg-black/60 border border-white/10 mx-2 text-center min-w-[70px]">
-                    <span className="text-base font-black text-emerald-400 font-mono tracking-wider">
-                      {m.score1} - {m.score2}
-                    </span>
-                    <span className="block text-[9px] text-zinc-400 mt-0.5">{m.date}</span>
-                  </div>
-
-                  {/* Player 2 */}
-                  <div className="flex-1 text-center">
-                    <span className="block font-bold text-sm text-white">{m.player2}</span>
-                    <span className="text-[10px] text-zinc-400">{m.team2}</span>
-                  </div>
+              {matches.length === 0 ? (
+                <div className="py-12 rounded-3xl bg-emerald-950/40 border border-white/10 text-center space-y-2">
+                  <Calendar className="w-8 h-8 mx-auto text-zinc-500" />
+                  <p className="text-xs text-zinc-400">هنوز هیچ مسابقه‌ای ثبت نشده است.</p>
                 </div>
-              ))}
+              ) : (
+                matches.map((m) => (
+                  <div
+                    key={m.id}
+                    className="p-4 rounded-2xl bg-emerald-950/60 border border-white/10 backdrop-blur-xl shadow-lg flex items-center justify-between hover:border-emerald-500/30 transition-all relative group"
+                  >
+                    {/* Player 1 */}
+                    <div className="flex-1 text-center">
+                      <span className="block font-bold text-sm text-white">{m.player1}</span>
+                      <span className="text-[10px] text-zinc-400">{m.team1}</span>
+                    </div>
+
+                    {/* Score Badge */}
+                    <div className="px-3 py-1.5 rounded-xl bg-black/60 border border-white/10 mx-2 text-center min-w-[70px]">
+                      <span className="text-base font-black text-emerald-400 font-mono tracking-wider">
+                        {m.score1} - {m.score2}
+                      </span>
+                      <span className="block text-[9px] text-zinc-400 mt-0.5">{m.date}</span>
+                    </div>
+
+                    {/* Player 2 */}
+                    <div className="flex-1 text-center">
+                      <span className="block font-bold text-sm text-white">{m.player2}</span>
+                      <span className="text-[10px] text-zinc-400">{m.team2}</span>
+                    </div>
+
+                    {/* Admin Delete Action */}
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteMatch(m.id)}
+                        className="text-zinc-500 hover:text-rose-400 p-1.5 transition-colors"
+                        title="حذف مسابقه"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           )}
         </main>
       </div>
 
-      {/* New Match Modal triggered by '+' button */}
-      {isAddModalOpen && (
+      {/* Modal 1: Add New Player (Admin Only) */}
+      {isAddPlayerModalOpen && (
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
         >
-          <div className="relative w-full max-w-sm rounded-3xl p-6 bg-emerald-950/90 border border-emerald-500/30 backdrop-blur-2xl shadow-2xl text-white">
+          <div className="relative w-full max-w-sm rounded-3xl p-6 bg-emerald-950/95 border border-emerald-500/30 backdrop-blur-2xl shadow-2xl text-white">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <h3 className="text-base font-bold text-emerald-300 flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-emerald-400" />
+                <span>افزودن بازیکن جدید</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsAddPlayerModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddPlayerSubmit} className="mt-4 space-y-4">
+              <div>
+                <label className="block text-xs text-zinc-300 mb-1 font-medium">نام بازیکن / دوست شما</label>
+                <input
+                  type="text"
+                  value={newPlayerName}
+                  onChange={(e) => setNewPlayerName(e.target.value)}
+                  placeholder="مثال: آرش، سامان، علی..."
+                  className="w-full py-2.5 px-3 rounded-xl bg-black/50 border border-white/15 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-zinc-300 mb-1 font-medium">تیم مورد علاقه</label>
+                <input
+                  type="text"
+                  value={newPlayerTeam}
+                  onChange={(e) => setNewPlayerTeam(e.target.value)}
+                  placeholder="مثال: رئال مادرید 🇪🇸"
+                  className="w-full py-2.5 px-3 rounded-xl bg-black/50 border border-white/15 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400"
+                />
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-bold text-sm shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:brightness-110 active:scale-95 transition-all"
+                >
+                  ثبت بازیکن در لیگ
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 2: Visitor Prompt to Enter Admin PIN */}
+      {isAdminAuthModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
+        >
+          <div className="relative w-full max-w-sm rounded-3xl p-6 bg-emerald-950/95 border border-amber-500/30 backdrop-blur-2xl shadow-2xl text-white">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <h3 className="text-base font-bold text-amber-300 flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-amber-400" />
+                <span>دسترسی مدیر لازم است</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsAdminAuthModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="mt-3 text-center">
+              <p className="text-xs text-zinc-300">
+                فقط مدیر لیگ امکان ثبت نتیجه مسابقه را دارد. اگر شما مدیر هستید، رمز عبور را وارد کنید:
+              </p>
+
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!handleAdminLogin(unlockPinInput)) {
+                    setUnlockError('رمز عبور مدیر اشتباه است.');
+                  }
+                }} 
+                className="mt-4 space-y-3"
+              >
+                <input
+                  type="password"
+                  value={unlockPinInput}
+                  onChange={(e) => {
+                    setUnlockPinInput(e.target.value);
+                    setUnlockError('');
+                  }}
+                  placeholder="رمز مدیر (پیش‌فرض: 1234)"
+                  className="w-full py-2.5 px-3 text-center rounded-xl bg-black/50 border border-white/15 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400"
+                  autoFocus
+                />
+
+                {unlockError && (
+                  <p className="text-[11px] text-rose-400 font-medium">{unlockError}</p>
+                )}
+
+                <button
+                  type="submit"
+                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-bold text-sm shadow hover:brightness-110 active:scale-95 transition-all"
+                >
+                  تایید رمز و باز شدن پنل
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 3: New Match Modal (Admin Only) */}
+      {isAddMatchModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
+        >
+          <div className="relative w-full max-w-sm rounded-3xl p-6 bg-emerald-950/95 border border-emerald-500/30 backdrop-blur-2xl shadow-2xl text-white">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h3 className="text-base font-bold text-emerald-300 flex items-center gap-2">
                 <Flame className="w-5 h-5 text-amber-400" />
@@ -566,7 +839,7 @@ export const App: React.FC = () => {
               </h3>
               <button
                 type="button"
-                onClick={() => setIsAddModalOpen(false)}
+                onClick={() => setIsAddMatchModalOpen(false)}
                 className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20"
               >
                 <X className="w-4 h-4" />
@@ -583,7 +856,7 @@ export const App: React.FC = () => {
                     onChange={(e) => setP1(e.target.value)}
                     className="w-full py-2 px-2.5 rounded-xl bg-black/50 border border-white/15 text-xs text-white focus:outline-none focus:border-emerald-400"
                   >
-                    {standings.map(s => <option key={s.name} value={s.name} className="bg-emerald-950">{s.name}</option>)}
+                    {players.map(p => <option key={p.id} value={p.name} className="bg-emerald-950">{p.name}</option>)}
                   </select>
                   <input
                     type="number"
@@ -605,7 +878,7 @@ export const App: React.FC = () => {
                     onChange={(e) => setP2(e.target.value)}
                     className="w-full py-2 px-2.5 rounded-xl bg-black/50 border border-white/15 text-xs text-white focus:outline-none focus:border-emerald-400"
                   >
-                    {standings.map(s => <option key={s.name} value={s.name} className="bg-emerald-950">{s.name}</option>)}
+                    {players.map(p => <option key={p.id} value={p.name} className="bg-emerald-950">{p.name}</option>)}
                   </select>
                   <input
                     type="number"
@@ -637,7 +910,7 @@ export const App: React.FC = () => {
       <LiquidBottomNav
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onAddClick={() => setIsAddModalOpen(true)}
+        onAddClick={handleOpenAddMatch}
       />
     </div>
   );
