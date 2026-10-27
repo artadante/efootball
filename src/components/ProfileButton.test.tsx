@@ -3,12 +3,22 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ProfileButton } from './ProfileButton';
 
 describe('ProfileButton Component', () => {
-  it('renders circular button with user initials and online badge', () => {
+  it('renders circular button with admin avatar and online badge when admin', () => {
     render(<ProfileButton userName="مدیر لیگ" rating={1420} isAdmin={true} onAdminLogin={vi.fn()} onAdminLogout={vi.fn()} />);
     
     const button = screen.getByRole('button', { name: /پروفایل مدیر لیگ/i });
     expect(button).toBeInTheDocument();
-    expect(screen.getByText('م')).toBeInTheDocument(); // Initial
+    const avatar = screen.getByAltText('مدیر لیگ');
+    expect(avatar).toBeInTheDocument();
+    expect(avatar).toHaveAttribute('src', '/admin-avatar.png');
+  });
+
+  it('renders initials when non-admin has no avatar image', () => {
+    render(<ProfileButton userName="کاربر مهمان" rating={1200} isAdmin={false} onAdminLogin={vi.fn()} onAdminLogout={vi.fn()} />);
+    
+    const button = screen.getByRole('button', { name: /پروفایل کاربر مهمان/i });
+    expect(button).toBeInTheDocument();
+    expect(screen.getByText('ک')).toBeInTheDocument();
   });
 
   it('opens profile drawer and shows admin badge if user is admin', () => {

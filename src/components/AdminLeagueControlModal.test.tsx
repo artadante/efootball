@@ -78,10 +78,10 @@ describe('AdminLeagueControlModal Component', () => {
     fireEvent.click(editBtns[0]);
 
     const nameInput = screen.getByPlaceholderText('نام بازیکن');
-    const teamInput = screen.getByPlaceholderText('نام تیم');
+    const teamSelect = screen.getByRole('combobox');
 
     fireEvent.change(nameInput, { target: { value: 'آرتا نوین' } });
-    fireEvent.change(teamInput, { target: { value: 'رئال مادرید' } });
+    fireEvent.change(teamSelect, { target: { value: 'رئال مادرید' } });
 
     fireEvent.click(screen.getByRole('button', { name: /ذخیره تغییرات/i }));
 
@@ -103,7 +103,7 @@ describe('AdminLeagueControlModal Component', () => {
     );
 
     fireEvent.click(screen.getByText('ویرایش بازی‌ها'));
-    expect(screen.getByText(/ویرایش نتایج مسابقات ثبت‌شده/i)).toBeInTheDocument();
+    expect(screen.getByText(/نتایج مسابقات ثبت‌شده/i)).toBeInTheDocument();
 
     const resetBtn = screen.getByRole('button', { name: /ریست بازی/i });
     fireEvent.click(resetBtn);

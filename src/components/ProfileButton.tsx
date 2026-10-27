@@ -26,6 +26,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
   const [pinInput, setPinInput] = useState('');
   const [loginError, setLoginError] = useState('');
 
+  const effectiveAvatar = avatarUrl || (isAdmin ? '/admin-avatar.png' : undefined);
   const initial = userName ? userName.trim().charAt(0) : 'ک';
 
   const handleLoginSubmit = (e: React.FormEvent) => {
@@ -58,8 +59,8 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
           }`}
         >
           <div className="w-full h-full rounded-full bg-emerald-950/90 backdrop-blur-md flex items-center justify-center text-emerald-300 font-bold text-base border border-white/20 overflow-hidden">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
+            {effectiveAvatar ? (
+              <img src={effectiveAvatar} alt={userName} className="w-full h-full object-cover" />
             ) : (
               <span>{initial}</span>
             )}
@@ -118,8 +119,12 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                     : 'bg-gradient-to-tr from-emerald-500 to-green-300 shadow-emerald-500/30'
                 }`}
               >
-                <div className="w-full h-full rounded-full bg-emerald-950 flex items-center justify-center text-2xl font-extrabold text-emerald-300 border border-white/20">
-                  {initial}
+                <div className="w-full h-full rounded-full bg-emerald-950 flex items-center justify-center text-2xl font-extrabold text-emerald-300 border border-white/20 overflow-hidden">
+                  {effectiveAvatar ? (
+                    <img src={effectiveAvatar} alt={userName} className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{initial}</span>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-1.5 mt-2.5">

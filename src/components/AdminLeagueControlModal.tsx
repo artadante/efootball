@@ -8,6 +8,8 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { ActiveLeague } from '../types/league';
+import { TEAMS_DATABASE } from '../data/teams';
+import { TeamLogo } from './TeamLogo';
 
 interface AdminLeagueControlModalProps {
   isOpen: boolean;
@@ -201,13 +203,22 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
                           className="p-2.5 rounded-xl bg-emerald-950 border border-emerald-400/40 text-sm text-white focus:outline-none"
                           autoFocus
                         />
-                        <input
-                          type="text"
+                        <select
                           value={editTeam}
                           onChange={(e) => setEditTeam(e.target.value)}
-                          placeholder="نام تیم"
                           className="p-2.5 rounded-xl bg-emerald-950 border border-emerald-400/40 text-sm text-white focus:outline-none"
-                        />
+                        >
+                          <option value="" disabled>انتخاب تیم از منو...</option>
+                          {['انگلیس', 'اسپانیا', 'آلمان', 'ایتالیا', 'فرانسه'].map((lg) => (
+                            <optgroup key={lg} label={`لیگ ${lg}`}>
+                              {TEAMS_DATABASE.filter(t => t.league === lg).map((t) => (
+                                <option key={t.id} value={t.name}>
+                                  {t.name} ({t.stars} ⭐)
+                                </option>
+                              ))}
+                            </optgroup>
+                          ))}
+                        </select>
                       </div>
                       <div className="flex gap-2">
                         <button
@@ -230,7 +241,10 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
                   ) : (
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-bold text-white">{p.name || 'نامشخص'}</span>
-                      <span className="text-emerald-400 font-semibold">{p.team || 'تیم نامشخص'}</span>
+                      <div className="flex items-center gap-1.5">
+                        <TeamLogo teamName={p.team} className="w-4 h-4" />
+                        <span className="text-emerald-400 font-semibold">{p.team || 'تیم نامشخص'}</span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -243,7 +257,7 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
         {activeSubTab === 'matches' && (
           <div className="flex-1 overflow-y-auto no-scrollbar space-y-2.5 pr-0.5">
             <p className="text-xs sm:text-sm text-zinc-300 mb-2">
-              ویرایش نتایج مسابقات ثبت‌شده یا بازگرداندن به حالت انجام‌نشده:
+              ویرایش منویی نتایج مسابقات ثبت‌شده یا بازگرداندن به حالت انجام‌نشده:
             </p>
 
             {activeLeague.matches.filter(m => m.isPlayed).length === 0 ? (
@@ -253,6 +267,8 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
             ) : (
               activeLeague.matches.filter(m => m.isPlayed).map((m) => {
                 const isEditing = editingMatchId === m.id;
+                const p1 = activeLeague.players.find(pl => pl.slot === m.player1Slot);
+                const p2 = activeLeague.players.find(pl => pl.slot === m.player2Slot);
                 const p1Name = getPlayerName(m.player1Slot);
                 const p2Name = getPlayerName(m.player2Slot);
 
@@ -274,25 +290,43 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
                     {isEditing ? (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between gap-2 text-sm">
-                          <span className="flex-1 truncate font-bold text-white text-start">{p1Name}</span>
-                          <input
-                            type="number"
-                            min="0"
-                            max="50"
+                          <div className="flex-1 flex items-center gap-1 truncate text-start">
+                            <TeamLogo teamName={p1?.team} className="w-4 h-4" />
+                            <span className="truncate font-bold text-white">{p1Name}</span>
+                          </div>
+
+                          {/* Menu-based goal selector for Home team */}
+                          <select
                             value={editScore1}
                             onChange={(e) => setEditScore1(Number(e.target.value))}
-                            className="w-14 py-1.5 text-center rounded-lg bg-emerald-950 border border-emerald-400 text-white font-mono font-black text-base"
-                          />
+                            className="w-16 py-1.5 px-1 text-center rounded-lg bg-emerald-950 border border-emerald-400 text-emerald-300 font-mono font-black text-base focus:outline-none"
+                          >
+                            {Array.from({ length: 21 }, (_, i) => (
+                              <option key={i} value={i} className="bg-zinc-900 text-white font-mono">
+                                {i}
+                              </option>
+                            ))}
+                          </select>
+
                           <span className="font-mono text-zinc-400 font-bold">-</span>
-                          <input
-                            type="number"
-                            min="0"
-                            max="50"
+
+                          {/* Menu-based goal selector for Away team */}
+                          <select
                             value={editScore2}
                             onChange={(e) => setEditScore2(Number(e.target.value))}
-                            className="w-14 py-1.5 text-center rounded-lg bg-emerald-950 border border-emerald-400 text-white font-mono font-black text-base"
-                          />
-                          <span className="flex-1 truncate font-bold text-white text-end">{p2Name}</span>
+                            className="w-16 py-1.5 px-1 text-center rounded-lg bg-emerald-950 border border-emerald-400 text-emerald-300 font-mono font-black text-base focus:outline-none"
+                          >
+                            {Array.from({ length: 21 }, (_, i) => (
+                              <option key={i} value={i} className="bg-zinc-900 text-white font-mono">
+                                {i}
+                              </option>
+                            ))}
+                          </select>
+
+                          <div className="flex-1 flex items-center justify-end gap-1 truncate text-end">
+                            <span className="truncate font-bold text-white">{p2Name}</span>
+                            <TeamLogo teamName={p2?.team} className="w-4 h-4" />
+                          </div>
                         </div>
                         <div className="flex gap-2">
                           <button
@@ -313,16 +347,22 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
                       </div>
                     ) : (
                       <div className="flex items-center justify-between text-sm">
-                        <span className="flex-1 truncate font-bold text-white text-start">{p1Name}</span>
+                        <div className="flex-1 flex items-center gap-1.5 truncate text-start">
+                          <TeamLogo teamName={p1?.team} className="w-4 h-4" />
+                          <span className="truncate font-bold text-white">{p1Name}</span>
+                        </div>
                         <div className="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 font-mono font-black text-base mx-2">
                           {m.score1} - {m.score2}
                         </div>
-                        <span className="flex-1 truncate font-bold text-white text-end">{p2Name}</span>
+                        <div className="flex-1 flex items-center justify-end gap-1.5 truncate text-end">
+                          <span className="truncate font-bold text-white">{p2Name}</span>
+                          <TeamLogo teamName={p2?.team} className="w-4 h-4" />
+                        </div>
                         <button
                           type="button"
                           onClick={() => handleStartEditMatch(m.id, m.score1, m.score2)}
                           className="mr-2 p-1 text-emerald-400 hover:text-white"
-                          title="ویرایش نتیجه"
+                          title="ویرایش نتیجه منویی"
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>

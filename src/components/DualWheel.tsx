@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Sparkles, Lock, CheckCircle2, User, Shield, AlertCircle } from 'lucide-react';
+import { Sparkles, Lock, CheckCircle2, User, Shield, AlertCircle, ListPlus } from 'lucide-react';
 import { ActiveLeague } from '../types/league';
+import { TeamSelectorModal } from './TeamSelectorModal';
+import { TeamLogo } from './TeamLogo';
 
 interface DualWheelProps {
   activeLeague: ActiveLeague | null;
@@ -11,9 +13,9 @@ export const DualWheel: React.FC<DualWheelProps> = ({
   activeLeague,
   onSlotAssigned,
 }) => {
-  // Empty by default as requested: "هیچ متن پیشفرضی نزار همرو باید دستی وارد کنم"
   const [playersInput, setPlayersInput] = useState('');
   const [teamsInput, setTeamsInput] = useState('');
+  const [isTeamSelectorOpen, setIsTeamSelectorOpen] = useState(false);
 
   // Rotation states for 2 wheels
   const [wheel1Angle, setWheel1Angle] = useState(0);
@@ -35,7 +37,7 @@ export const DualWheel: React.FC<DualWheelProps> = ({
   // If no league created yet
   if (!activeLeague) {
     return (
-      <div className="p-6 rounded-3xl bg-emerald-950/60 border border-white/15 backdrop-blur-2xl shadow-xl text-center space-y-3">
+      <div className="my-auto p-6 rounded-3xl bg-emerald-950/60 border border-white/15 backdrop-blur-2xl shadow-xl text-center space-y-3">
         <div className="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-400 mx-auto flex items-center justify-center text-emerald-400">
           <AlertCircle className="w-7 h-7" />
         </div>
@@ -55,26 +57,31 @@ export const DualWheel: React.FC<DualWheelProps> = ({
 
   if (isLocked) {
     return (
-      <div className="p-6 rounded-3xl bg-emerald-950/60 border border-amber-500/30 backdrop-blur-2xl shadow-xl text-center space-y-4 animate-fadeIn">
-        <div className="w-16 h-16 rounded-full bg-amber-500/20 border-2 border-amber-400 mx-auto flex items-center justify-center text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.4)]">
-          <Lock className="w-8 h-8" />
-        </div>
-        <div>
-          <h3 className="text-lg font-bold text-white">گردونه قفل است 🔒</h3>
-          <p className="text-sm text-zinc-300 mt-1">
-            تمامی بازیکنان و تیم‌های <span className="font-bold text-emerald-400">{activeLeague.name}</span> تعیین شده‌اند. تا اتمام کامل بازی‌های لیگ، گردونه قفل خواهد بود.
-          </p>
-        </div>
+      <div className="my-auto space-y-4">
+        <div className="p-6 rounded-3xl bg-emerald-950/60 border border-amber-500/30 backdrop-blur-2xl shadow-xl text-center space-y-4 animate-fadeIn">
+          <div className="w-16 h-16 rounded-full bg-amber-500/20 border-2 border-amber-400 mx-auto flex items-center justify-center text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.4)]">
+            <Lock className="w-8 h-8" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-white">گردونه قفل است 🔒</h3>
+            <p className="text-sm text-zinc-300 mt-1">
+              تمامی بازیکنان و تیم‌های <span className="font-bold text-emerald-400">{activeLeague.name}</span> تعیین شده‌اند. تا اتمام کامل بازی‌های لیگ، گردونه قفل خواهد بود.
+            </p>
+          </div>
 
-        {/* Assigned list overview */}
-        <div className="p-3.5 rounded-2xl bg-black/50 border border-white/10 text-sm text-start space-y-2">
-          <span className="text-xs text-zinc-400 font-bold block mb-1">بازیکنان و تیم‌های تعیین‌شده:</span>
-          {activeLeague.players.map((p) => (
-            <div key={p.slot} className="flex justify-between items-center py-1.5 border-b border-white/5">
-              <span className="font-bold text-white">بازیکن {p.slot}: {p.name}</span>
-              <span className="text-emerald-400 font-semibold">{p.team}</span>
-            </div>
-          ))}
+          {/* Assigned list overview */}
+          <div className="p-3.5 rounded-2xl bg-black/50 border border-white/10 text-sm text-start space-y-2">
+            <span className="text-xs text-zinc-400 font-bold block mb-1">بازیکنان و تیم‌های تعیین‌شده:</span>
+            {activeLeague.players.map((p) => (
+              <div key={p.slot} className="flex justify-between items-center py-1.5 border-b border-white/5">
+                <span className="font-bold text-white">بازیکن {p.slot}: {p.name}</span>
+                <div className="flex items-center gap-1.5">
+                  <TeamLogo teamName={p.team} className="w-4 h-4" />
+                  <span className="text-emerald-400 font-semibold">{p.team}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -85,7 +92,7 @@ export const DualWheel: React.FC<DualWheelProps> = ({
   const handleDualSpin = () => {
     if (isSpinning) return;
     if (playerList.length === 0 || teamList.length === 0) {
-      alert('لطفاً در هر دو کادر زیر حداقل ۱ بازیکن و ۱ تیم وارد کنید.');
+      alert('لطفاً در هر دو بخش حداقل ۱ بازیکن و ۱ تیم انتخاب یا وارد کنید.');
       return;
     }
 
@@ -132,7 +139,7 @@ export const DualWheel: React.FC<DualWheelProps> = ({
   };
 
   return (
-    <div className="space-y-4 animate-fadeIn">
+    <div className="my-auto space-y-4 animate-fadeIn">
       {/* Container Box */}
       <div className="p-4 rounded-3xl bg-emerald-950/60 border border-white/15 backdrop-blur-2xl shadow-xl">
         
@@ -152,11 +159,12 @@ export const DualWheel: React.FC<DualWheelProps> = ({
           </span>
         </div>
 
-        {/* Manual Input Section (No default text as requested) */}
+        {/* Player Name Input & Team Picker Menu */}
         <div className="grid grid-cols-2 gap-2.5 my-3">
+          {/* 1. Players Input */}
           <div>
             <label className="block text-xs font-semibold text-zinc-200 mb-1">
-              اسم بازیکنا (با ویرگول جدا کنید):
+              اسم بازیکنا (با ویرگول):
             </label>
             <textarea
               rows={2}
@@ -169,19 +177,40 @@ export const DualWheel: React.FC<DualWheelProps> = ({
             <span className="text-xs text-zinc-400 mt-0.5 block">{playerList.length} بازیکن</span>
           </div>
 
+          {/* 2. Teams Selector Menu (Menu-based as requested) */}
           <div>
-            <label className="block text-xs font-semibold text-zinc-200 mb-1">
-              اسم تیم‌ها (با ویرگول جدا کنید):
-            </label>
-            <textarea
-              rows={2}
-              value={teamsInput}
-              onChange={(e) => setTeamsInput(e.target.value)}
-              placeholder="مثال: چلسی، رئال، بارسا، اینتر..."
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-zinc-200">
+                تیم‌ها ({teamList.length}):
+              </label>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsTeamSelectorOpen(true)}
               disabled={isSpinning}
-              className="w-full p-2.5 rounded-xl bg-black/50 border border-white/15 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400 resize-none"
-            />
-            <span className="text-xs text-zinc-400 mt-0.5 block">{teamList.length} تیم</span>
+              className="w-full py-2.5 px-2 rounded-xl bg-gradient-to-r from-emerald-600/30 to-green-600/30 hover:from-emerald-600/40 hover:to-green-600/40 border border-emerald-400/50 text-emerald-300 font-bold text-xs flex items-center justify-center gap-1.5 shadow transition-all"
+            >
+              <ListPlus className="w-4 h-4 text-emerald-400" />
+              <span>منوی انتخاب تیم‌ها 📋</span>
+            </button>
+
+            {/* Selected teams preview tags */}
+            <div className="mt-1.5 max-h-14 overflow-y-auto no-scrollbar flex flex-wrap gap-1">
+              {teamList.length === 0 ? (
+                <span className="text-[11px] text-zinc-500 italic">هنوز تیمی انتخاب نشده است</span>
+              ) : (
+                teamList.map((t, idx) => (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center gap-1 py-0.5 px-1.5 rounded-md bg-black/40 border border-white/10 text-[10px] text-white"
+                  >
+                    <TeamLogo teamName={t} className="w-3 h-3" />
+                    <span>{t}</span>
+                  </span>
+                ))
+              )}
+            </div>
           </div>
         </div>
 
@@ -272,7 +301,14 @@ export const DualWheel: React.FC<DualWheelProps> = ({
           <div className="p-3 my-3 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-center animate-bounce">
             <span className="text-sm font-bold text-amber-300 flex items-center justify-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>بازیکن {lastAssigned.slot}: «{lastAssigned.name}» با تیم «{lastAssigned.team}» ثبت شد!</span>
+              <span>
+                بازیکن {lastAssigned.slot}: «{lastAssigned.name}» با تیم
+              </span>
+              <span className="inline-flex items-center gap-1 font-black text-white">
+                <TeamLogo teamName={lastAssigned.team} className="w-4 h-4" />
+                «{lastAssigned.team}»
+              </span>
+              <span>ثبت شد!</span>
             </span>
           </div>
         )}
@@ -288,6 +324,14 @@ export const DualWheel: React.FC<DualWheelProps> = ({
           <span>{isSpinning ? 'در حال چرخش دو گردونه...' : `چرخش برای بازیکن ${currentSlotNumber} 🎡`}</span>
         </button>
       </div>
+
+      {/* Team Selection Menu Modal */}
+      <TeamSelectorModal
+        isOpen={isTeamSelectorOpen}
+        onClose={() => setIsTeamSelectorOpen(false)}
+        selectedTeamNames={teamList}
+        onConfirm={(chosen) => setTeamsInput(chosen.join(', '))}
+      />
     </div>
   );
 };
