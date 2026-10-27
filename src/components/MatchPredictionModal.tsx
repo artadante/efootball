@@ -33,8 +33,6 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
   players,
   currentUserName,
   activeUser,
-  registeredPlayers,
-  onSelectActiveUser,
 }) => {
   const [predictions, setPredictions] = useState<StoredPrediction[]>(() => {
     try {
@@ -95,7 +93,7 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
 
     if (!isLoggedIn || !effectiveUserName) {
       soundEngine.playWhistle();
-      setAuthError('خطا: برای ثبت پیش‌بینی ابتدا باید وارد حساب کاربری خود شوید.');
+      setAuthError('خطا: برای ثبت پیش‌بینی، ابتدا از بالای صفحه اصلی وارد حساب کاربری خود شوید.');
       return;
     }
 
@@ -180,57 +178,38 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label="پیش‌بینی و کل‌کل مسابقات"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fadeIn"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 pb-20 sm:pb-6 bg-black/75 backdrop-blur-md animate-fadeIn overflow-hidden"
     >
-      <div className="relative w-full max-w-lg rounded-3xl bg-emerald-950/90 border border-white/20 p-5 text-white shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar">
+      <div className="relative w-full max-w-sm sm:max-w-md mx-auto rounded-2xl sm:rounded-3xl bg-[#061f0e]/95 border border-white/20 p-3.5 sm:p-5 text-white shadow-2xl max-h-[74vh] sm:max-h-[80vh] overflow-y-auto overflow-x-hidden no-scrollbar">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
-          <div className="flex items-center gap-2">
-            <Target className="w-5 h-5 text-amber-400" />
-            <h3 className="font-black text-lg text-white">پیش‌بینی نتایج مسابقات</h3>
+        <div className="flex items-center justify-between pb-2.5 border-b border-white/10 mb-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <Target className="w-5 h-5 text-amber-400 shrink-0" />
+            <h3 className="font-black text-sm sm:text-base text-white truncate">پیش‌بینی نتایج مسابقات</h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-zinc-300 cursor-pointer"
+            className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-zinc-300 cursor-pointer shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Prediction Form for Current User */}
-        <div className="p-4 rounded-2xl bg-black/40 border border-white/10 mb-5">
+        <div className="p-3 sm:p-4 rounded-2xl bg-black/40 border border-white/10 mb-4">
           {!isLoggedIn ? (
-            <div className="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/35 text-rose-300 text-xs sm:text-sm font-bold flex flex-col gap-2 mb-3">
+            <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/35 text-rose-300 text-xs font-bold flex flex-col gap-1.5 mb-3">
               <div className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
                 <span className="font-black text-white">خطا: ورود به حساب کاربری الزامی است!</span>
               </div>
-              <p className="text-xs text-rose-200/90 font-normal">
-                برای ثبت پیش‌بینی مسابقات، ابتدا باید وارد حساب کاربری خود شوید (مثلاً پدرام).
+              <p className="text-[11px] text-rose-200/90 font-normal leading-relaxed">
+                برای ثبت پیش‌بینی مسابقات، ابتدا باید وارد حساب کاربری خود شوید. لطفاً از بالای صفحه اصلی روی آیکون پروفایل بزنید و نام خود را انتخاب کنید.
               </p>
-              {registeredPlayers && registeredPlayers.length > 0 && onSelectActiveUser && (
-                <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-rose-500/25">
-                  <span className="text-[11px] text-zinc-300 font-bold">ورود به حساب:</span>
-                  {registeredPlayers.map((player) => (
-                    <button
-                      key={player.id}
-                      type="button"
-                      onClick={() => {
-                        soundEngine.playClick();
-                        onSelectActiveUser(player);
-                        setAuthError('');
-                      }}
-                      className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-emerald-500 hover:text-black text-white text-xs font-bold transition-all cursor-pointer"
-                    >
-                      {player.name}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
           ) : (
-            <span className="text-xs text-amber-300 font-bold block mb-2">
+            <span className="text-xs text-amber-300 font-bold block mb-2 truncate">
               پیش‌بینی مسابقه بعدی توسط «{effectiveUserName}»:
             </span>
           )}
@@ -238,21 +217,21 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
           {authError && (
             <div className="p-2.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-bold flex items-center gap-2 mb-3">
               <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-              <span>{authError}</span>
+              <span className="truncate">{authError}</span>
             </div>
           )}
 
           {unplayedMatches.length === 0 ? (
             <p className="text-xs text-zinc-400 text-center py-4">همه بازی‌های این لیگ برگزار شده‌اند یا هنوز لیگی ایجاد نشده است.</p>
           ) : (
-            <form onSubmit={handleSavePrediction} className="space-y-4">
+            <form onSubmit={handleSavePrediction} className="space-y-3">
               {/* Select Match */}
               <div>
-                <label className="text-xs text-zinc-400 block mb-1">انتخاب مسابقه برای پیش‌بینی:</label>
+                <label className="text-[11px] text-zinc-400 block mb-1">انتخاب مسابقه برای پیش‌بینی:</label>
                 <select
                   value={selectedMatchId || activeTargetMatch?.id}
                   onChange={(e) => setSelectedMatchId(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-black/60 border border-white/15 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-emerald-400 cursor-pointer"
+                  className="w-full max-w-full p-2 rounded-xl bg-black/60 border border-white/15 text-xs font-bold text-white focus:outline-none focus:border-emerald-400 cursor-pointer truncate"
                 >
                   {unplayedMatches.map((m) => {
                     const pl1 = getPlayer(m.player1Slot);
@@ -268,27 +247,27 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
 
               {/* Match Visual & Winner selector */}
               {p1 && p2 && (
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-center space-y-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-1.5 flex-1 truncate">
+                <div className="p-2.5 sm:p-3 rounded-xl bg-white/5 border border-white/10 text-center space-y-2.5">
+                  <div className="flex items-center justify-between text-xs gap-1">
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
                       <TeamLogo teamName={p1.team} className="w-4 h-4 shrink-0" />
-                      <span className="font-bold truncate text-white">{p1.name}</span>
+                      <span className="font-bold truncate text-white text-[11px] sm:text-xs">{p1.name}</span>
                     </div>
-                    <span className="text-amber-400 font-mono font-black px-2">VS</span>
-                    <div className="flex items-center justify-end gap-1.5 flex-1 truncate text-end">
-                      <span className="font-bold truncate text-white">{p2.name}</span>
+                    <span className="text-amber-400 font-mono font-black px-1.5 text-xs shrink-0">VS</span>
+                    <div className="flex items-center justify-end gap-1.5 min-w-0 flex-1 truncate text-end">
+                      <span className="font-bold truncate text-white text-[11px] sm:text-xs">{p2.name}</span>
                       <TeamLogo teamName={p2.team} className="w-4 h-4 shrink-0" />
                     </div>
                   </div>
 
                   {/* Outcome choice buttons */}
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-1.5">
                     <button
                       type="button"
                       onClick={() => handleSetWinner('p1')}
-                      className={`py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      className={`py-1.5 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer truncate ${
                         predWinner === 'p1'
-                          ? 'bg-emerald-500 text-black shadow-lg font-black'
+                          ? 'bg-emerald-500 text-black shadow-md font-black'
                           : 'bg-white/10 text-zinc-300 hover:bg-white/15'
                       }`}
                     >
@@ -297,9 +276,9 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                     <button
                       type="button"
                       onClick={() => handleSetWinner('draw')}
-                      className={`py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      className={`py-1.5 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer truncate ${
                         predWinner === 'draw'
-                          ? 'bg-amber-400 text-black shadow-lg font-black'
+                          ? 'bg-amber-400 text-black shadow-md font-black'
                           : 'bg-white/10 text-zinc-300 hover:bg-white/15'
                       }`}
                     >
@@ -308,9 +287,9 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                     <button
                       type="button"
                       onClick={() => handleSetWinner('p2')}
-                      className={`py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      className={`py-1.5 px-1 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer truncate ${
                         predWinner === 'p2'
-                          ? 'bg-emerald-500 text-black shadow-lg font-black'
+                          ? 'bg-emerald-500 text-black shadow-md font-black'
                           : 'bg-white/10 text-zinc-300 hover:bg-white/15'
                       }`}
                     >
@@ -319,17 +298,17 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                   </div>
 
                   {/* Menu-Based Exact Score Select */}
-                  <div className="pt-3 border-t border-white/10 space-y-2.5">
-                    <span className="text-xs text-zinc-300 font-bold block text-start">
+                  <div className="pt-2.5 border-t border-white/10 space-y-2">
+                    <span className="text-[11px] text-zinc-300 font-bold block text-start">
                       انتخاب منویی نتیجه دقیق مسابقه:
                     </span>
 
-                    {/* CASE 1: DRAW (Positive scores up to 10-10) */}
+                    {/* CASE 1: DRAW (Up to 10-10) */}
                     {predWinner === 'draw' && (
-                      <div className="space-y-2.5 animate-fadeIn">
-                        <div className="flex items-center gap-2">
-                          <label className="text-xs text-amber-300 font-bold shrink-0">
-                            نتیجه تساوی (اعداد مساوی):
+                      <div className="space-y-2 animate-fadeIn">
+                        <div className="flex items-center justify-between gap-2">
+                          <label className="text-[11px] sm:text-xs text-amber-300 font-bold shrink-0">
+                            نتیجه تساوی (۱-۱، ۲-۲، ۳-۳):
                           </label>
                           <select
                             value={score1}
@@ -338,7 +317,7 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                               setScore1(val);
                               setScore2(val);
                             }}
-                            className="flex-1 p-2 rounded-xl bg-black/60 border border-amber-400/50 text-amber-300 font-mono font-bold text-sm focus:outline-none focus:border-amber-400 cursor-pointer"
+                            className="w-28 sm:w-32 p-1.5 rounded-xl bg-black/60 border border-amber-400/50 text-amber-300 font-mono font-bold text-xs focus:outline-none focus:border-amber-400 cursor-pointer"
                           >
                             {Array.from({ length: 11 }, (_, i) => i).map((n) => (
                               <option key={n} value={n}>
@@ -349,7 +328,7 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                         </div>
 
                         {/* Quick pills for equal scores up to 10 */}
-                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                        <div className="flex items-center justify-center gap-1 flex-wrap">
                           {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
                             <button
                               key={n}
@@ -358,9 +337,9 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                                 setScore1(n);
                                 setScore2(n);
                               }}
-                              className={`px-2 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                              className={`px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
                                 score1 === n && score2 === n
-                                  ? 'bg-amber-400 text-black shadow-lg font-black scale-105'
+                                  ? 'bg-amber-400 text-black shadow font-black scale-105'
                                   : 'bg-white/10 text-zinc-300 hover:bg-white/15'
                               }`}
                             >
@@ -371,12 +350,12 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                       </div>
                     )}
 
-                    {/* CASE 2: TEAM 1 WIN (Scores up to 20 goals) */}
+                    {/* CASE 2: TEAM 1 WIN (Both sides up to 10 goals) */}
                     {predWinner === 'p1' && (
-                      <div className="space-y-2.5 animate-fadeIn">
+                      <div className="space-y-2 animate-fadeIn">
                         <div className="grid grid-cols-2 gap-2 text-start">
                           <div>
-                            <label className="text-[11px] text-emerald-400 font-bold block mb-1">
+                            <label className="text-[11px] text-emerald-400 font-bold block mb-1 truncate">
                               گل‌های {p1.name} (بالاتر):
                             </label>
                             <select
@@ -385,12 +364,12 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                                 const val = parseInt(e.target.value, 10);
                                 setScore1(val);
                                 if (score2 >= val) {
-                                  setScore2(val - 1);
+                                  setScore2(Math.max(0, val - 1));
                                 }
                               }}
-                              className="w-full p-2 rounded-xl bg-black/60 border border-emerald-400/50 text-emerald-300 font-mono font-bold text-sm focus:outline-none focus:border-emerald-400 cursor-pointer"
+                              className="w-full p-1.5 rounded-xl bg-black/60 border border-emerald-400/50 text-emerald-300 font-mono font-bold text-xs focus:outline-none focus:border-emerald-400 cursor-pointer"
                             >
-                              {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
+                              {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                                 <option key={n} value={n}>
                                   {n} گل
                                 </option>
@@ -399,15 +378,21 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                           </div>
 
                           <div>
-                            <label className="text-[11px] text-zinc-400 font-bold block mb-1">
+                            <label className="text-[11px] text-zinc-400 font-bold block mb-1 truncate">
                               گل‌های {p2.name} (کمتر):
                             </label>
                             <select
                               value={score2}
-                              onChange={(e) => setScore2(parseInt(e.target.value, 10))}
-                              className="w-full p-2 rounded-xl bg-black/60 border border-white/20 text-zinc-200 font-mono font-bold text-sm focus:outline-none focus:border-emerald-400 cursor-pointer"
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                setScore2(val);
+                                if (val >= score1) {
+                                  setScore1(Math.min(10, val + 1));
+                                }
+                              }}
+                              className="w-full p-1.5 rounded-xl bg-black/60 border border-white/20 text-zinc-200 font-mono font-bold text-xs focus:outline-none focus:border-emerald-400 cursor-pointer"
                             >
-                              {Array.from({ length: score1 }, (_, i) => i).map((n) => (
+                              {Array.from({ length: 11 }, (_, i) => i).map((n) => (
                                 <option key={n} value={n}>
                                   {n} گل
                                 </option>
@@ -417,7 +402,7 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                         </div>
 
                         {/* Quick pills for P1 win */}
-                        <div className="flex items-center justify-center gap-1.5 flex-wrap pt-1">
+                        <div className="flex items-center justify-center gap-1 flex-wrap pt-0.5">
                           {[
                             [1, 0],
                             [2, 0],
@@ -429,7 +414,6 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                             [4, 2],
                             [5, 1],
                             [5, 2],
-                            [6, 1],
                           ].map(([s1, s2]) => (
                             <button
                               key={`${s1}-${s2}`}
@@ -438,9 +422,9 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                                 setScore1(s1);
                                 setScore2(s2);
                               }}
-                              className={`px-2 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                              className={`px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
                                 score1 === s1 && score2 === s2
-                                  ? 'bg-emerald-500 text-black shadow-lg font-black scale-105'
+                                  ? 'bg-emerald-500 text-black shadow font-black scale-105'
                                   : 'bg-white/10 text-zinc-300 hover:bg-white/15'
                               }`}
                             >
@@ -451,20 +435,26 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                       </div>
                     )}
 
-                    {/* CASE 3: TEAM 2 WIN (Scores up to 20 goals) */}
+                    {/* CASE 3: TEAM 2 WIN (Both sides up to 10 goals) */}
                     {predWinner === 'p2' && (
-                      <div className="space-y-2.5 animate-fadeIn">
+                      <div className="space-y-2 animate-fadeIn">
                         <div className="grid grid-cols-2 gap-2 text-start">
                           <div>
-                            <label className="text-[11px] text-zinc-400 font-bold block mb-1">
+                            <label className="text-[11px] text-zinc-400 font-bold block mb-1 truncate">
                               گل‌های {p1.name} (کمتر):
                             </label>
                             <select
                               value={score1}
-                              onChange={(e) => setScore1(parseInt(e.target.value, 10))}
-                              className="w-full p-2 rounded-xl bg-black/60 border border-white/20 text-zinc-200 font-mono font-bold text-sm focus:outline-none focus:border-emerald-400 cursor-pointer"
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                setScore1(val);
+                                if (val >= score2) {
+                                  setScore2(Math.min(10, val + 1));
+                                }
+                              }}
+                              className="w-full p-1.5 rounded-xl bg-black/60 border border-white/20 text-zinc-200 font-mono font-bold text-xs focus:outline-none focus:border-emerald-400 cursor-pointer"
                             >
-                              {Array.from({ length: score2 }, (_, i) => i).map((n) => (
+                              {Array.from({ length: 11 }, (_, i) => i).map((n) => (
                                 <option key={n} value={n}>
                                   {n} گل
                                 </option>
@@ -473,7 +463,7 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                           </div>
 
                           <div>
-                            <label className="text-[11px] text-emerald-400 font-bold block mb-1">
+                            <label className="text-[11px] text-emerald-400 font-bold block mb-1 truncate">
                               گل‌های {p2.name} (بالاتر):
                             </label>
                             <select
@@ -482,12 +472,12 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                                 const val = parseInt(e.target.value, 10);
                                 setScore2(val);
                                 if (score1 >= val) {
-                                  setScore1(val - 1);
+                                  setScore1(Math.max(0, val - 1));
                                 }
                               }}
-                              className="w-full p-2 rounded-xl bg-black/60 border border-emerald-400/50 text-emerald-300 font-mono font-bold text-sm focus:outline-none focus:border-emerald-400 cursor-pointer"
+                              className="w-full p-1.5 rounded-xl bg-black/60 border border-emerald-400/50 text-emerald-300 font-mono font-bold text-xs focus:outline-none focus:border-emerald-400 cursor-pointer"
                             >
-                              {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
+                              {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                                 <option key={n} value={n}>
                                   {n} گل
                                 </option>
@@ -497,7 +487,7 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                         </div>
 
                         {/* Quick pills for P2 win */}
-                        <div className="flex items-center justify-center gap-1.5 flex-wrap pt-1">
+                        <div className="flex items-center justify-center gap-1 flex-wrap pt-0.5">
                           {[
                             [0, 1],
                             [0, 2],
@@ -509,7 +499,6 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                             [2, 4],
                             [1, 5],
                             [2, 5],
-                            [1, 6],
                           ].map(([s1, s2]) => (
                             <button
                               key={`${s1}-${s2}`}
@@ -518,9 +507,9 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                                 setScore1(s1);
                                 setScore2(s2);
                               }}
-                              className={`px-2 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                              className={`px-2 py-0.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer ${
                                 score1 === s1 && score2 === s2
-                                  ? 'bg-emerald-500 text-black shadow-lg font-black scale-105'
+                                  ? 'bg-emerald-500 text-black shadow font-black scale-105'
                                   : 'bg-white/10 text-zinc-300 hover:bg-white/15'
                               }`}
                             >
@@ -544,9 +533,9 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                 }`}
               >
                 {!isLoggedIn ? (
-                  <span className="flex items-center gap-1.5 text-rose-400">
-                    <AlertCircle className="w-4 h-4" />
-                    <span>برای پیش‌بینی وارد حساب خود شوید</span>
+                  <span className="flex items-center gap-1.5 text-rose-400 text-[11px] sm:text-xs">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>برای پیش‌بینی، ابتدا از صفحه اصلی وارد حساب خود شوید</span>
                   </span>
                 ) : savedSuccess ? (
                   <>
@@ -565,38 +554,38 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
         </div>
 
         {/* Prediction Leaderboard */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-amber-400" />
-            <h4 className="font-black text-sm text-white">جدول پیش‌بینی‌کنندگان برتر دورهمی</h4>
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5">
+            <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
+            <h4 className="font-black text-xs sm:text-sm text-white">جدول پیش‌بینی‌کنندگان برتر دورهمی</h4>
           </div>
 
           {leaderboard.length === 0 ? (
-            <p className="text-xs text-zinc-400 text-center py-3">هنوز هیچ پیش‌بینی امتیازداری ثبت نشده است.</p>
+            <p className="text-xs text-zinc-400 text-center py-2.5">هنوز هیچ پیش‌بینی امتیازداری ثبت نشده است.</p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {leaderboard.map((item, idx) => (
                 <div
                   key={item.name}
-                  className={`p-3 rounded-2xl flex items-center justify-between text-xs ${
+                  className={`p-2 sm:p-2.5 rounded-xl flex items-center justify-between text-xs gap-2 ${
                     idx === 0
                       ? 'bg-amber-400/20 border border-amber-400/40 text-amber-200'
                       : 'bg-white/5 border border-white/5 text-zinc-300'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-6 h-6 rounded-full bg-black/40 flex items-center justify-center font-mono font-bold">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-5 h-5 rounded-full bg-black/40 flex items-center justify-center font-mono font-bold text-[11px] shrink-0">
                       {idx + 1}
                     </span>
-                    <span className="font-bold text-white text-sm">{item.name}</span>
+                    <span className="font-bold text-white text-xs truncate">{item.name}</span>
                   </div>
 
-                  <div className="flex items-center gap-4 text-end">
-                    <span className="text-[11px] text-zinc-400">
-                      {item.correctExact} حدس دقیق • {item.correctOutcome} حدس برنده
+                  <div className="flex items-center gap-2 text-end shrink-0">
+                    <span className="text-[10px] text-zinc-400 hidden xs:inline">
+                      {item.correctExact} دقیق • {item.correctOutcome} برنده
                     </span>
-                    <span className="font-mono font-black text-base text-amber-400">
-                      {item.points} امتیاز
+                    <span className="font-mono font-black text-xs sm:text-sm text-amber-400 shrink-0">
+                      {item.points} امت
                     </span>
                   </div>
                 </div>
