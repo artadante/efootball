@@ -279,7 +279,7 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                             }}
                             className="flex-1 p-2 rounded-xl bg-black/60 border border-amber-400/50 text-amber-300 font-mono font-bold text-sm focus:outline-none focus:border-amber-400 cursor-pointer"
                           >
-                            {[0, 1, 2, 3, 4, 5].map((n) => (
+                            {Array.from({ length: 11 }, (_, i) => i).map((n) => (
                               <option key={n} value={n}>
                                 تساوی {n} - {n}
                               </option>
@@ -329,7 +329,7 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                               }}
                               className="w-full p-2 rounded-xl bg-black/60 border border-emerald-400/50 text-emerald-300 font-mono font-bold text-sm focus:outline-none focus:border-emerald-400 cursor-pointer"
                             >
-                              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                              {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
                                 <option key={n} value={n}>
                                   {n} گل
                                 </option>
@@ -423,7 +423,7 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                               }}
                               className="w-full p-2 rounded-xl bg-black/60 border border-emerald-400/50 text-emerald-300 font-mono font-bold text-sm focus:outline-none focus:border-emerald-400 cursor-pointer"
                             >
-                              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                              {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
                                 <option key={n} value={n}>
                                   {n} گل
                                 </option>

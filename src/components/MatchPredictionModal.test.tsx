@@ -133,4 +133,24 @@ describe('MatchPredictionModal Component', () => {
     expect(saved[0].score2).toBe(3);
     expect(saved[0].score2).toBeGreaterThan(saved[0].score1);
   });
+
+  it('provides score options up to 20 goals for win and up to 10 for draw', () => {
+    render(
+      <MatchPredictionModal
+        isOpen={true}
+        onClose={vi.fn()}
+        matches={mockMatches}
+        players={mockPlayers}
+        currentUserName="آرتا"
+      />
+    );
+
+    // Test Win options up to 20 goals
+    fireEvent.click(screen.getByText(/برد آرتا/i));
+    expect(screen.getByRole('option', { name: '20 گل' })).toBeInTheDocument();
+
+    // Test Draw options up to 10 goals
+    fireEvent.click(screen.getByText(/نتیجه تساوی/i));
+    expect(screen.getByRole('option', { name: 'تساوی 10 - 10' })).toBeInTheDocument();
+  });
 });
