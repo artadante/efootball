@@ -36,6 +36,8 @@ export const PickBanModal: React.FC<PickBanModalProps> = ({
   });
 
   const [activePlayer, setActivePlayer] = useState<string>(players[0] || '');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedLeagueFilter, setSelectedLeagueFilter] = useState<string>('all');
 
   if (!isOpen) return null;
 
@@ -175,9 +177,56 @@ export const PickBanModal: React.FC<PickBanModalProps> = ({
             )}
           </div>
 
+          {/* Filter & Search Bar */}
+          <div className="space-y-2">
+            <input
+              type="text"
+              placeholder="جستجوی نام تیم (فارسی یا انگلیسی)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400"
+            />
+
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+              {[
+                { id: 'all', label: `همه تیم‌ها (${TEAMS_DATABASE.length})` },
+                { id: 'انگلیس', label: 'انگلیس' },
+                { id: 'اسپانیا', label: 'اسپانیا' },
+                { id: 'آلمان', label: 'آلمان' },
+                { id: 'ایتالیا', label: 'ایتالیا' },
+                { id: 'فرانسه', label: 'فرانسه' },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    soundEngine.playClick();
+                    setSelectedLeagueFilter(item.id);
+                  }}
+                  className={`py-1 px-2.5 rounded-lg text-[11px] font-bold shrink-0 transition-all cursor-pointer ${
+                    selectedLeagueFilter === item.id
+                      ? 'bg-emerald-500 text-black shadow'
+                      : 'bg-white/10 text-zinc-300 hover:bg-white/15'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Teams Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-            {TEAMS_DATABASE.map((team: TeamInfo) => {
+            {TEAMS_DATABASE.filter((team: TeamInfo) => {
+              const q = searchQuery.trim().toLowerCase();
+              const matchesSearch =
+                !q ||
+                team.name.toLowerCase().includes(q) ||
+                team.enName.toLowerCase().includes(q);
+              const matchesLeague =
+                selectedLeagueFilter === 'all' || team.league === selectedLeagueFilter;
+              return matchesSearch && matchesLeague;
+            }).map((team: TeamInfo) => {
               const isBanned = currentSelection.bannedTeam === team.name;
               const isPicked = currentSelection.pickedTeams.includes(team.name);
 

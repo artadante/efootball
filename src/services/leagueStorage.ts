@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 
 const STORAGE_ACTIVE_KEY = 'efootball_active_league';
 const STORAGE_ARCHIVED_KEY = 'efootball_archived_leagues';
+const STORAGE_ARCHIVED_BACKUP_KEY = 'efootball_archived_leagues_backup';
 const STORAGE_PLAYERS_KEY = 'efootball_registered_players';
 const DB_SYNC_NAME = '__EFOOTBALL_GLOBAL_STATE__';
 
@@ -23,11 +24,33 @@ export function getLocalLeagueState(): {
   try {
     const activeRaw = localStorage.getItem(STORAGE_ACTIVE_KEY);
     const archivedRaw = localStorage.getItem(STORAGE_ARCHIVED_KEY);
+    const backupRaw = localStorage.getItem(STORAGE_ARCHIVED_BACKUP_KEY);
     const playersRaw = localStorage.getItem(STORAGE_PLAYERS_KEY);
+
+    let parsedArchived: ArchivedLeague[] = [];
+    if (archivedRaw) {
+      try {
+        parsedArchived = JSON.parse(archivedRaw);
+      } catch {
+        parsedArchived = [];
+      }
+    }
+
+    // Safety net: If archived is empty but backup has saved leagues, recover from backup
+    if ((!parsedArchived || parsedArchived.length === 0) && backupRaw) {
+      try {
+        const backupParsed = JSON.parse(backupRaw);
+        if (Array.isArray(backupParsed) && backupParsed.length > 0) {
+          parsedArchived = backupParsed;
+        }
+      } catch {
+        // ignore
+      }
+    }
 
     return {
       activeLeague: activeRaw ? JSON.parse(activeRaw) : null,
-      archivedLeagues: archivedRaw ? JSON.parse(archivedRaw) : [],
+      archivedLeagues: parsedArchived,
       registeredPlayers: playersRaw ? JSON.parse(playersRaw) : DEFAULT_FIXED_PLAYERS,
     };
   } catch (err) {
@@ -64,9 +87,27 @@ export async function fetchRemoteLeagueState(): Promise<LeagueAppState | null> {
       } else {
         localStorage.removeItem(STORAGE_ACTIVE_KEY);
       }
-      if (parsed.archivedLeagues) {
-        localStorage.setItem(STORAGE_ARCHIVED_KEY, JSON.stringify(parsed.archivedLeagues));
+
+      if (parsed.archivedLeagues && Array.isArray(parsed.archivedLeagues)) {
+        if (parsed.archivedLeagues.length > 0) {
+          localStorage.setItem(STORAGE_ARCHIVED_KEY, JSON.stringify(parsed.archivedLeagues));
+          localStorage.setItem(STORAGE_ARCHIVED_BACKUP_KEY, JSON.stringify(parsed.archivedLeagues));
+        } else {
+          // If remote is empty, check if we have a valid local backup before wiping
+          const backupRaw = localStorage.getItem(STORAGE_ARCHIVED_BACKUP_KEY);
+          if (backupRaw) {
+            try {
+              const localBackup = JSON.parse(backupRaw);
+              if (Array.isArray(localBackup) && localBackup.length > 0) {
+                parsed.archivedLeagues = localBackup;
+              }
+            } catch {
+              // ignore
+            }
+          }
+        }
       }
+
       if (parsed.registeredPlayers && parsed.registeredPlayers.length > 0) {
         localStorage.setItem(STORAGE_PLAYERS_KEY, JSON.stringify(parsed.registeredPlayers));
       }
@@ -93,6 +134,9 @@ export async function syncSaveLeagueState(
       localStorage.removeItem(STORAGE_ACTIVE_KEY);
     }
     localStorage.setItem(STORAGE_ARCHIVED_KEY, JSON.stringify(archivedLeagues));
+    if (archivedLeagues && archivedLeagues.length > 0) {
+      localStorage.setItem(STORAGE_ARCHIVED_BACKUP_KEY, JSON.stringify(archivedLeagues));
+    }
     if (registeredPlayers) {
       localStorage.setItem(STORAGE_PLAYERS_KEY, JSON.stringify(registeredPlayers));
     }
@@ -155,8 +199,23 @@ export function subscribeToRealtimeLeague(
               } else {
                 localStorage.removeItem(STORAGE_ACTIVE_KEY);
               }
-              if (parsed.archivedLeagues) {
-                localStorage.setItem(STORAGE_ARCHIVED_KEY, JSON.stringify(parsed.archivedLeagues));
+              if (parsed.archivedLeagues && Array.isArray(parsed.archivedLeagues)) {
+                if (parsed.archivedLeagues.length > 0) {
+                  localStorage.setItem(STORAGE_ARCHIVED_KEY, JSON.stringify(parsed.archivedLeagues));
+                  localStorage.setItem(STORAGE_ARCHIVED_BACKUP_KEY, JSON.stringify(parsed.archivedLeagues));
+                } else {
+                  const backupRaw = localStorage.getItem(STORAGE_ARCHIVED_BACKUP_KEY);
+                  if (backupRaw) {
+                    try {
+                      const localBackup = JSON.parse(backupRaw);
+                      if (Array.isArray(localBackup) && localBackup.length > 0) {
+                        parsed.archivedLeagues = localBackup;
+                      }
+                    } catch {
+                      // ignore
+                    }
+                  }
+                }
               }
               if (parsed.registeredPlayers && parsed.registeredPlayers.length > 0) {
                 localStorage.setItem(STORAGE_PLAYERS_KEY, JSON.stringify(parsed.registeredPlayers));

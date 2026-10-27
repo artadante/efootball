@@ -129,6 +129,41 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
     return getLocalLeagueState().registeredPlayers || DEFAULT_FIXED_PLAYERS;
   });
 
+  // Keep refs perpetually updated for immediate synchronous access without closure lag
+  const activeLeagueRef = React.useRef(activeLeague);
+  const archivedLeaguesRef = React.useRef(archivedLeagues);
+  const registeredPlayersRef = React.useRef(registeredPlayers);
+
+  useEffect(() => {
+    activeLeagueRef.current = activeLeague;
+  }, [activeLeague]);
+
+  useEffect(() => {
+    archivedLeaguesRef.current = archivedLeagues;
+  }, [archivedLeagues]);
+
+  useEffect(() => {
+    registeredPlayersRef.current = registeredPlayers;
+  }, [registeredPlayers]);
+
+  // Unified atomic persistence function: updates React state, refs, LocalStorage, and Supabase together
+  const persistAppState = (
+    nextActive: ActiveLeague | null,
+    nextArchived: ArchivedLeague[],
+    nextPlayers?: RegisteredPlayer[]
+  ) => {
+    const playersToSave = nextPlayers ?? registeredPlayersRef.current;
+    activeLeagueRef.current = nextActive;
+    archivedLeaguesRef.current = nextArchived;
+    if (nextPlayers) registeredPlayersRef.current = nextPlayers;
+
+    setActiveLeague(nextActive);
+    setArchivedLeagues(nextArchived);
+    if (nextPlayers) setRegisteredPlayers(nextPlayers);
+
+    syncSaveLeagueState(nextActive, nextArchived, playersToSave);
+  };
+
   // Standings table calculation
   const [standings, setStandings] = useState<StandingRow[]>([]);
 
@@ -241,14 +276,7 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
 
   // Save active league to local cache and Supabase Cloud
   const saveActiveLeague = (league: ActiveLeague | null) => {
-    setActiveLeague(league);
-    syncSaveLeagueState(league, archivedLeagues, registeredPlayers);
-  };
-
-  // Save archived leagues to local cache and Supabase Cloud
-  const saveArchivedLeagues = (list: ArchivedLeague[]) => {
-    setArchivedLeagues(list);
-    syncSaveLeagueState(activeLeague, list, registeredPlayers);
+    persistAppState(league, archivedLeaguesRef.current, registeredPlayersRef.current);
   };
 
   // Add new player to registered players list
@@ -260,28 +288,25 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
       isDefault: false,
       createdAt: new Date().toLocaleDateString('fa-IR'),
     };
-    const updated = [...registeredPlayers, newPlayer];
-    setRegisteredPlayers(updated);
-    syncSaveLeagueState(activeLeague, archivedLeagues, updated);
+    const updated = [...registeredPlayersRef.current, newPlayer];
+    persistAppState(activeLeagueRef.current, archivedLeaguesRef.current, updated);
   };
 
   // Delete custom player
   const handleDeletePlayer = (id: string) => {
-    const updated = registeredPlayers.filter((p) => p.id !== id);
-    setRegisteredPlayers(updated);
-    syncSaveLeagueState(activeLeague, archivedLeagues, updated);
+    const updated = registeredPlayersRef.current.filter((p) => p.id !== id);
+    persistAppState(activeLeagueRef.current, archivedLeaguesRef.current, updated);
   };
 
   // Update avatar of a player
   const handleUpdatePlayerAvatar = (playerId: string, avatarUrl: string) => {
-    const updated = registeredPlayers.map((p) => {
+    const updated = registeredPlayersRef.current.map((p) => {
       if (p.id === playerId) {
         return { ...p, avatarUrl };
       }
       return p;
     });
-    setRegisteredPlayers(updated);
-    syncSaveLeagueState(activeLeague, archivedLeagues, updated);
+    persistAppState(activeLeagueRef.current, archivedLeaguesRef.current, updated);
   };
 
   // Admin login handlers - Automatically switches to Arta on login
@@ -323,13 +348,13 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
 
   // Handle new league created from modal
   const handleLeagueCreated = (newLeague: ActiveLeague) => {
-    if (activeLeague) {
-      const pausedArchive = createArchivedSnapshot(activeLeague, true);
-      const updatedArchive = [pausedArchive, ...archivedLeagues.filter((a) => a.id !== activeLeague.id)];
-      saveArchivedLeagues(updatedArchive);
+    let nextArchived = archivedLeaguesRef.current;
+    if (activeLeagueRef.current) {
+      const pausedArchive = createArchivedSnapshot(activeLeagueRef.current, true);
+      nextArchived = [pausedArchive, ...nextArchived.filter((a) => a.id !== activeLeagueRef.current!.id)];
     }
 
-    saveActiveLeague(newLeague);
+    persistAppState(newLeague, nextArchived);
     setActiveTab('wheel');
   };
 
@@ -584,38 +609,39 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
 
   // Pause & Archive active league (for switching to another league)
   const handlePauseAndArchiveActiveLeague = () => {
-    if (!activeLeague) return;
+    const curActive = activeLeagueRef.current;
+    if (!curActive) return;
 
     soundEngine.playWhistle();
-    const pausedArchive = createArchivedSnapshot(activeLeague, true);
-    const updatedArchive = [pausedArchive, ...archivedLeagues.filter((a) => a.id !== activeLeague.id)];
-    saveArchivedLeagues(updatedArchive);
-    saveActiveLeague(null);
+    const pausedArchive = createArchivedSnapshot(curActive, true);
+    const updatedArchive = [pausedArchive, ...archivedLeaguesRef.current.filter((a) => a.id !== curActive.id)];
+    persistAppState(null, updatedArchive);
     setActiveTab('history');
   };
 
   // Resume a league from History back to active
   const handleResumeLeagueFromHistory = (archivedId: string) => {
-    const target = archivedLeagues.find((a) => a.id === archivedId);
+    const curArchived = archivedLeaguesRef.current;
+    const curActive = activeLeagueRef.current;
+    const target = curArchived.find((a) => a.id === archivedId);
     if (!target) return;
 
     soundEngine.playWhistle();
 
     // 1. Remove target from archived list
-    let nextArchive = archivedLeagues.filter((a) => a.id !== archivedId);
+    let nextArchive = curArchived.filter((a) => a.id !== archivedId);
 
     // 2. If there is currently an active league, archive it so it's safely preserved
-    if (activeLeague) {
-      const currentArchive = createArchivedSnapshot(activeLeague, true);
-      nextArchive = [currentArchive, ...nextArchive.filter((a) => a.id !== activeLeague.id)];
+    if (curActive) {
+      const currentArchive = createArchivedSnapshot(curActive, true);
+      nextArchive = [currentArchive, ...nextArchive.filter((a) => a.id !== curActive.id)];
     }
 
     // 3. Restore target
     const restored = restoreActiveLeague(target);
 
-    // 4. Save both
-    saveArchivedLeagues(nextArchive);
-    saveActiveLeague(restored);
+    // 4. Save both ATOMICALLY in a single call
+    persistAppState(restored, nextArchive);
 
     // 5. Navigate to matches or wheel
     if (!restored.wheelCompleted) {
@@ -627,22 +653,22 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
 
   // Finalize & Archive League to History (Official Celebration)
   const handleFinishAndArchiveLeague = () => {
-    if (!activeLeague) return;
+    const curActive = activeLeagueRef.current;
+    if (!curActive) return;
 
     soundEngine.playFanfare();
-    const newArchived = createArchivedSnapshot(activeLeague, false);
-    const updatedArchive = [newArchived, ...archivedLeagues.filter((a) => a.id !== activeLeague.id)];
-    saveArchivedLeagues(updatedArchive);
+    const newArchived = createArchivedSnapshot(curActive, false);
+    const updatedArchive = [newArchived, ...archivedLeaguesRef.current.filter((a) => a.id !== curActive.id)];
 
     setCelebrationData({
       championName: newArchived.championName,
       championTeam: newArchived.championTeam,
-      leagueName: activeLeague.name,
-      avatarUrl: registeredPlayers.find((p) => p.name === newArchived.championName)?.avatarUrl,
+      leagueName: curActive.name,
+      avatarUrl: registeredPlayersRef.current.find((p) => p.name === newArchived.championName)?.avatarUrl,
     });
     setIsCelebrationOpen(true);
 
-    saveActiveLeague(null);
+    persistAppState(null, updatedArchive);
     setActiveTab('history');
   };
 

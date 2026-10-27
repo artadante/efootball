@@ -39,6 +39,7 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
     DEFAULT_FIXED_PLAYERS[0]?.name || 'آرتا'
   );
   const [teamSearchQuery, setTeamSearchQuery] = useState('');
+  const [selectedLeagueFilter, setSelectedLeagueFilter] = useState<string>('all');
 
   if (!isOpen) return null;
 
@@ -152,11 +153,16 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
     pickedTeams: [],
   };
 
-  const filteredTeams = TEAMS_DATABASE.filter(
-    (t) =>
-      t.name.includes(teamSearchQuery) ||
-      t.enName.toLowerCase().includes(teamSearchQuery.toLowerCase())
-  ).slice(0, 12);
+  const filteredTeams = TEAMS_DATABASE.filter((t) => {
+    const q = teamSearchQuery.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      t.name.toLowerCase().includes(q) ||
+      t.enName.toLowerCase().includes(q);
+    const matchesLeague =
+      selectedLeagueFilter === 'all' || t.league === selectedLeagueFilter;
+    return matchesSearch && matchesLeague;
+  });
 
   return (
     <div
@@ -380,18 +386,46 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
               </div>
             </div>
 
-            {/* Team Search & Quick Toggle */}
-            <div>
+            {/* Team Search & League Filters */}
+            <div className="space-y-2">
               <input
                 type="text"
-                placeholder="جستجوی سریع تیم (مثلاً: رئال، بارسا، منچستر...)"
+                placeholder="جستجوی سریع تیم (مثلاً: رئال، بارسا، منچستر، بایرن...)"
                 value={teamSearchQuery}
                 onChange={(e) => setTeamSearchQuery(e.target.value)}
                 className="w-full py-2 px-3 rounded-xl bg-black/50 border border-white/15 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400"
               />
+
+              {/* League Filter Tabs */}
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                {[
+                  { id: 'all', label: `همه تیم‌ها (${TEAMS_DATABASE.length})` },
+                  { id: 'انگلیس', label: 'انگلیس' },
+                  { id: 'اسپانیا', label: 'اسپانیا' },
+                  { id: 'آلمان', label: 'آلمان' },
+                  { id: 'ایتالیا', label: 'ایتالیا' },
+                  { id: 'فرانسه', label: 'فرانسه' },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      soundEngine.playClick();
+                      setSelectedLeagueFilter(item.id);
+                    }}
+                    className={`py-1 px-2.5 rounded-lg text-[11px] font-bold shrink-0 transition-all cursor-pointer ${
+                      selectedLeagueFilter === item.id
+                        ? 'bg-emerald-500 text-black shadow'
+                        : 'bg-white/10 text-zinc-300 hover:bg-white/15'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto no-scrollbar pr-1">
+            <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto no-scrollbar pr-1">
               {filteredTeams.map((t) => {
                 const isBanned = currentPlayerPickBan.bannedTeam === t.name;
                 const isPicked = currentPlayerPickBan.pickedTeams.includes(t.name);
