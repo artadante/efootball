@@ -112,8 +112,9 @@ describe('AdminLeagueControlModal Component', () => {
     expect(handleResetMatch).toHaveBeenCalledWith('m-1');
   });
 
-  it('switches to finish tab and triggers early end of league', () => {
+  it('switches to finish tab and triggers pause or early end of league', () => {
     const handleEndLeagueEarly = vi.fn();
+    const handlePauseLeague = vi.fn();
     // Mock window.confirm
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
@@ -126,13 +127,17 @@ describe('AdminLeagueControlModal Component', () => {
         onUpdateMatchScore={vi.fn()}
         onResetMatch={vi.fn()}
         onEndLeagueEarly={handleEndLeagueEarly}
+        onPauseLeague={handlePauseLeague}
       />
     );
 
     fireEvent.click(screen.getByText('اتمام زودهنگام'));
-    expect(screen.getByText(/اتمام زودهنگام و بایگانی لیگ/i)).toBeInTheDocument();
+    expect(screen.getByText(/آرشیو و جابجایی لیگ‌ها/i)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /اتمام رسمی لیگ و انتقال به تاریخچه/i }));
+    fireEvent.click(screen.getByRole('button', { name: /توقف موقت و ذخیره لیگ در تاریخچه/i }));
+    expect(handlePauseLeague).toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: /اتمام رسمی مسابقات و ثبت قهرمان/i }));
     expect(handleEndLeagueEarly).toHaveBeenCalled();
   });
 });

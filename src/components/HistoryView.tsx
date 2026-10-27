@@ -1,5 +1,5 @@
 import React from 'react';
-import { History, Archive, Crown, Trophy } from 'lucide-react';
+import { History, Archive, Crown, Trophy, Play } from 'lucide-react';
 import { ArchivedLeague } from '../types/league';
 import { RegisteredPlayer } from '../types/player';
 import { TeamLogo } from './TeamLogo';
@@ -14,12 +14,14 @@ export interface HistoryViewProps {
     leagueName: string;
     avatarUrl?: string;
   }) => void;
+  onResumeLeague?: (archivedId: string) => void;
 }
 
 export const HistoryView: React.FC<HistoryViewProps> = ({
   archivedLeagues,
   registeredPlayers,
   onOpenCelebration,
+  onResumeLeague,
 }) => {
   return (
     <div className="space-y-3 animate-fadeIn my-auto w-full">
@@ -34,9 +36,9 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
         {archivedLeagues.length === 0 ? (
           <div className="py-10 text-center space-y-2">
             <Archive className="w-8 h-8 mx-auto text-zinc-500" />
-            <p className="text-sm text-zinc-300 font-medium">هنوز هیچ لیگی به اتمام نرسیده است.</p>
+            <p className="text-sm text-zinc-300 font-medium">هنوز هیچ لیگی در تاریخچه ثبت نشده است.</p>
             <p className="text-xs text-zinc-400">
-              وقتی تمام بازی‌های یک لیگ انجام شود، نتایج کامل و جدول رده‌بندی به اینجا منتقل می‌شود.
+              وقتی لیگی را بایگانی یا تمام کنید، نتایج کامل و جدول رده‌بندی به اینجا منتقل شده و هر زمان بخواهید می‌توانید دوباره آن را فعال و ادامه دهید.
             </p>
           </div>
         ) : (
@@ -46,13 +48,24 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                 key={archived.id}
                 className="p-3 sm:p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-2.5"
               >
-                {/* League Title & Date */}
-                <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
-                  <h4 className="font-bold text-sm sm:text-base text-white">{archived.name}</h4>
-                  <span className="text-[11px] sm:text-xs text-zinc-400">{archived.finishedAt}</span>
+                {/* League Title, Status Badge & Date */}
+                <div className="flex items-center justify-between border-b border-white/10 pb-2 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-sm sm:text-base text-white">{archived.name}</h4>
+                    {archived.isManuallyPaused ? (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        متوقف‌شده (آماده ادامه)
+                      </span>
+                    ) : (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        تکمیل‌شده
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] sm:text-xs text-zinc-400 font-mono">{archived.finishedAt}</span>
                 </div>
 
-                {/* Champion Spotlight Badge with Crown, Team Logo & Celebration */}
+                {/* Champion / Leader Spotlight Badge with Action Buttons */}
                 <div className="p-2.5 sm:p-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-transparent border border-amber-400/30 flex items-center justify-between gap-2.5 flex-wrap">
                   <div className="flex items-center gap-2.5">
                     <div className="p-2 rounded-xl bg-amber-400/20 text-amber-300">
@@ -60,7 +73,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                     </div>
                     <div>
                       <span className="text-[11px] text-amber-300 font-bold uppercase tracking-wider block">
-                        قهرمان مسابقات
+                        {archived.isManuallyPaused ? 'صدرنشین موقت' : 'قهرمان مسابقات'}
                       </span>
                       <span className="text-sm sm:text-base font-black text-white">
                         {archived.championName} ({archived.championTeam})
@@ -68,7 +81,23 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Primary Action: Resume League */}
+                    {onResumeLeague && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundEngine.playWhistle();
+                          onResumeLeague(archived.id);
+                        }}
+                        className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-400 hover:brightness-110 text-black font-black text-xs flex items-center gap-1.5 shadow-lg active:scale-95 transition-all cursor-pointer"
+                        title="فعال‌سازی این لیگ برای ادامه مسابقات"
+                      >
+                        <Play className="w-3.5 h-3.5 fill-black" />
+                        <span>ادامه این لیگ</span>
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => {
@@ -80,13 +109,13 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                           avatarUrl: registeredPlayers.find((p) => p.name === archived.championName)?.avatarUrl,
                         });
                       }}
-                      className="py-1 px-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-extrabold text-xs flex items-center gap-1.5 shadow active:scale-95 transition-all cursor-pointer"
+                      className="py-1.5 px-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-extrabold text-xs flex items-center gap-1.5 shadow active:scale-95 transition-all cursor-pointer"
                     >
                       <Trophy className="w-3.5 h-3.5" />
-                      <span>جشن قهرمانی</span>
+                      <span>جشن</span>
                     </button>
 
-                    <TeamLogo teamName={archived.championTeam} className="w-9 h-9 shrink-0" />
+                    <TeamLogo teamName={archived.championTeam} className="w-8 h-8 shrink-0" />
                   </div>
                 </div>
 

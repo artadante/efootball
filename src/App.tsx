@@ -22,7 +22,7 @@ import {
   subscribeToRealtimeLeague,
   getLocalLeagueState,
 } from './services/leagueStorage';
-import { ActiveLeague, ArchivedLeague, StandingRow } from './types/league';
+import { ActiveLeague, ArchivedLeague, StandingRow, LeaguePlayer, ScheduledMatch } from './types/league';
 import { RegisteredPlayer, DEFAULT_FIXED_PLAYERS } from './types/player';
 import { soundEngine } from './utils/soundEffects';
 import { generateMatchdayNews } from './utils/newsGenerator';
@@ -313,7 +313,7 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
     }
 
     if (activeLeague && !activeLeague.isFinished) {
-      if (!confirm(`لیگ «${activeLeague.name}» هم‌اکنون در حال برگزاری است. آیا می‌خواهید لیگ جدیدی ایجاد کرده و این لیگ را جایگزین کنید؟`)) {
+      if (!confirm(`لیگ «${activeLeague.name}» هم‌اکنون در حال برگزاری است. با ایجاد مسابقات جدید، این لیگ موقتاً در تاریخچه ذخیره خواهد شد تا هر زمان که خواستید بتوانید دوباره آن را فعال کرده و ادامه‌اش را بروید. آیا مایل به ادامه هستید؟`)) {
         return;
       }
     }
@@ -323,6 +323,12 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
 
   // Handle new league created from modal
   const handleLeagueCreated = (newLeague: ActiveLeague) => {
+    if (activeLeague) {
+      const pausedArchive = createArchivedSnapshot(activeLeague, true);
+      const updatedArchive = [pausedArchive, ...archivedLeagues.filter((a) => a.id !== activeLeague.id)];
+      saveArchivedLeagues(updatedArchive);
+    }
+
     saveActiveLeague(newLeague);
     setActiveTab('wheel');
   };
@@ -483,20 +489,16 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
     saveActiveLeague(updatedLeague);
   };
 
-  // Finalize & Archive League to History
-  const handleFinishAndArchiveLeague = () => {
-    if (!activeLeague) return;
-
-    soundEngine.playFanfare();
-
+  // Helper to convert an active league into an ArchivedLeague with complete backup
+  const createArchivedSnapshot = (league: ActiveLeague, isManualPause: boolean = false): ArchivedLeague => {
     let championName = standings[0]?.name || 'نامشخص';
     let championTeam = standings[0]?.team || 'نامشخص';
 
-    if (activeLeague.mode === 'cup') {
-      const finalM = activeLeague.matches[activeLeague.matches.length - 1];
+    if (league.mode === 'cup') {
+      const finalM = league.matches[league.matches.length - 1];
       if (finalM && finalM.isPlayed && typeof finalM.score1 === 'number' && typeof finalM.score2 === 'number') {
         const champSlot = finalM.score1 >= finalM.score2 ? finalM.player1Slot : finalM.player2Slot;
-        const champP = activeLeague.players.find((p) => p.slot === champSlot);
+        const champP = league.players.find((p) => p.slot === champSlot);
         if (champP && champP.name) {
           championName = champP.name;
           championTeam = champP.team || 'نامشخص';
@@ -504,7 +506,7 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
       }
     }
 
-    const completedMatches = activeLeague.matches.map((m) => {
+    const completedMatches = league.matches.map((m) => {
       const p1 = getPlayerLabel(m.player1Slot);
       const p2 = getPlayerLabel(m.player2Slot);
       return {
@@ -520,25 +522,123 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
       };
     });
 
-    const newArchived: ArchivedLeague = {
-      id: activeLeague.id,
-      name: activeLeague.name,
-      mode: activeLeague.mode,
+    const unplayedCount = league.matches.filter((m) => !m.isPlayed).length;
+
+    return {
+      id: league.id,
+      name: league.name,
+      mode: league.mode,
       finishedAt: new Date().toLocaleDateString('fa-IR'),
       championName,
       championTeam,
       standings: [...standings],
       matches: completedMatches,
+      isManuallyPaused: isManualPause || unplayedCount > 0,
+      activeLeagueBackup: JSON.parse(JSON.stringify(league)),
     };
+  };
 
-    const updatedArchive = [newArchived, ...archivedLeagues];
+  // Helper to restore an ArchivedLeague back to an ActiveLeague
+  const restoreActiveLeague = (archived: ArchivedLeague): ActiveLeague => {
+    if (archived.activeLeagueBackup) {
+      return {
+        ...JSON.parse(JSON.stringify(archived.activeLeagueBackup)),
+        isFinished: false,
+      };
+    }
+
+    // Fallback reconstruction if backup is missing
+    const players: LeaguePlayer[] = archived.standings.map((s, idx) => ({
+      slot: idx + 1,
+      name: s.name,
+      team: s.team,
+    }));
+
+    const matches: ScheduledMatch[] = archived.matches.map((m) => {
+      const p1 = players.find((p) => p.name === m.player1);
+      const p2 = players.find((p) => p.name === m.player2);
+      return {
+        id: m.id,
+        leg: m.leg,
+        round: m.round,
+        player1Slot: p1 ? p1.slot : 1,
+        player2Slot: p2 ? p2.slot : 2,
+        score1: m.score1,
+        score2: m.score2,
+        isPlayed: typeof m.score1 === 'number' && typeof m.score2 === 'number',
+      };
+    });
+
+    return {
+      id: archived.id,
+      name: archived.name,
+      mode: archived.mode,
+      playerCount: players.length,
+      players,
+      matches,
+      wheelCompleted: true,
+      isFinished: false,
+      createdAt: archived.finishedAt,
+    };
+  };
+
+  // Pause & Archive active league (for switching to another league)
+  const handlePauseAndArchiveActiveLeague = () => {
+    if (!activeLeague) return;
+
+    soundEngine.playWhistle();
+    const pausedArchive = createArchivedSnapshot(activeLeague, true);
+    const updatedArchive = [pausedArchive, ...archivedLeagues.filter((a) => a.id !== activeLeague.id)];
+    saveArchivedLeagues(updatedArchive);
+    saveActiveLeague(null);
+    setActiveTab('history');
+  };
+
+  // Resume a league from History back to active
+  const handleResumeLeagueFromHistory = (archivedId: string) => {
+    const target = archivedLeagues.find((a) => a.id === archivedId);
+    if (!target) return;
+
+    soundEngine.playWhistle();
+
+    // 1. Remove target from archived list
+    let nextArchive = archivedLeagues.filter((a) => a.id !== archivedId);
+
+    // 2. If there is currently an active league, archive it so it's safely preserved
+    if (activeLeague) {
+      const currentArchive = createArchivedSnapshot(activeLeague, true);
+      nextArchive = [currentArchive, ...nextArchive.filter((a) => a.id !== activeLeague.id)];
+    }
+
+    // 3. Restore target
+    const restored = restoreActiveLeague(target);
+
+    // 4. Save both
+    saveArchivedLeagues(nextArchive);
+    saveActiveLeague(restored);
+
+    // 5. Navigate to matches or wheel
+    if (!restored.wheelCompleted) {
+      setActiveTab('wheel');
+    } else {
+      setActiveTab('matches');
+    }
+  };
+
+  // Finalize & Archive League to History (Official Celebration)
+  const handleFinishAndArchiveLeague = () => {
+    if (!activeLeague) return;
+
+    soundEngine.playFanfare();
+    const newArchived = createArchivedSnapshot(activeLeague, false);
+    const updatedArchive = [newArchived, ...archivedLeagues.filter((a) => a.id !== activeLeague.id)];
     saveArchivedLeagues(updatedArchive);
 
     setCelebrationData({
-      championName,
-      championTeam,
+      championName: newArchived.championName,
+      championTeam: newArchived.championTeam,
       leagueName: activeLeague.name,
-      avatarUrl: registeredPlayers.find((p) => p.name === championName)?.avatarUrl,
+      avatarUrl: registeredPlayers.find((p) => p.name === newArchived.championName)?.avatarUrl,
     });
     setIsCelebrationOpen(true);
 
@@ -634,6 +734,7 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
                 setCelebrationData(data);
                 setIsCelebrationOpen(true);
               }}
+              onResumeLeague={handleResumeLeagueFromHistory}
             />
           )}
         </main>
@@ -676,6 +777,7 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
         onUpdateMatchScore={handleAdminUpdateMatchScore}
         onResetMatch={handleAdminResetMatch}
         onEndLeagueEarly={handleFinishAndArchiveLeague}
+        onPauseLeague={handlePauseAndArchiveActiveLeague}
         onAddPlayer={handleAddPlayer}
         onDeletePlayer={handleDeletePlayer}
         onUpdatePlayerAvatar={handleUpdatePlayerAvatar}

@@ -5,14 +5,14 @@ import {
   Edit3, 
   Save, 
   RotateCcw, 
-  AlertTriangle,
   UserPlus,
   Trash2,
   Plus,
   Camera,
   Upload,
   Image as ImageIcon,
-  CheckCircle2
+  CheckCircle2,
+  Archive,
 } from 'lucide-react';
 import { ActiveLeague } from '../types/league';
 import { RegisteredPlayer, DEFAULT_FIXED_PLAYERS } from '../types/player';
@@ -28,6 +28,7 @@ interface AdminLeagueControlModalProps {
   onUpdateMatchScore: (matchId: string, score1: number, score2: number) => void;
   onResetMatch: (matchId: string) => void;
   onEndLeagueEarly: () => void;
+  onPauseLeague?: () => void;
   onAddPlayer?: (name: string) => void;
   onDeletePlayer?: (id: string) => void;
   onUpdatePlayerAvatar?: (playerId: string, avatarUrl: string) => void;
@@ -43,6 +44,7 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
   onUpdateMatchScore,
   onResetMatch,
   onEndLeagueEarly,
+  onPauseLeague,
   onAddPlayer,
   onDeletePlayer,
   onUpdatePlayerAvatar,
@@ -651,35 +653,55 @@ export const AdminLeagueControlModal: React.FC<AdminLeagueControlModalProps> = (
           </div>
         )}
 
-        {/* Sub-Tab 4: Early Finish & Archive League */}
+        {/* Sub-Tab 4: Pause or Finish & Archive League */}
         {activeSubTab === 'finish' && (
-          <div className="flex-1 flex flex-col justify-center text-center p-3 space-y-4">
-            <div className="w-16 h-16 rounded-full bg-rose-500/20 border-2 border-rose-500 mx-auto flex items-center justify-center text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.3)]">
-              <AlertTriangle className="w-8 h-8" />
+          <div className="flex-1 flex flex-col justify-center text-center p-3 space-y-3.5">
+            <div className="w-14 h-14 rounded-full bg-amber-500/20 border-2 border-amber-400 mx-auto flex items-center justify-center text-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.25)]">
+              <Archive className="w-7 h-7" />
             </div>
 
             <div>
-              <h4 className="text-lg font-bold text-white">اتمام زودهنگام و بایگانی لیگ</h4>
-              <p className="text-sm text-zinc-300 mt-1 max-w-xs mx-auto">
-                با زدن این دکمه، وضعیت کنونی جدول رده‌بندی به عنوان نتیجه نهایی ثبت شده و لیگ به همراه تمام نتایج به تالار افتخارات (تاریخچه) منتقل خواهد شد.
+              <h4 className="text-base sm:text-lg font-bold text-white">آرشیو و جابجایی لیگ‌ها</h4>
+              <p className="text-xs text-zinc-300 mt-1 max-w-xs mx-auto leading-relaxed">
+                می‌توانید این لیگ را موقتاً متوقف و در تاریخچه ذخیره کنید تا لیگ دیگری بسازید، و هر زمان که خواستید از بخش تاریخچه دوباره با دکمه «ادامه این لیگ» آن را فعال نمایید.
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                if (confirm('آیا از اتمام زودهنگام و بایگانی این لیگ اطمینان دارید؟')) {
-                  onEndLeagueEarly();
-                  onClose();
-                }
-              }}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-extrabold text-base shadow-[0_0_20px_rgba(244,63,94,0.4)] transition-all"
-            >
-              <span className="flex items-center justify-center gap-2">
-                <CheckCircle2 className="w-5 h-5" />
-                <span>اتمام رسمی لیگ و انتقال به تاریخچه</span>
-              </span>
-            </button>
+            <div className="space-y-2 pt-1">
+              {/* Option 1: Pause and Archive (Recommended for switching leagues) */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm('این لیگ با تمامی نتایج ذخیره شده و به تاریخچه منتقل می‌شود تا بتوانید لیگ جدیدی شروع کنید یا لیگ دیگری را فعال نمایید. آیا مایلید؟')) {
+                    if (onPauseLeague) {
+                      onPauseLeague();
+                    } else {
+                      onEndLeagueEarly();
+                    }
+                    onClose();
+                  }
+                }}
+                className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:brightness-110 text-black font-black text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all"
+              >
+                <Archive className="w-4 h-4" />
+                <span>توقف موقت و ذخیره لیگ در تاریخچه</span>
+              </button>
+
+              {/* Option 2: Finish Officially */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm('آیا از ثبت پایان رسمی این لیگ و بستن نهایی آن اطمینان دارید؟ (باز هم از تاریخچه قابل ادامه خواهد بود)')) {
+                    onEndLeagueEarly();
+                    onClose();
+                  }
+                }}
+                className="w-full py-2.5 rounded-2xl bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 border border-rose-500/40 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>اتمام رسمی مسابقات و ثبت قهرمان</span>
+              </button>
+            </div>
           </div>
         )}
       </div>

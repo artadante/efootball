@@ -63,4 +63,6 @@ export interface ArchivedLeague {
     player2: string;
     team2: string;
   }[];
+  isManuallyPaused?: boolean;
+  activeLeagueBackup?: ActiveLeague;
 }
