@@ -185,10 +185,10 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
       {/* Main Full-Page Scrollable Body */}
       <main className="flex-1 overflow-y-auto no-scrollbar py-4 max-w-4xl mx-auto w-full">
         
-        {/* VIEW 1: All Players Directory - Full page, large logo and prominent name side-by-side */}
+        {/* VIEW 1: All Players Directory - 2-column vertical grid layout */}
         {viewMode === 'list' && (
-          <div className="space-y-4 pb-12">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-4">
+          <div className="space-y-4 pb-12 max-w-3xl mx-auto">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               {registeredPlayers.map((player) => {
                 const pStats = calculatePlayerCareerStats(player, activeLeague, archivedLeagues);
                 const eloInfo = eloMap[player.name];
@@ -202,11 +202,11 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
                       setSelectedPlayer(player);
                       setViewMode('profile');
                     }}
-                    className="relative overflow-hidden w-full p-4 sm:p-5 rounded-3xl bg-emerald-950/50 border border-white/15 hover:border-emerald-400/60 hover:bg-emerald-900/40 transition-all flex items-center gap-4 text-start group active:scale-95 shadow-xl cursor-pointer"
+                    className="relative overflow-hidden w-full p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-emerald-950/50 border border-white/15 hover:border-emerald-400/60 hover:bg-emerald-900/40 transition-all flex flex-col items-center text-center justify-between group active:scale-95 shadow-xl cursor-pointer"
                   >
-                    {/* Large Logo / Avatar */}
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 min-w-[5rem] min-h-[5rem] sm:min-w-[6rem] sm:min-h-[6rem] rounded-full p-1 bg-gradient-to-tr from-emerald-400 via-green-300 to-emerald-500 shadow-[0_0_20px_rgba(34,197,94,0.35)] shrink-0 group-hover:scale-105 transition-all flex items-center justify-center overflow-hidden">
-                      <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center overflow-hidden font-black text-2xl sm:text-3xl text-emerald-300">
+                    {/* Top: Avatar */}
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 min-w-[4rem] min-h-[4rem] sm:min-w-[5rem] sm:min-h-[5rem] rounded-full p-0.5 sm:p-1 bg-gradient-to-tr from-emerald-400 via-green-300 to-emerald-500 shadow-[0_0_18px_rgba(34,197,94,0.35)] shrink-0 group-hover:scale-105 transition-all flex items-center justify-center overflow-hidden mb-2 sm:mb-2.5">
+                      <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center overflow-hidden font-black text-xl sm:text-2xl text-emerald-300">
                         {player.avatarUrl ? (
                           <img src={player.avatarUrl} alt={player.name} className="w-full h-full object-cover rounded-full" />
                         ) : (
@@ -215,29 +215,30 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
                       </div>
                     </div>
 
-                    {/* Large Name, ELO, Form Arrow */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="block text-xl sm:text-2xl font-black text-white group-hover:text-emerald-300 transition-colors truncate">
+                    {/* Middle: Name & Form Badge */}
+                    <div className="w-full flex flex-col items-center">
+                      <div className="flex items-center justify-center gap-1.5 w-full">
+                        <span className="block text-base sm:text-lg font-black text-white group-hover:text-emerald-300 transition-colors truncate">
                           {player.name}
                         </span>
                         <PlayerFormBadge results={formResults} />
                       </div>
 
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center justify-center gap-1.5 mt-1 sm:mt-1.5 flex-wrap">
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${eloInfo?.tierBg || 'bg-white/10 text-white'}`}>
                           {eloInfo?.tierNameFa || 'عادی'}
                         </span>
-                        <span className="text-[11px] font-mono text-zinc-400">
+                        <span className="text-[10px] sm:text-[11px] font-mono text-zinc-400">
                           ELO {eloInfo?.rating || 1200}
                         </span>
                       </div>
-
-                      <span className="text-xs text-emerald-400 font-semibold mt-1.5 flex items-center justify-center gap-1">
-                        <span>مشاهده پروفایل و آمار</span>
-                        <ChevronLeft className="w-3.5 h-3.5" />
-                      </span>
                     </div>
+
+                    {/* Bottom: Action Hint */}
+                    <span className="text-[11px] sm:text-xs text-emerald-400 font-semibold mt-2.5 sm:mt-3 flex items-center justify-center gap-1 group-hover:underline">
+                      <span>مشاهده پروفایل</span>
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </span>
                   </button>
                 );
               })}
