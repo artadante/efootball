@@ -400,12 +400,12 @@ export const App: React.FC = () => {
           {/* Center: Admin status / Active League Name */}
           <div className="text-center">
             {activeLeague ? (
-              <span className="text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-green-200 to-emerald-400">
+              <span className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-green-200 to-emerald-400">
                 {activeLeague.name}
               </span>
             ) : null}
             {isAdmin && (
-              <div className="flex items-center justify-center gap-1 text-[10px] text-amber-300 font-bold mt-0.5">
+              <div className="flex items-center justify-center gap-1 text-xs text-amber-300 font-bold mt-0.5">
                 <span>👑 پنل مدیریت فعال</span>
               </div>
             )}
@@ -425,21 +425,21 @@ export const App: React.FC = () => {
 
         {/* PWA Helper Banner */}
         {showPwaTip && (
-          <div className="mt-2.5 p-3 rounded-2xl bg-emerald-950/70 border border-emerald-500/20 backdrop-blur-xl flex items-center justify-between text-xs text-emerald-200/90 shadow-lg animate-fadeIn">
+          <div className="mt-2.5 p-3.5 rounded-2xl bg-emerald-950/70 border border-emerald-500/20 backdrop-blur-xl flex items-center justify-between text-sm text-emerald-200/90 shadow-lg animate-fadeIn">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-300">
                 <Smartphone className="w-4 h-4" />
               </div>
               <div>
-                <p className="font-semibold text-white">نصب روی گوشی</p>
-                <p className="text-[11px] text-emerald-300/70">در مرورگر گزینه Add to Home Screen را بزنید</p>
+                <p className="font-bold text-white text-sm">نصب روی گوشی</p>
+                <p className="text-xs text-emerald-300/80">در مرورگر گزینه Add to Home Screen را بزنید</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setShowPwaTip(false)}
               aria-label="بستن راهنما"
-              className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10"
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10"
             >
               <X className="w-4 h-4" />
             </button>
@@ -464,12 +464,12 @@ export const App: React.FC = () => {
                 
                 {/* Header with Title and Leg Filter */}
                 <div className="flex items-center justify-between mb-3 px-1">
-                  <h3 className="font-bold text-sm text-emerald-300 flex items-center gap-2">
-                    <Swords className="w-4 h-4 text-emerald-400" />
+                  <h3 className="font-bold text-base text-emerald-300 flex items-center gap-2">
+                    <Swords className="w-5 h-5 text-emerald-400" />
                     <span>برنامه و نتایج مسابقات</span>
                   </h3>
                   {activeLeague && (
-                    <span className="text-[11px] text-zinc-400 font-mono">
+                    <span className="text-xs text-zinc-300 font-mono font-medium">
                       {activeLeague.matches.filter(m => m.isPlayed).length} / {activeLeague.matches.length} بازی
                     </span>
                   )}
@@ -478,19 +478,19 @@ export const App: React.FC = () => {
                 {!activeLeague ? (
                   <div className="py-12 text-center space-y-2">
                     <Calendar className="w-8 h-8 mx-auto text-zinc-500" />
-                    <p className="text-xs text-zinc-400 font-medium">هنوز لیگی تعریف نشده است.</p>
-                    <p className="text-[11px] text-zinc-500">برای ایجاد لیگ و قرعه‌کشی، دکمه + بالا را بزنید.</p>
+                    <p className="text-sm text-zinc-300 font-medium">هنوز لیگی تعریف نشده است.</p>
+                    <p className="text-xs text-zinc-400">برای ایجاد لیگ و قرعه‌کشی، دکمه + بالا را بزنید.</p>
                   </div>
                 ) : (
                   <>
                     {/* Leg Filter Tabs (نیم‌فصل اول / دوم) */}
-                    <div className="flex p-1 bg-black/40 rounded-2xl border border-white/10 mb-3 text-xs">
+                    <div className="flex p-1 bg-black/40 rounded-2xl border border-white/10 mb-3 text-sm">
                       <button
                         type="button"
                         onClick={() => setLegFilter('all')}
-                        className={`flex-1 py-1.5 rounded-xl font-medium transition-all ${
+                        className={`flex-1 py-2 rounded-xl font-bold transition-all ${
                           legFilter === 'all'
-                            ? 'bg-emerald-500 text-black font-bold shadow'
+                            ? 'bg-emerald-500 text-black font-extrabold shadow'
                             : 'text-zinc-400 hover:text-white'
                         }`}
                       >
@@ -499,9 +499,9 @@ export const App: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setLegFilter(1)}
-                        className={`flex-1 py-1.5 rounded-xl font-medium transition-all ${
+                        className={`flex-1 py-2 rounded-xl font-bold transition-all ${
                           legFilter === 1
-                            ? 'bg-emerald-500 text-black font-bold shadow'
+                            ? 'bg-emerald-500 text-black font-extrabold shadow'
                             : 'text-zinc-400 hover:text-white'
                         }`}
                       >
@@ -510,9 +510,9 @@ export const App: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setLegFilter(2)}
-                        className={`flex-1 py-1.5 rounded-xl font-medium transition-all ${
+                        className={`flex-1 py-2 rounded-xl font-bold transition-all ${
                           legFilter === 2
-                            ? 'bg-emerald-500 text-black font-bold shadow'
+                            ? 'bg-emerald-500 text-black font-extrabold shadow'
                             : 'text-zinc-400 hover:text-white'
                         }`}
                       >
@@ -523,14 +523,14 @@ export const App: React.FC = () => {
                     {/* All Matches Completed Celebration Banner */}
                     {activeLeague.matches.every(m => m.isPlayed) && !activeLeague.isFinished && (
                       <div className="p-3 mb-3 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-center space-y-2 animate-bounce">
-                        <span className="text-xs font-extrabold text-amber-300 block">
+                        <span className="text-sm font-black text-amber-300 block">
                           🎉 تمام مسابقات این لیگ با موفقیت به پایان رسید!
                         </span>
                         {isAdmin && (
                           <button
                             type="button"
                             onClick={handleFinishAndArchiveLeague}
-                            className="py-2 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-extrabold text-xs shadow hover:scale-105 active:scale-95 transition-all"
+                            className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-black text-xs shadow hover:scale-105 active:scale-95 transition-all"
                           >
                             ثبت نهایی و بایگانی در تاریخچه 📜
                           </button>
@@ -553,25 +553,25 @@ export const App: React.FC = () => {
                                 : 'bg-emerald-950/40 border-emerald-500/20 hover:border-emerald-400/40'
                             }`}
                           >
-                            <div className="flex items-center justify-between text-[10px] text-zinc-400 mb-1.5">
-                              <span>هفته {m.round} • {m.leg === 1 ? 'دور رفت' : 'دور برگشت'}</span>
+                            <div className="flex items-center justify-between text-xs text-zinc-300 mb-2">
+                              <span className="font-medium">هفته {m.round} • {m.leg === 1 ? 'دور رفت' : 'دور برگشت'}</span>
                               {m.isPlayed ? (
-                                <span className="text-emerald-400 font-bold flex items-center gap-1">
-                                  <CheckCircle2 className="w-3 h-3" />
+                                <span className="text-emerald-400 font-bold flex items-center gap-1 text-xs">
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
                                   <span>انجام شده</span>
                                 </span>
                               ) : (
-                                <span className="text-amber-400/90 font-medium">در انتظار برگزاری</span>
+                                <span className="text-amber-400 font-medium text-xs">در انتظار برگزاری</span>
                               )}
                             </div>
 
                             <div className="flex items-center justify-between">
                               {/* Player 1 (Home) */}
                               <div className="flex-1 text-start">
-                                <span className="block font-bold text-xs text-white truncate max-w-[100px]">
+                                <span className="block font-bold text-sm text-white truncate max-w-[110px]">
                                   {p1.name}
                                 </span>
-                                <span className="text-[10px] text-emerald-400/80 block truncate max-w-[100px]">
+                                <span className="text-xs text-emerald-400/90 font-medium block truncate max-w-[110px]">
                                   {p1.team}
                                 </span>
                               </div>
@@ -579,7 +579,7 @@ export const App: React.FC = () => {
                               {/* Score or Action Button */}
                               <div className="px-3 text-center">
                                 {m.isPlayed ? (
-                                  <div className="px-3 py-1 rounded-xl bg-black/60 border border-white/10 font-mono font-black text-base text-emerald-400 tracking-wider">
+                                  <div className="px-3.5 py-1.5 rounded-xl bg-black/60 border border-white/10 font-mono font-black text-lg text-emerald-400 tracking-wider">
                                     {m.score1} - {m.score2}
                                   </div>
                                 ) : (
@@ -591,22 +591,22 @@ export const App: React.FC = () => {
                                         setScoreInput1(0);
                                         setScoreInput2(0);
                                       }}
-                                      className="py-1 px-3 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-400/40 text-[11px] font-bold transition-all"
+                                      className="py-1.5 px-3.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-400/40 text-xs font-bold transition-all"
                                     >
                                       ثبت نتیجه
                                     </button>
                                   ) : (
-                                    <span className="text-xs text-zinc-500 font-mono font-bold">VS</span>
+                                    <span className="text-sm text-zinc-400 font-mono font-bold">VS</span>
                                   )
                                 )}
                               </div>
 
                               {/* Player 2 (Away) */}
                               <div className="flex-1 text-end">
-                                <span className="block font-bold text-xs text-white truncate max-w-[100px]">
+                                <span className="block font-bold text-sm text-white truncate max-w-[110px]">
                                   {p2.name}
                                 </span>
-                                <span className="text-[10px] text-emerald-400/80 block truncate max-w-[100px]">
+                                <span className="text-xs text-emerald-400/90 font-medium block truncate max-w-[110px]">
                                   {p2.team}
                                 </span>
                               </div>
@@ -626,12 +626,12 @@ export const App: React.FC = () => {
             <div className="space-y-4 animate-fadeIn">
               <div className="rounded-3xl p-4 bg-emerald-950/50 border border-white/15 backdrop-blur-2xl shadow-xl">
                 <div className="flex items-center justify-between mb-3 px-1">
-                  <h3 className="font-bold text-sm text-emerald-300 flex items-center gap-2">
-                    <Medal className="w-4 h-4 text-emerald-400" />
+                  <h3 className="font-bold text-base text-emerald-300 flex items-center gap-2">
+                    <Medal className="w-5 h-5 text-emerald-400" />
                     <span>جدول رده‌بندی {activeLeague?.name || 'لیگ'}</span>
                   </h3>
                   {standings.length > 0 && (
-                    <span className="text-[11px] text-zinc-400 font-mono">
+                    <span className="text-xs text-zinc-300 font-mono font-medium">
                       {standings.length} بازیکن
                     </span>
                   )}
@@ -640,24 +640,24 @@ export const App: React.FC = () => {
                 {standings.length === 0 ? (
                   <div className="py-12 text-center space-y-2">
                     <Trophy className="w-8 h-8 mx-auto text-zinc-500" />
-                    <p className="text-xs text-zinc-400 font-medium">هنوز مسابقه‌ای در جدول ثبت نشده است.</p>
-                    <p className="text-[11px] text-zinc-500">
+                    <p className="text-sm text-zinc-300 font-medium">هنوز مسابقه‌ای در جدول ثبت نشده است.</p>
+                    <p className="text-xs text-zinc-400">
                       برای شروع با زدن دکمه + در بالا، لیگ را ایجاد و قرعه‌کشی کنید.
                     </p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-center text-xs">
+                    <table className="w-full text-center text-sm">
                       <thead>
-                        <tr className="text-zinc-400 border-b border-white/10 pb-2 font-medium">
-                          <th className="py-2 text-start px-2">#</th>
-                          <th className="py-2 text-start">بازیکن و تیم</th>
-                          <th className="py-2">بازی</th>
-                          <th className="py-2">برد</th>
-                          <th className="py-2">مساوی</th>
-                          <th className="py-2">باخت</th>
-                          <th className="py-2">تفاضل</th>
-                          <th className="py-2 font-bold text-emerald-400">امتیاز</th>
+                        <tr className="text-zinc-300 border-b border-white/10 pb-2 text-xs font-bold">
+                          <th className="py-2.5 text-start px-2">#</th>
+                          <th className="py-2.5 text-start">بازیکن و تیم</th>
+                          <th className="py-2.5">بازی</th>
+                          <th className="py-2.5">برد</th>
+                          <th className="py-2.5">مساوی</th>
+                          <th className="py-2.5">باخت</th>
+                          <th className="py-2.5">تفاضل</th>
+                          <th className="py-2.5 font-black text-emerald-400">امتیاز</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
@@ -665,40 +665,40 @@ export const App: React.FC = () => {
                           <tr
                             key={row.name}
                             className={`hover:bg-white/5 transition-colors ${
-                              row.rank === 1 ? 'bg-amber-400/5' : ''
+                              row.rank === 1 ? 'bg-amber-400/10' : ''
                             }`}
                           >
                             <td className="py-3 px-2 text-start font-bold">
                               {row.rank === 1 ? (
-                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-400/20 text-amber-300 text-[11px]">
+                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-400/25 text-amber-300 text-xs font-black">
                                   ۱
                                 </span>
                               ) : (
-                                <span className="text-zinc-400">{row.rank}</span>
+                                <span className="text-zinc-400 text-xs font-semibold">{row.rank}</span>
                               )}
                             </td>
 
                             {/* Player Name with Crown 👑 on the left side of the name */}
                             <td className="py-3 text-start font-bold text-white">
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-2">
                                 <div>
-                                  <span className="block text-white font-bold">{row.name}</span>
-                                  <span className="block text-[10px] text-zinc-400 font-normal">{row.team}</span>
+                                  <span className="block text-white font-extrabold text-sm">{row.name}</span>
+                                  <span className="block text-xs text-zinc-400 font-normal">{row.team}</span>
                                 </div>
                                 {row.rank === 1 && (
-                                  <Crown className="w-4 h-4 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)] animate-pulse" />
+                                  <Crown className="w-4.5 h-4.5 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)] animate-pulse" />
                                 )}
                               </div>
                             </td>
 
-                            <td className="py-3 text-zinc-300">{row.played}</td>
-                            <td className="py-3 text-zinc-300">{row.won}</td>
-                            <td className="py-3 text-zinc-300">{row.drawn}</td>
-                            <td className="py-3 text-zinc-300">{row.lost}</td>
-                            <td className="py-3 font-mono text-[11px] text-zinc-300 dir-ltr">
+                            <td className="py-3 text-zinc-200 font-medium text-xs sm:text-sm">{row.played}</td>
+                            <td className="py-3 text-zinc-200 font-medium text-xs sm:text-sm">{row.won}</td>
+                            <td className="py-3 text-zinc-200 font-medium text-xs sm:text-sm">{row.drawn}</td>
+                            <td className="py-3 text-zinc-200 font-medium text-xs sm:text-sm">{row.lost}</td>
+                            <td className="py-3 font-mono text-xs sm:text-sm text-zinc-200 font-semibold dir-ltr">
                               {row.goalDiff > 0 ? `+${row.goalDiff}` : row.goalDiff}
                             </td>
-                            <td className="py-3 font-extrabold text-sm text-emerald-400 font-mono">
+                            <td className="py-3 font-black text-base text-emerald-400 font-mono">
                               {row.points}
                             </td>
                           </tr>
@@ -716,11 +716,11 @@ export const App: React.FC = () => {
             <div className="space-y-4 animate-fadeIn">
               <div className="rounded-3xl p-4 bg-emerald-950/50 border border-white/15 backdrop-blur-2xl shadow-xl">
                 <div className="flex items-center justify-between mb-3 px-1">
-                  <h3 className="font-bold text-sm text-emerald-300 flex items-center gap-2">
-                    <History className="w-4 h-4 text-emerald-400" />
+                  <h3 className="font-bold text-base text-emerald-300 flex items-center gap-2">
+                    <History className="w-5 h-5 text-emerald-400" />
                     <span>تاریخچه و تالار افتخارات لیگ‌ها</span>
                   </h3>
-                  <span className="text-[11px] text-zinc-400 font-mono">
+                  <span className="text-xs text-zinc-300 font-mono font-medium">
                     ({archivedLeagues.length} لیگ بایگانی‌شده)
                   </span>
                 </div>
@@ -728,8 +728,8 @@ export const App: React.FC = () => {
                 {archivedLeagues.length === 0 ? (
                   <div className="py-12 text-center space-y-2">
                     <Archive className="w-8 h-8 mx-auto text-zinc-500" />
-                    <p className="text-xs text-zinc-400 font-medium">هنوز هیچ لیگی به اتمام نرسیده است.</p>
-                    <p className="text-[11px] text-zinc-500">
+                    <p className="text-sm text-zinc-300 font-medium">هنوز هیچ لیگی به اتمام نرسیده است.</p>
+                    <p className="text-xs text-zinc-400">
                       وقتی تمام بازی‌های یک لیگ انجام شود، نتایج کامل و جدول رده‌بندی به اینجا منتقل می‌شود.
                     </p>
                   </div>
@@ -742,20 +742,20 @@ export const App: React.FC = () => {
                       >
                         {/* League Title & Date */}
                         <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                          <h4 className="font-bold text-sm text-white">{archived.name}</h4>
-                          <span className="text-[11px] text-zinc-400">{archived.finishedAt}</span>
+                          <h4 className="font-bold text-base text-white">{archived.name}</h4>
+                          <span className="text-xs text-zinc-300">{archived.finishedAt}</span>
                         </div>
 
                         {/* Champion Spotlight Badge with Crown 👑 */}
-                        <div className="p-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-transparent border border-amber-400/30 flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-amber-400/20 text-amber-300">
-                            <Crown className="w-5 h-5 drop-shadow-[0_0_8px_#fbbf24]" />
+                        <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-transparent border border-amber-400/30 flex items-center gap-3">
+                          <div className="p-2.5 rounded-xl bg-amber-400/20 text-amber-300">
+                            <Crown className="w-6 h-6 drop-shadow-[0_0_8px_#fbbf24]" />
                           </div>
                           <div>
-                            <span className="text-[10px] text-amber-300 font-bold uppercase tracking-wider block">
+                            <span className="text-xs text-amber-300 font-bold uppercase tracking-wider block">
                               قهرمان مسابقات
                             </span>
-                            <span className="text-sm font-extrabold text-white">
+                            <span className="text-base font-black text-white">
                               {archived.championName} ({archived.championTeam})
                             </span>
                           </div>
@@ -763,29 +763,29 @@ export const App: React.FC = () => {
 
                         {/* Final Standings Table in History */}
                         <div className="overflow-x-auto">
-                          <table className="w-full text-center text-xs">
+                          <table className="w-full text-center text-xs sm:text-sm">
                             <thead>
-                              <tr className="text-zinc-400 border-b border-white/10 pb-1 text-[11px]">
-                                <th className="py-1 text-start">#</th>
-                                <th className="py-1 text-start">بازیکن</th>
-                                <th className="py-1">بازی</th>
-                                <th className="py-1">برد</th>
-                                <th className="py-1">تفاضل</th>
-                                <th className="py-1 font-bold text-emerald-400">امتیاز</th>
+                              <tr className="text-zinc-300 border-b border-white/10 pb-1 text-xs font-bold">
+                                <th className="py-1.5 text-start">#</th>
+                                <th className="py-1.5 text-start">بازیکن</th>
+                                <th className="py-1.5">بازی</th>
+                                <th className="py-1.5">برد</th>
+                                <th className="py-1.5">تفاضل</th>
+                                <th className="py-1.5 font-bold text-emerald-400">امتیاز</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
                               {archived.standings.map((s) => (
                                 <tr key={s.name}>
-                                  <td className="py-1.5 text-start font-bold text-zinc-400">{s.rank}</td>
-                                  <td className="py-1.5 text-start font-bold text-white flex items-center gap-1">
+                                  <td className="py-2 text-start font-bold text-zinc-300 text-xs sm:text-sm">{s.rank}</td>
+                                  <td className="py-2 text-start font-bold text-white flex items-center gap-1.5 text-xs sm:text-sm">
                                     <span>{s.name}</span>
-                                    {s.rank === 1 && <Crown className="w-3.5 h-3.5 text-amber-400" />}
+                                    {s.rank === 1 && <Crown className="w-4 h-4 text-amber-400" />}
                                   </td>
-                                  <td className="py-1.5 text-zinc-300">{s.played}</td>
-                                  <td className="py-1.5 text-zinc-300">{s.won}</td>
-                                  <td className="py-1.5 text-zinc-300 font-mono dir-ltr">{s.goalDiff}</td>
-                                  <td className="py-1.5 font-bold text-emerald-400 font-mono">{s.points}</td>
+                                  <td className="py-2 text-zinc-200">{s.played}</td>
+                                  <td className="py-2 text-zinc-200">{s.won}</td>
+                                  <td className="py-2 text-zinc-200 font-mono dir-ltr">{s.goalDiff}</td>
+                                  <td className="py-2 font-black text-emerald-400 font-mono text-sm sm:text-base">{s.points}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -794,20 +794,20 @@ export const App: React.FC = () => {
 
                         {/* Collapsible/List of Match Results under the table */}
                         <div className="pt-2 border-t border-white/10">
-                          <span className="text-[11px] text-zinc-400 font-bold mb-1.5 block">
+                          <span className="text-xs text-zinc-300 font-bold mb-2 block">
                             نتایج مسابقات ثبت‌شده ({archived.matches.length} بازی):
                           </span>
-                          <div className="space-y-1.5 max-h-36 overflow-y-auto no-scrollbar">
+                          <div className="space-y-1.5 max-h-40 overflow-y-auto no-scrollbar">
                             {archived.matches.map((m) => (
                               <div
                                 key={m.id}
-                                className="flex items-center justify-between py-1 px-2 rounded-lg bg-white/5 text-[11px]"
+                                className="flex items-center justify-between py-1.5 px-2.5 rounded-lg bg-white/5 text-xs font-medium"
                               >
-                                <span className="text-white truncate max-w-[80px]">{m.player1}</span>
-                                <span className="font-mono font-bold text-emerald-400">
+                                <span className="text-white truncate max-w-[90px]">{m.player1}</span>
+                                <span className="font-mono font-black text-emerald-400 text-sm">
                                   {m.score1} - {m.score2}
                                 </span>
-                                <span className="text-white truncate max-w-[80px]">{m.player2}</span>
+                                <span className="text-white truncate max-w-[90px]">{m.player2}</span>
                               </div>
                             ))}
                           </div>
@@ -852,7 +852,7 @@ export const App: React.FC = () => {
             </div>
 
             <div className="mt-3 text-center">
-              <p className="text-xs text-zinc-300">
+              <p className="text-sm text-zinc-200">
                 فقط مدیر لیگ امکان ساخت لیگ و ثبت نتایج را دارد. اگر شما مدیر هستید، رمز عبور را وارد کنید:
               </p>
 
@@ -878,12 +878,12 @@ export const App: React.FC = () => {
                 />
 
                 {unlockError && (
-                  <p className="text-[11px] text-rose-400 font-medium">{unlockError}</p>
+                  <p className="text-xs text-rose-400 font-medium">{unlockError}</p>
                 )}
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-bold text-sm shadow hover:brightness-110 active:scale-95 transition-all"
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-extrabold text-sm shadow hover:brightness-110 active:scale-95 transition-all"
                 >
                   تایید رمز و ورود
                 </button>
@@ -902,8 +902,8 @@ export const App: React.FC = () => {
         >
           <div className="relative w-full max-w-xs rounded-3xl p-5 bg-emerald-950/95 border border-emerald-500/30 backdrop-blur-2xl shadow-2xl text-white">
             <div className="flex items-center justify-between pb-2 border-b border-white/10">
-              <h3 className="text-sm font-bold text-emerald-300 flex items-center gap-1.5">
-                <Flame className="w-4 h-4 text-amber-400" />
+              <h3 className="text-base font-bold text-emerald-300 flex items-center gap-1.5">
+                <Flame className="w-4.5 h-4.5 text-amber-400" />
                 <span>ثبت نتیجه مسابقه</span>
               </h3>
               <button
@@ -924,7 +924,7 @@ export const App: React.FC = () => {
             >
               <div className="flex items-center justify-between gap-3 text-center">
                 <div className="flex-1">
-                  <span className="block text-xs font-bold text-white mb-1 truncate">
+                  <span className="block text-sm font-bold text-white mb-1.5 truncate">
                     {getPlayerLabel(activeLeague?.matches.find(m => m.id === scoreEditMatchId)?.player1Slot || 1).name}
                   </span>
                   <input
@@ -933,16 +933,16 @@ export const App: React.FC = () => {
                     max="50"
                     value={scoreInput1}
                     onChange={(e) => setScoreInput1(e.target.value)}
-                    className="w-full py-2 text-center rounded-xl bg-black/50 border border-white/15 font-mono text-lg font-bold text-emerald-400 focus:outline-none focus:border-emerald-400"
+                    className="w-full py-2.5 text-center rounded-xl bg-black/50 border border-white/15 font-mono text-xl font-black text-emerald-400 focus:outline-none focus:border-emerald-400"
                     required
                     autoFocus
                   />
                 </div>
 
-                <span className="text-sm font-bold text-zinc-500 font-mono mt-4">-</span>
+                <span className="text-base font-bold text-zinc-500 font-mono mt-4">-</span>
 
                 <div className="flex-1">
-                  <span className="block text-xs font-bold text-white mb-1 truncate">
+                  <span className="block text-sm font-bold text-white mb-1.5 truncate">
                     {getPlayerLabel(activeLeague?.matches.find(m => m.id === scoreEditMatchId)?.player2Slot || 2).name}
                   </span>
                   <input
@@ -951,7 +951,7 @@ export const App: React.FC = () => {
                     max="50"
                     value={scoreInput2}
                     onChange={(e) => setScoreInput2(e.target.value)}
-                    className="w-full py-2 text-center rounded-xl bg-black/50 border border-white/15 font-mono text-lg font-bold text-emerald-400 focus:outline-none focus:border-emerald-400"
+                    className="w-full py-2.5 text-center rounded-xl bg-black/50 border border-white/15 font-mono text-xl font-black text-emerald-400 focus:outline-none focus:border-emerald-400"
                     required
                   />
                 </div>
@@ -959,7 +959,7 @@ export const App: React.FC = () => {
 
               <button
                 type="submit"
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-bold text-xs shadow hover:brightness-110 active:scale-95 transition-all"
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-extrabold text-sm shadow hover:brightness-110 active:scale-95 transition-all"
               >
                 ذخیره نتیجه در جدول
               </button>

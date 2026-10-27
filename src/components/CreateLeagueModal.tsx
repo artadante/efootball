@@ -75,8 +75,8 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
               <Trophy className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">راه‌اندازی مسابقات جدید</h3>
-              <span className="text-[11px] text-emerald-400 font-medium">مرحله {step} از ۳</span>
+              <h3 className="text-base sm:text-lg font-bold text-white">راه‌اندازی مسابقات جدید</h3>
+              <span className="text-xs text-emerald-400 font-medium">مرحله {step} از ۳</span>
             </div>
           </div>
           <button
@@ -93,19 +93,19 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
         {step === 1 && (
           <div className="mt-4 space-y-4 animate-fadeIn">
             <div>
-              <label className="block text-xs text-zinc-300 mb-1.5 font-medium">نام لیگ یا مسابقات</label>
+              <label className="block text-sm text-zinc-200 mb-1.5 font-semibold">نام لیگ یا مسابقات</label>
               <input
                 type="text"
                 value={leagueName}
                 onChange={(e) => setLeagueName(e.target.value)}
                 placeholder="مثلاً: لیگ تابستانه دوستان"
-                className="w-full py-2.5 px-3 rounded-xl bg-black/50 border border-white/15 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400"
+                className="w-full py-2.5 px-3 rounded-xl bg-black/50 border border-white/15 text-sm sm:text-base text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs text-zinc-300 mb-2 font-medium">حالت برگزاری (Mode)</label>
+              <label className="block text-sm text-zinc-200 mb-2 font-semibold">حالت برگزاری (Mode)</label>
               <div className="grid grid-cols-2 gap-2.5">
                 <button
                   type="button"
@@ -117,8 +117,8 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
                   }`}
                 >
                   <Trophy className={`w-5 h-5 mb-1.5 ${mode === 'league' ? 'text-amber-400' : 'text-zinc-500'}`} />
-                  <span className="block text-xs font-bold text-white">۱. لیگ عادی فوتبال</span>
-                  <span className="text-[10px] text-zinc-400 block mt-0.5">دو نیم‌فصل رفت و برگشت</span>
+                  <span className="block text-sm font-bold text-white">۱. لیگ عادی فوتبال</span>
+                  <span className="text-xs text-zinc-300 block mt-0.5">دو نیم‌فصل رفت و برگشت</span>
                 </button>
 
                 <button
@@ -131,8 +131,8 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
                   }`}
                 >
                   <Swords className={`w-5 h-5 mb-1.5 ${mode === 'cup' ? 'text-emerald-400' : 'text-zinc-500'}`} />
-                  <span className="block text-xs font-bold text-white">۲. جام حذفی</span>
-                  <span className="text-[10px] text-zinc-400 block mt-0.5">تک‌حذفی و صعود مرحله‌ای</span>
+                  <span className="block text-sm font-bold text-white">۲. جام حذفی</span>
+                  <span className="text-xs text-zinc-300 block mt-0.5">تک‌حذفی و صعود مرحله‌ای</span>
                 </button>
               </div>
             </div>
@@ -141,7 +141,7 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
               type="button"
               onClick={() => setStep(2)}
               disabled={!leagueName.trim()}
-              className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-bold text-sm shadow hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+              className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-extrabold text-sm sm:text-base shadow hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1.5"
             >
               <span>مرحله بعد: تعداد بازیکنان</span>
               <ChevronRight className="w-4 h-4 rotate-180" />
@@ -153,14 +153,14 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
         {step === 2 && (
           <div className="mt-4 space-y-4 animate-fadeIn">
             <div>
-              <label className="block text-xs text-zinc-300 mb-2 font-medium">تعداد بازیکنان حاضر در لیگ</label>
+              <label className="block text-sm text-zinc-200 mb-2 font-semibold">تعداد بازیکنان حاضر در لیگ</label>
               <div className="grid grid-cols-4 gap-2 mb-3">
                 {[4, 6, 8, 10].map((num) => (
                   <button
                     key={num}
                     type="button"
                     onClick={() => setPlayerCount(num)}
-                    className={`py-3 rounded-xl font-bold text-sm border transition-all ${
+                    className={`py-3 rounded-xl font-bold text-base border transition-all ${
                       playerCount === num
                         ? 'bg-emerald-500 text-black border-emerald-300 shadow-[0_0_12px_rgba(34,197,94,0.4)]'
                         : 'bg-black/40 border-white/10 text-white hover:bg-white/5'
@@ -173,27 +173,27 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
 
               {/* Custom count input */}
               <div className="mt-3">
-                <span className="text-[11px] text-zinc-400 mb-1 block">یا تعداد دلخواه وارد کنید:</span>
+                <span className="text-xs text-zinc-300 mb-1 block font-medium">یا تعداد دلخواه وارد کنید:</span>
                 <input
                   type="number"
                   min="2"
                   max="32"
                   value={playerCount}
                   onChange={(e) => setPlayerCount(Math.max(2, Number(e.target.value)))}
-                  className="w-full py-2.5 px-3 rounded-xl bg-black/50 border border-white/15 text-sm text-center font-bold text-emerald-400 focus:outline-none focus:border-emerald-400"
+                  className="w-full py-2.5 px-3 rounded-xl bg-black/50 border border-white/15 text-base text-center font-bold text-emerald-400 focus:outline-none focus:border-emerald-400"
                 />
               </div>
             </div>
 
-            <div className="p-3 rounded-2xl bg-black/40 border border-white/10 text-xs text-zinc-300 space-y-1">
+            <div className="p-3.5 rounded-2xl bg-black/40 border border-white/10 text-sm text-zinc-200 space-y-1.5">
               <div className="flex justify-between">
                 <span>تعداد کل بازی‌های لیگ:</span>
-                <span className="font-bold text-emerald-400 font-mono">
+                <span className="font-bold text-emerald-400 font-mono text-base">
                   {mode === 'league' ? playerCount * (playerCount - 1) : playerCount - 1} مسابقه
                 </span>
               </div>
               {mode === 'league' && (
-                <div className="flex justify-between text-[11px] text-zinc-400">
+                <div className="flex justify-between text-xs text-zinc-300">
                   <span>ساختار:</span>
                   <span>نیم‌فصل اول (رفت) + نیم‌فصل دوم (برگشت)</span>
                 </div>
@@ -204,14 +204,14 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-zinc-300 font-bold text-xs"
+                className="py-3 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-zinc-200 font-bold text-sm"
               >
                 بازگشت
               </button>
               <button
                 type="button"
                 onClick={handleStartDraw}
-                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-bold text-sm shadow hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-extrabold text-sm sm:text-base shadow hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1.5"
               >
                 <Shuffle className="w-4 h-4" />
                 <span>شروع قرعه‌کشی با انیمیشن 🎲</span>
@@ -241,21 +241,21 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
                 </div>
                 <div>
                   <h4 className="text-base font-bold text-white">قرعه‌کشی با موفقیت انجام شد! 🎉</h4>
-                  <p className="text-xs text-zinc-300 mt-1">
+                  <p className="text-xs sm:text-sm text-zinc-300 mt-1">
                     بازی‌های نیم‌فصل اول و دوم مشخص شدند. حالا به صفحه چرخونه بروید تا اسامی و تیم‌ها را بچرخانید!
                   </p>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-black/50 border border-white/10 text-xs text-start space-y-1.5 max-h-36 overflow-y-auto no-scrollbar font-mono">
-                  <div className="text-[11px] text-amber-300 font-bold font-sans">پیش‌نمایش قرعه‌کشی (اسلات‌های خالی):</div>
+                <div className="p-3.5 rounded-2xl bg-black/50 border border-white/10 text-xs sm:text-sm text-start space-y-1.5 max-h-36 overflow-y-auto no-scrollbar font-mono">
+                  <div className="text-xs text-amber-300 font-bold font-sans">پیش‌نمایش قرعه‌کشی (اسلات‌های خالی):</div>
                   {Array.from({ length: Math.min(3, playerCount / 2) }).map((_, i) => (
-                    <div key={i} className="text-zinc-300 flex justify-between border-b border-white/5 py-1">
+                    <div key={i} className="text-zinc-200 flex justify-between border-b border-white/5 py-1">
                       <span>بازیکن {i + 1} (تیم نامشخص)</span>
-                      <span className="text-emerald-400">VS</span>
+                      <span className="text-emerald-400 font-bold">VS</span>
                       <span>بازیکن {playerCount - i} (تیم نامشخص)</span>
                     </div>
                   ))}
-                  <div className="text-[10px] text-zinc-500 text-center font-sans">
+                  <div className="text-xs text-zinc-400 text-center font-sans">
                     + و تمام بازی‌های رفت و برگشت لیگ
                   </div>
                 </div>
@@ -263,7 +263,7 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
                 <button
                   type="button"
                   onClick={handleFinalize}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-500 text-black font-extrabold text-sm shadow-[0_0_25px_rgba(34,197,94,0.4)] hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-500 text-black font-extrabold text-sm sm:text-base shadow-[0_0_25px_rgba(34,197,94,0.4)] hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>تایید و رفتن به چرخونه انتخاب تیم‌ها 🎡</span>

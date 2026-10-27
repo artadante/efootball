@@ -79,7 +79,7 @@ export const LiquidBottomNav: React.FC<LiquidBottomNavProps> = ({
                   <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
                 )}
               </div>
-              <span className="text-[11px] font-medium mt-1 tracking-tight">
+              <span className="text-xs font-bold mt-1 tracking-tight">
                 {tab.label}
               </span>
             </button>

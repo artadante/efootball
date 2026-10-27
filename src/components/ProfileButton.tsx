@@ -130,7 +130,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                   </span>
                 )}
               </div>
-              <p className="text-xs text-emerald-400/90 font-medium">
+              <p className="text-sm text-emerald-400 font-medium">
                 امتیاز eFootball: {rating} • {favoriteTeam}
               </p>
             </div>
@@ -138,12 +138,12 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
             {/* Admin status vs Visitor status */}
             <div className="mt-4">
               {isAdmin ? (
-                <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-400/30 text-amber-200 text-xs space-y-2">
+                <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-400/30 text-amber-200 text-sm space-y-2">
                   <div className="flex items-center gap-2 font-bold text-amber-300">
                     <Crown className="w-4 h-4" />
                     <span>دسترسی مدیر لیگ فعال است</span>
                   </div>
-                  <p className="text-[11px] text-zinc-300">
+                  <p className="text-xs sm:text-sm text-zinc-300">
                     شما دسترسی کامل به ثبت نتایج مسابقات و کنترل لیگ جاری را دارید.
                   </p>
                   
@@ -156,7 +156,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                           setIsOpen(false);
                           onOpenLeagueControl();
                         }}
-                        className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-black font-extrabold text-xs flex items-center justify-center gap-1.5 shadow transition-all"
+                        className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-black font-extrabold text-sm flex items-center justify-center gap-1.5 shadow transition-all"
                       >
                         <Settings2 className="w-4 h-4" />
                         <span>کنترل لیگ در حال جریان ⚙️</span>
@@ -169,7 +169,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                         onClick={() => {
                           onAdminLogout();
                         }}
-                        className="w-full py-1.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-zinc-300 hover:text-white text-xs flex items-center justify-center gap-1.5"
+                        className="w-full py-2 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-zinc-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5"
                       >
                         <LogOut className="w-3.5 h-3.5" />
                         <span>خروج از حساب مدیر</span>
@@ -178,16 +178,16 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className="p-3 rounded-2xl bg-black/40 border border-white/10 text-xs">
-                  <div className="flex items-center gap-2 text-zinc-300 mb-2 font-medium">
+                <div className="p-3.5 rounded-2xl bg-black/40 border border-white/10 text-sm">
+                  <div className="flex items-center gap-2 text-zinc-300 mb-2 font-bold">
                     <Shield className="w-4 h-4 text-emerald-400" />
                     <span>حالت مهمان / تماشاگر</span>
                   </div>
-                  <p className="text-[11px] text-zinc-400 mb-3">
+                  <p className="text-xs sm:text-sm text-zinc-300 mb-3">
                     کاربران عادی فقط امکان مشاهده جدول و تاریخچه را دارند. برای مدیریت مسابقات، با رمز ادمین وارد شوید.
                   </p>
 
-                  <form onSubmit={handleLoginSubmit} className="space-y-2">
+                  <form onSubmit={handleLoginSubmit} className="space-y-2.5">
                     <div className="relative">
                       <input
                         type="password"
@@ -197,19 +197,19 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                           setLoginError('');
                         }}
                         placeholder="رمز عبور مدیر"
-                        className="w-full py-2 px-3 pl-8 rounded-xl bg-emerald-950/70 border border-white/15 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400"
+                        className="w-full py-2.5 px-3 pl-8 rounded-xl bg-emerald-950/70 border border-white/15 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400"
                       />
-                      <KeyRound className="w-3.5 h-3.5 text-zinc-400 absolute left-2.5 top-2.5" />
+                      <KeyRound className="w-4 h-4 text-zinc-400 absolute left-2.5 top-3" />
                     </div>
 
                     {loginError && (
-                      <p className="text-[11px] text-rose-400 font-medium">{loginError}</p>
+                      <p className="text-xs text-rose-400 font-medium">{loginError}</p>
                     )}
 
                     <button
                       type="submit"
                       aria-label="ورود مدیر"
-                      className="w-full py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-bold text-xs shadow hover:brightness-110 active:scale-95 transition-all"
+                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-extrabold text-sm shadow hover:brightness-110 active:scale-95 transition-all"
                     >
                       ورود مدیر
                     </button>

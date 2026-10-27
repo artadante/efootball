@@ -39,8 +39,8 @@ export const DualWheel: React.FC<DualWheelProps> = ({
         <div className="w-14 h-14 rounded-full bg-emerald-500/20 border border-emerald-400 mx-auto flex items-center justify-center text-emerald-400">
           <AlertCircle className="w-7 h-7" />
         </div>
-        <h3 className="text-base font-bold text-white">هنوز لیگی آغاز نشده است</h3>
-        <p className="text-xs text-zinc-300">
+        <h3 className="text-lg font-bold text-white">هنوز لیگی آغاز نشده است</h3>
+        <p className="text-sm text-zinc-300">
           برای قرعه‌کشی و تخصیص تیم‌ها، ابتدا با زدن دکمه <span className="font-bold text-emerald-400">+</span> در بالای صفحه لیگ را بسازید.
         </p>
       </div>
@@ -60,19 +60,19 @@ export const DualWheel: React.FC<DualWheelProps> = ({
           <Lock className="w-8 h-8" />
         </div>
         <div>
-          <h3 className="text-base font-bold text-white">گردونه قفل است 🔒</h3>
-          <p className="text-xs text-zinc-300 mt-1">
+          <h3 className="text-lg font-bold text-white">گردونه قفل است 🔒</h3>
+          <p className="text-sm text-zinc-300 mt-1">
             تمامی بازیکنان و تیم‌های <span className="font-bold text-emerald-400">{activeLeague.name}</span> تعیین شده‌اند. تا اتمام کامل بازی‌های لیگ، گردونه قفل خواهد بود.
           </p>
         </div>
 
         {/* Assigned list overview */}
-        <div className="p-3 rounded-2xl bg-black/50 border border-white/10 text-xs text-start space-y-2">
-          <span className="text-[11px] text-zinc-400 font-bold block mb-1">بازیکنان و تیم‌های تعیین‌شده:</span>
+        <div className="p-3.5 rounded-2xl bg-black/50 border border-white/10 text-sm text-start space-y-2">
+          <span className="text-xs text-zinc-400 font-bold block mb-1">بازیکنان و تیم‌های تعیین‌شده:</span>
           {activeLeague.players.map((p) => (
-            <div key={p.slot} className="flex justify-between items-center py-1 border-b border-white/5">
+            <div key={p.slot} className="flex justify-between items-center py-1.5 border-b border-white/5">
               <span className="font-bold text-white">بازیکن {p.slot}: {p.name}</span>
-              <span className="text-emerald-400 font-medium">{p.team}</span>
+              <span className="text-emerald-400 font-semibold">{p.team}</span>
             </div>
           ))}
         </div>
@@ -139,23 +139,23 @@ export const DualWheel: React.FC<DualWheelProps> = ({
         {/* Progress & Header */}
         <div className="flex items-center justify-between pb-3 border-b border-white/10">
           <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-amber-400" />
+            <h3 className="text-base font-bold text-white flex items-center gap-1.5">
+              <Sparkles className="w-4.5 h-4.5 text-amber-400" />
               <span>قرعه‌کشی اختصاص بازیکن و تیم</span>
             </h3>
-            <p className="text-[11px] text-zinc-300 mt-0.5">
+            <p className="text-xs sm:text-sm text-zinc-300 mt-0.5">
               در حال انتخاب برای: <span className="font-bold text-emerald-400">بازیکن {currentSlotNumber}</span> (از {activeLeague.playerCount} نفر)
             </p>
           </div>
-          <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+          <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold">
             اسلات {currentSlotNumber} / {activeLeague.playerCount}
           </span>
         </div>
 
         {/* Manual Input Section (No default text as requested) */}
-        <div className="grid grid-cols-2 gap-2.5 my-3 text-xs">
+        <div className="grid grid-cols-2 gap-2.5 my-3">
           <div>
-            <label className="block text-[11px] text-zinc-300 font-medium mb-1">
+            <label className="block text-xs font-semibold text-zinc-200 mb-1">
               اسم بازیکنا (با ویرگول جدا کنید):
             </label>
             <textarea
@@ -164,13 +164,13 @@ export const DualWheel: React.FC<DualWheelProps> = ({
               onChange={(e) => setPlayersInput(e.target.value)}
               placeholder="مثال: آرتا، علی، رضا، مهران..."
               disabled={isSpinning}
-              className="w-full p-2 rounded-xl bg-black/50 border border-white/15 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400 resize-none"
+              className="w-full p-2.5 rounded-xl bg-black/50 border border-white/15 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400 resize-none"
             />
-            <span className="text-[10px] text-zinc-400 mt-0.5 block">{playerList.length} بازیکن</span>
+            <span className="text-xs text-zinc-400 mt-0.5 block">{playerList.length} بازیکن</span>
           </div>
 
           <div>
-            <label className="block text-[11px] text-zinc-300 font-medium mb-1">
+            <label className="block text-xs font-semibold text-zinc-200 mb-1">
               اسم تیم‌ها (با ویرگول جدا کنید):
             </label>
             <textarea
@@ -179,9 +179,9 @@ export const DualWheel: React.FC<DualWheelProps> = ({
               onChange={(e) => setTeamsInput(e.target.value)}
               placeholder="مثال: چلسی، رئال، بارسا، اینتر..."
               disabled={isSpinning}
-              className="w-full p-2 rounded-xl bg-black/50 border border-white/15 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400 resize-none"
+              className="w-full p-2.5 rounded-xl bg-black/50 border border-white/15 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400 resize-none"
             />
-            <span className="text-[10px] text-zinc-400 mt-0.5 block">{teamList.length} تیم</span>
+            <span className="text-xs text-zinc-400 mt-0.5 block">{teamList.length} تیم</span>
           </div>
         </div>
 
@@ -190,8 +190,8 @@ export const DualWheel: React.FC<DualWheelProps> = ({
           
           {/* Wheel 1: Players */}
           <div className="text-center">
-            <div className="flex items-center justify-center gap-1 text-[11px] text-emerald-300 font-bold mb-2">
-              <User className="w-3.5 h-3.5" />
+            <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm text-emerald-300 font-bold mb-2">
+              <User className="w-4 h-4" />
               <span>چرخونه ۱: بازیکن</span>
             </div>
 
@@ -208,7 +208,7 @@ export const DualWheel: React.FC<DualWheelProps> = ({
                     : '#042111',
                 }}
               >
-                <div className="absolute z-20 w-8 h-8 rounded-full bg-emerald-950 border border-amber-400 flex items-center justify-center text-[9px] font-bold text-amber-300">
+                <div className="absolute z-20 w-8 h-8 rounded-full bg-emerald-950 border border-amber-400 flex items-center justify-center text-[10px] font-bold text-amber-300">
                   بازیکن
                 </div>
                 {playerList.map((p, idx) => {
@@ -229,8 +229,8 @@ export const DualWheel: React.FC<DualWheelProps> = ({
 
           {/* Wheel 2: Teams */}
           <div className="text-center">
-            <div className="flex items-center justify-center gap-1 text-[11px] text-emerald-300 font-bold mb-2">
-              <Shield className="w-3.5 h-3.5" />
+            <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm text-emerald-300 font-bold mb-2">
+              <Shield className="w-4 h-4" />
               <span>چرخونه ۲: تیم</span>
             </div>
 
@@ -247,7 +247,7 @@ export const DualWheel: React.FC<DualWheelProps> = ({
                     : '#042111',
                 }}
               >
-                <div className="absolute z-20 w-8 h-8 rounded-full bg-emerald-950 border border-amber-400 flex items-center justify-center text-[9px] font-bold text-amber-300">
+                <div className="absolute z-20 w-8 h-8 rounded-full bg-emerald-950 border border-amber-400 flex items-center justify-center text-[10px] font-bold text-amber-300">
                   تیم
                 </div>
                 {teamList.map((t, idx) => {
@@ -270,7 +270,7 @@ export const DualWheel: React.FC<DualWheelProps> = ({
         {/* Announcement of Pick */}
         {lastAssigned && (
           <div className="p-3 my-3 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-center animate-bounce">
-            <span className="text-xs font-bold text-amber-300 flex items-center justify-center gap-1.5">
+            <span className="text-sm font-bold text-amber-300 flex items-center justify-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <span>بازیکن {lastAssigned.slot}: «{lastAssigned.name}» با تیم «{lastAssigned.team}» ثبت شد!</span>
             </span>
@@ -282,7 +282,7 @@ export const DualWheel: React.FC<DualWheelProps> = ({
           type="button"
           onClick={handleDualSpin}
           disabled={isSpinning || playerList.length === 0 || teamList.length === 0}
-          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-500 text-black font-extrabold text-sm shadow-[0_0_25px_rgba(34,197,94,0.5)] hover:brightness-110 active:scale-95 disabled:opacity-40 transition-all flex items-center justify-center gap-2"
+          className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-500 text-black font-extrabold text-base shadow-[0_0_25px_rgba(34,197,94,0.5)] hover:brightness-110 active:scale-95 disabled:opacity-40 transition-all flex items-center justify-center gap-2"
         >
           <Sparkles className="w-4 h-4" />
           <span>{isSpinning ? 'در حال چرخش دو گردونه...' : `چرخش برای بازیکن ${currentSlotNumber} 🎡`}</span>
