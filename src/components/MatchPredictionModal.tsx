@@ -57,14 +57,38 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
     };
   };
 
+  const handleSetWinner = (winner: 'p1' | 'draw' | 'p2') => {
+    setPredWinner(winner);
+    if (winner === 'p1') {
+      if (score1 <= score2) {
+        setScore1(2);
+        setScore2(1);
+      }
+    } else if (winner === 'draw') {
+      setScore1(1);
+      setScore2(1);
+    } else if (winner === 'p2') {
+      if (score2 <= score1) {
+        setScore1(1);
+        setScore2(2);
+      }
+    }
+  };
+
   const handleSavePrediction = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedMatchId) return;
+    const targetMatchId = selectedMatchId || activeTargetMatch?.id;
+    if (!targetMatchId) return;
+
+    // Strict validation
+    if (predWinner === 'p1' && score1 <= score2) return;
+    if (predWinner === 'p2' && score2 <= score1) return;
+    if (predWinner === 'draw' && score1 !== score2) return;
 
     soundEngine.playClick();
 
     const newPred: StoredPrediction = {
-      matchId: selectedMatchId,
+      matchId: targetMatchId,
       userName: currentUserName,
       predictedWinner: predWinner,
       score1,
@@ -72,7 +96,7 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
     };
 
     const updated = predictions.filter(
-      (p) => !(p.matchId === selectedMatchId && p.userName === currentUserName)
+      (p) => !(p.matchId === targetMatchId && p.userName === currentUserName)
     );
     updated.push(newPred);
 
@@ -200,7 +224,7 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       type="button"
-                      onClick={() => setPredWinner('p1')}
+                      onClick={() => handleSetWinner('p1')}
                       className={`py-2 px-2 rounded-xl text-xs font-bold transition-all ${
                         predWinner === 'p1'
                           ? 'bg-emerald-500 text-black shadow-lg font-black'
@@ -211,7 +235,7 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                     </button>
                     <button
                       type="button"
-                      onClick={() => setPredWinner('draw')}
+                      onClick={() => handleSetWinner('draw')}
                       className={`py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         predWinner === 'draw'
                           ? 'bg-amber-400 text-black shadow-lg font-black'
@@ -222,7 +246,7 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                     </button>
                     <button
                       type="button"
-                      onClick={() => setPredWinner('p2')}
+                      onClick={() => handleSetWinner('p2')}
                       className={`py-2 px-2 rounded-xl text-xs font-bold transition-all ${
                         predWinner === 'p2'
                           ? 'bg-emerald-500 text-black shadow-lg font-black'
@@ -233,28 +257,212 @@ export const MatchPredictionModal: React.FC<MatchPredictionModalProps> = ({
                     </button>
                   </div>
 
-                  {/* Exact Score Select */}
-                  <div className="flex items-center justify-center gap-3 pt-2 border-t border-white/10">
-                    <span className="text-xs text-zinc-400">پیش‌بینی دقیق گل‌ها:</span>
-                    <div className="flex items-center gap-2 font-mono">
-                      <input
-                        type="number"
-                        min="0"
-                        max="15"
-                        value={score1}
-                        onChange={(e) => setScore1(parseInt(e.target.value) || 0)}
-                        className="w-12 p-1.5 rounded-lg bg-black/60 border border-white/20 text-center font-bold text-emerald-400"
-                      />
-                      <span>-</span>
-                      <input
-                        type="number"
-                        min="0"
-                        max="15"
-                        value={score2}
-                        onChange={(e) => setScore2(parseInt(e.target.value) || 0)}
-                        className="w-12 p-1.5 rounded-lg bg-black/60 border border-white/20 text-center font-bold text-emerald-400"
-                      />
-                    </div>
+                  {/* Menu-Based Exact Score Select */}
+                  <div className="pt-3 border-t border-white/10 space-y-2.5">
+                    <span className="text-xs text-zinc-300 font-bold block text-start">
+                      انتخاب منویی نتیجه دقیق مسابقه:
+                    </span>
+
+                    {/* CASE 1: DRAW (ONLY equal scores selectable) */}
+                    {predWinner === 'draw' && (
+                      <div className="space-y-2.5 animate-fadeIn">
+                        <div className="flex items-center gap-2">
+                          <label className="text-xs text-amber-300 font-bold shrink-0">
+                            نتیجه تساوی (اعداد مساوی):
+                          </label>
+                          <select
+                            value={score1}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              setScore1(val);
+                              setScore2(val);
+                            }}
+                            className="flex-1 p-2 rounded-xl bg-black/60 border border-amber-400/50 text-amber-300 font-mono font-bold text-sm focus:outline-none focus:border-amber-400 cursor-pointer"
+                          >
+                            {[0, 1, 2, 3, 4, 5].map((n) => (
+                              <option key={n} value={n}>
+                                تساوی {n} - {n}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Quick pills for equal scores */}
+                        <div className="flex items-center justify-center gap-2 flex-wrap">
+                          {[0, 1, 2, 3, 4].map((n) => (
+                            <button
+                              key={n}
+                              type="button"
+                              onClick={() => {
+                                setScore1(n);
+                                setScore2(n);
+                              }}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all ${
+                                score1 === n && score2 === n
+                                  ? 'bg-amber-400 text-black shadow-lg font-black scale-105'
+                                  : 'bg-white/10 text-zinc-300 hover:bg-white/15'
+                              }`}
+                            >
+                              {n} - {n}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* CASE 2: TEAM 1 WIN (Team 1 score strictly higher than Team 2) */}
+                    {predWinner === 'p1' && (
+                      <div className="space-y-2.5 animate-fadeIn">
+                        <div className="grid grid-cols-2 gap-2 text-start">
+                          <div>
+                            <label className="text-[11px] text-emerald-400 font-bold block mb-1">
+                              گل‌های {p1.name} (بالاتر):
+                            </label>
+                            <select
+                              value={score1}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                setScore1(val);
+                                if (score2 >= val) {
+                                  setScore2(val - 1);
+                                }
+                              }}
+                              className="w-full p-2 rounded-xl bg-black/60 border border-emerald-400/50 text-emerald-300 font-mono font-bold text-sm focus:outline-none focus:border-emerald-400 cursor-pointer"
+                            >
+                              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                                <option key={n} value={n}>
+                                  {n} گل
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] text-zinc-400 font-bold block mb-1">
+                              گل‌های {p2.name} (کمتر):
+                            </label>
+                            <select
+                              value={score2}
+                              onChange={(e) => setScore2(parseInt(e.target.value, 10))}
+                              className="w-full p-2 rounded-xl bg-black/60 border border-white/20 text-zinc-200 font-mono font-bold text-sm focus:outline-none focus:border-emerald-400 cursor-pointer"
+                            >
+                              {Array.from({ length: score1 }, (_, i) => i).map((n) => (
+                                <option key={n} value={n}>
+                                  {n} گل
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Quick pills for P1 win */}
+                        <div className="flex items-center justify-center gap-1.5 flex-wrap pt-1">
+                          {[
+                            [1, 0],
+                            [2, 0],
+                            [2, 1],
+                            [3, 0],
+                            [3, 1],
+                            [3, 2],
+                            [4, 1],
+                            [4, 2],
+                          ].map(([s1, s2]) => (
+                            <button
+                              key={`${s1}-${s2}`}
+                              type="button"
+                              onClick={() => {
+                                setScore1(s1);
+                                setScore2(s2);
+                              }}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all ${
+                                score1 === s1 && score2 === s2
+                                  ? 'bg-emerald-500 text-black shadow-lg font-black scale-105'
+                                  : 'bg-white/10 text-zinc-300 hover:bg-white/15'
+                              }`}
+                            >
+                              {s1} - {s2}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* CASE 3: TEAM 2 WIN (Team 2 score strictly higher than Team 1) */}
+                    {predWinner === 'p2' && (
+                      <div className="space-y-2.5 animate-fadeIn">
+                        <div className="grid grid-cols-2 gap-2 text-start">
+                          <div>
+                            <label className="text-[11px] text-zinc-400 font-bold block mb-1">
+                              گل‌های {p1.name} (کمتر):
+                            </label>
+                            <select
+                              value={score1}
+                              onChange={(e) => setScore1(parseInt(e.target.value, 10))}
+                              className="w-full p-2 rounded-xl bg-black/60 border border-white/20 text-zinc-200 font-mono font-bold text-sm focus:outline-none focus:border-emerald-400 cursor-pointer"
+                            >
+                              {Array.from({ length: score2 }, (_, i) => i).map((n) => (
+                                <option key={n} value={n}>
+                                  {n} گل
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] text-emerald-400 font-bold block mb-1">
+                              گل‌های {p2.name} (بالاتر):
+                            </label>
+                            <select
+                              value={score2}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                setScore2(val);
+                                if (score1 >= val) {
+                                  setScore1(val - 1);
+                                }
+                              }}
+                              className="w-full p-2 rounded-xl bg-black/60 border border-emerald-400/50 text-emerald-300 font-mono font-bold text-sm focus:outline-none focus:border-emerald-400 cursor-pointer"
+                            >
+                              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                                <option key={n} value={n}>
+                                  {n} گل
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Quick pills for P2 win */}
+                        <div className="flex items-center justify-center gap-1.5 flex-wrap pt-1">
+                          {[
+                            [0, 1],
+                            [0, 2],
+                            [1, 2],
+                            [0, 3],
+                            [1, 3],
+                            [2, 3],
+                            [1, 4],
+                            [2, 4],
+                          ].map(([s1, s2]) => (
+                            <button
+                              key={`${s1}-${s2}`}
+                              type="button"
+                              onClick={() => {
+                                setScore1(s1);
+                                setScore2(s2);
+                              }}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all ${
+                                score1 === s1 && score2 === s2
+                                  ? 'bg-emerald-500 text-black shadow-lg font-black scale-105'
+                                  : 'bg-white/10 text-zinc-300 hover:bg-white/15'
+                              }`}
+                            >
+                              {s1} - {s2}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

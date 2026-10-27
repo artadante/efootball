@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Trophy, X, Camera, Crown } from 'lucide-react';
+import { Trophy, X, Crown } from 'lucide-react';
 import { soundEngine } from '../utils/soundEffects';
 
 interface ChampionshipCelebrationProps {
@@ -9,7 +9,6 @@ interface ChampionshipCelebrationProps {
   championTeam: string;
   leagueName: string;
   avatarUrl?: string;
-  onOpenStoryPoster?: () => void;
 }
 
 export const ChampionshipCelebration: React.FC<ChampionshipCelebrationProps> = ({
@@ -19,7 +18,6 @@ export const ChampionshipCelebration: React.FC<ChampionshipCelebrationProps> = (
   championTeam,
   leagueName,
   avatarUrl,
-  onOpenStoryPoster,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -175,26 +173,13 @@ export const ChampionshipCelebration: React.FC<ChampionshipCelebrationProps> = (
 
         {/* Action Buttons */}
         <div className="w-full space-y-2">
-          {onOpenStoryPoster && (
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onOpenStoryPoster();
-              }}
-              className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:brightness-110 active:scale-95 text-black font-black text-sm flex items-center justify-center gap-2 shadow-xl transition-all cursor-pointer"
-            >
-              <Camera className="w-4 h-4 text-black stroke-[2.5]" />
-              <span>ساخت پوستر قهرمانی برای استوری</span>
-            </button>
-          )}
-
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 text-zinc-300 text-xs font-bold transition-all"
+            className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:brightness-110 active:scale-95 text-black font-black text-sm flex items-center justify-center gap-2 shadow-xl transition-all cursor-pointer"
           >
-            مشاهده جدول نهایی و بایگانی
+            <Trophy className="w-4 h-4 text-black stroke-[2.5]" />
+            <span>مشاهده جدول نهایی و بایگانی</span>
           </button>
         </div>
       </div>

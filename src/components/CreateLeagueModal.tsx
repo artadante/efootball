@@ -229,7 +229,7 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
                 >
                   <Swords className={`w-5 h-5 mb-1.5 ${mode === 'cup' ? 'text-emerald-400' : 'text-zinc-500'}`} />
                   <span className="block text-sm font-bold text-white">۲. جام حذفی</span>
-                  <span className="text-xs text-zinc-300 block mt-0.5">نمودار درختی تک‌حذفی</span>
+                  <span className="text-xs text-zinc-300 block mt-0.5">مسابقات تک‌حذفی</span>
                 </button>
               </div>
             </div>
@@ -286,7 +286,7 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
               <div className="flex justify-between">
                 <span>ساختار مسابقات:</span>
                 <span className="font-bold text-emerald-400 font-mono text-base">
-                  {mode === 'league' ? `${playerCount * (playerCount - 1)} مسابقه رفت و برگشت` : 'نمودار درختی حذفی'}
+                  {mode === 'league' ? `${playerCount * (playerCount - 1)} مسابقه رفت و برگشت` : 'مسابقات حذفی'}
                 </span>
               </div>
             </div>
@@ -481,7 +481,7 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
                   <h4 className="text-base font-bold text-white">در حال قرعه‌کشی مسابقات...</h4>
                   <p className="text-xs text-zinc-400 mt-1">
                     {mode === 'cup'
-                      ? 'چیدمان مسابقات در نمودار درختی جام حذفی'
+                      ? 'چیدمان مسابقات در جام حذفی'
                       : 'تخصیص مسابقات رفت و برگشت به اسلات‌های بازیکنان'}
                   </p>
                 </div>
@@ -495,7 +495,7 @@ export const CreateLeagueModal: React.FC<CreateLeagueModalProps> = ({
                   <h4 className="text-base font-bold text-white">قرعه‌کشی با موفقیت انجام شد!</h4>
                   <p className="text-xs sm:text-sm text-zinc-300 mt-1">
                     {mode === 'cup'
-                      ? 'نمودار درختی جام حذفی شکل گرفت. اکنون وارد چرخونه شوید تا تیم‌ها و بازیکنان را مشخص کنید.'
+                      ? 'مسابقات جام حذفی تنظیم شد. اکنون وارد چرخونه شوید تا تیم‌ها و بازیکنان را مشخص کنید.'
                       : 'بازی‌های رفت و برگشت ثبت شدند. اکنون وارد چرخونه شوید تا اسامی و تیم‌ها را بچرخانید.'}
                   </p>
                 </div>

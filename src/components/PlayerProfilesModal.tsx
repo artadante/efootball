@@ -8,7 +8,6 @@ import {
   Scale,
   Award,
   Flame,
-  Share2,
   ChevronLeft,
   Sparkles
 } from 'lucide-react';
@@ -22,7 +21,6 @@ import { PlayerPerformanceGraph } from './PlayerPerformanceGraph';
 import { FutCard } from './FutCard';
 import { GuinnessRecordsModal } from './GuinnessRecordsModal';
 import { PuskasPollModal } from './PuskasPollModal';
-import { StoryPosterModal } from './StoryPosterModal';
 import { TeamLogo } from './TeamLogo';
 import { soundEngine } from '../utils/soundEffects';
 
@@ -48,10 +46,9 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
   const [compareName1, setCompareName1] = useState<string>(registeredPlayers[0]?.name || '');
   const [compareName2, setCompareName2] = useState<string>(registeredPlayers[1]?.name || '');
 
-  // Sub-modals for Guinness and Puskas Poll and Story Poster
+  // Sub-modals for Guinness and Puskas Poll
   const [isGuinnessOpen, setIsGuinnessOpen] = useState(false);
   const [isPuskasOpen, setIsPuskasOpen] = useState(false);
-  const [isPosterOpen, setIsPosterOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -172,20 +169,6 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
                 </button>
               )}
             </>
-          )}
-
-          {viewMode === 'profile' && selectedPlayer && (
-            <button
-              type="button"
-              onClick={() => {
-                soundEngine.playClick();
-                setIsPosterOpen(true);
-              }}
-              className="py-1.5 sm:py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-black font-bold text-xs flex items-center gap-1.5 shadow active:scale-95 transition-all cursor-pointer"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              <span>پوستر استوری</span>
-            </button>
           )}
 
           <button
@@ -619,19 +602,6 @@ export const PlayerProfilesModal: React.FC<PlayerProfilesModalProps> = ({
         players={registeredPlayers.map((p) => p.name)}
         currentUserName={selectedPlayer?.name || registeredPlayers[0]?.name || 'کاربر مهمان'}
       />
-
-      {selectedPlayer && (
-        <StoryPosterModal
-          isOpen={isPosterOpen}
-          onClose={() => setIsPosterOpen(false)}
-          title="PLAYER PROFILE"
-          player1Name={selectedPlayer.name}
-          player1Team={activeStats?.teamsPlayed[0] || 'eFootball'}
-          player2Name="STAR OF LEAGUE"
-          player2Team={calculatePlayerNickname(activeStats || ({} as any))}
-          leagueName="کارت مسابقات رسمی eFootball"
-        />
-      )}
     </div>
   );
 };

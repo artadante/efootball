@@ -32,7 +32,7 @@ export const LiquidBottomNav: React.FC<LiquidBottomNavProps> = ({
       id: 'table' as TabType,
       label: mode === 'cup' ? 'جام حذفی' : 'جدول',
       icon: Trophy,
-      aria: mode === 'cup' ? 'نمودار درختی مسابقات حذفی' : 'جدول رده‌بندی لیگ',
+      aria: mode === 'cup' ? 'مسابقات جام حذفی' : 'جدول رده‌بندی لیگ',
     },
     {
       id: 'history' as TabType,

@@ -26,23 +26,16 @@ import {
   Archive,
   Trophy,
   Flame,
-  Smartphone,
   Users,
   Target,
-  Ban,
-  ClipboardList,
-  Network,
   Disc,
   Radio, 
-  Share2, 
   Sparkles
 } from 'lucide-react';
-import { ActiveLeague, ArchivedLeague, StandingRow, ScheduledMatch } from './types/league';
+import { ActiveLeague, ArchivedLeague, StandingRow } from './types/league';
 import { RegisteredPlayer, DEFAULT_FIXED_PLAYERS } from './types/player';
 import { SoundToggle } from './components/SoundToggle';
 import { soundEngine } from './utils/soundEffects';
-import { KnockoutBracket } from './components/KnockoutBracket';
-import { StoryPosterModal } from './components/StoryPosterModal';
 import { MatchPredictionModal } from './components/MatchPredictionModal';
 import { PositionProgressionChart } from './components/PositionProgressionChart';
 import { PickBanModal, PlayerPickBan } from './components/PickBanModal';
@@ -62,7 +55,6 @@ export const App: React.FC = () => {
   const [scoreInput1, setScoreInput1] = useState<number | string>(0);
   const [scoreInput2, setScoreInput2] = useState<number | string>(0);
   const [legFilter, setLegFilter] = useState<1 | 2>(1);
-  const [showPwaTip, setShowPwaTip] = useState(true);
 
   // Active User switcher state (Guest or one of registered players)
   const [activeUser, setActiveUser] = useState<RegisteredPlayer | null>(() => {
@@ -87,9 +79,6 @@ export const App: React.FC = () => {
     }
   };
 
-  // Matches view mode: list vs knockout bracket
-  const [matchesViewMode, setMatchesViewMode] = useState<'list' | 'bracket'>('list');
-
   // Prediction modal
   const [isPredictionModalOpen, setIsPredictionModalOpen] = useState(false);
 
@@ -104,22 +93,6 @@ export const App: React.FC = () => {
     championTeam: string;
     leagueName: string;
     avatarUrl?: string;
-  } | null>(null);
-
-  // Story poster modal
-  const [isStoryPosterOpen, setIsStoryPosterOpen] = useState(false);
-  const [storyPosterParams, setStoryPosterParams] = useState<{
-    posterType?: 'match' | 'table';
-    title?: string;
-    player1Name?: string;
-    player1Team?: string;
-    player2Name?: string;
-    player2Team?: string;
-    score1?: number | null;
-    score2?: number | null;
-    isPlayed?: boolean;
-    leagueName?: string;
-    standings?: StandingRow[];
   } | null>(null);
 
   // Dismissed news persistence (single view per user/device)
@@ -353,9 +326,6 @@ export const App: React.FC = () => {
   // Handle new league created from modal
   const handleLeagueCreated = (newLeague: ActiveLeague) => {
     saveActiveLeague(newLeague);
-    if (newLeague.mode === 'cup') {
-      setMatchesViewMode('bracket');
-    }
     setActiveTab('wheel'); // Redirect immediately to wheel to spin players and teams!
   };
 
@@ -583,24 +553,6 @@ export const App: React.FC = () => {
     setActiveTab('history');
   };
 
-  const handleOpenMatchStory = (m: ScheduledMatch) => {
-    soundEngine.playClick();
-    const p1 = getPlayerLabel(m.player1Slot);
-    const p2 = getPlayerLabel(m.player2Slot);
-    setStoryPosterParams({
-      title: m.isPlayed ? 'MATCH RESULT' : 'MATCHDAY',
-      player1Name: p1.name,
-      player1Team: p1.team,
-      player2Name: p2.name,
-      player2Team: p2.team,
-      score1: m.score1,
-      score2: m.score2,
-      isPlayed: m.isPlayed,
-      leagueName: activeLeague?.name || 'مسابقات دوستانه eFootball',
-    });
-    setIsStoryPosterOpen(true);
-  };
-
   // Filtered matches for "بازی‌ها" tab (نیم‌فصل ۱ یا ۲)
   const displayedMatches = activeLeague
     ? activeLeague.matches.filter((m) => m.leg === legFilter)
@@ -747,29 +699,6 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* PWA Helper Banner */}
-        {showPwaTip && (
-          <div className="mt-2.5 p-3.5 rounded-2xl bg-emerald-950/70 border border-emerald-500/20 backdrop-blur-xl flex items-center justify-between text-sm text-emerald-200/90 shadow-lg animate-fadeIn">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-300">
-                <Smartphone className="w-4 h-4" />
-              </div>
-              <div>
-                <p className="font-bold text-white text-sm">نصب روی گوشی</p>
-                <p className="text-xs text-emerald-300/80">در مرورگر گزینه Add to Home Screen را بزنید</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowPwaTip(false)}
-              aria-label="بستن راهنما"
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
         {/* Dynamic Views Content based on active tab: چرخونه - بازی‌ها - جدول - تاریخچه */}
         <main className="mt-3 flex-1 flex flex-col justify-center">
           
@@ -804,15 +733,6 @@ export const App: React.FC = () => {
                         <span>پیش‌بینی</span>
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={() => setIsPickBanOpen(true)}
-                        className="py-1 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-zinc-200 text-xs font-bold border border-white/10 transition-all flex items-center gap-1.5"
-                      >
-                        <Ban className="w-3 h-3 text-rose-400" />
-                        <span>پیک و بن</span>
-                      </button>
-
                       <span className="text-xs text-zinc-300 font-mono font-medium">
                         {activeLeague.matches.filter(m => m.isPlayed).length} / {activeLeague.matches.length} بازی
                       </span>
@@ -828,71 +748,31 @@ export const App: React.FC = () => {
                   </div>
                 ) : (
                   <>
-                    {/* View Switcher: List vs Knockout Bracket */}
-                    <div className="flex p-1 bg-black/50 rounded-2xl border border-white/10 mb-3 text-xs sm:text-sm">
+                    {/* Leg Filter Tabs (نیم‌فصل اول / دوم) */}
+                    <div className="flex p-1 bg-black/40 rounded-2xl border border-white/10 mb-3 text-sm">
                       <button
                         type="button"
-                        onClick={() => setMatchesViewMode('list')}
-                        className={`flex-1 py-1.5 sm:py-2 rounded-xl font-extrabold transition-all flex items-center justify-center gap-1.5 ${
-                          matchesViewMode === 'list'
-                            ? 'bg-emerald-500 text-black shadow'
+                        onClick={() => setLegFilter(1)}
+                        className={`flex-1 py-2 rounded-xl font-bold transition-all ${
+                          legFilter === 1
+                            ? 'bg-emerald-500 text-black font-extrabold shadow'
                             : 'text-zinc-400 hover:text-white'
                         }`}
                       >
-                        <ClipboardList className="w-4 h-4" />
-                        <span>لیست مسابقات</span>
+                        نیم‌فصل ۱ (رفت)
                       </button>
                       <button
                         type="button"
-                        onClick={() => setMatchesViewMode('bracket')}
-                        className={`flex-1 py-1.5 sm:py-2 rounded-xl font-extrabold transition-all flex items-center justify-center gap-1.5 ${
-                          matchesViewMode === 'bracket'
-                            ? 'bg-emerald-500 text-black shadow'
+                        onClick={() => setLegFilter(2)}
+                        className={`flex-1 py-2 rounded-xl font-bold transition-all ${
+                          legFilter === 2
+                            ? 'bg-emerald-500 text-black font-extrabold shadow'
                             : 'text-zinc-400 hover:text-white'
                         }`}
                       >
-                        <Network className="w-4 h-4" />
-                        <span>نمودار درختی جام</span>
+                        نیم‌فصل ۲ (برگشت)
                       </button>
                     </div>
-
-                    {matchesViewMode === 'bracket' ? (
-                      <KnockoutBracket
-                        activeLeague={activeLeague}
-                        isAdmin={isAdmin}
-                        onEditMatch={(mId) => {
-                          setScoreEditMatchId(mId);
-                          setScoreInput1(0);
-                          setScoreInput2(0);
-                        }}
-                      />
-                    ) : (
-                      <>
-                        {/* Leg Filter Tabs (نیم‌فصل اول / دوم) */}
-                        <div className="flex p-1 bg-black/40 rounded-2xl border border-white/10 mb-3 text-sm">
-                          <button
-                            type="button"
-                            onClick={() => setLegFilter(1)}
-                            className={`flex-1 py-2 rounded-xl font-bold transition-all ${
-                              legFilter === 1
-                                ? 'bg-emerald-500 text-black font-extrabold shadow'
-                                : 'text-zinc-400 hover:text-white'
-                            }`}
-                          >
-                            نیم‌فصل ۱ (رفت)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setLegFilter(2)}
-                            className={`flex-1 py-2 rounded-xl font-bold transition-all ${
-                              legFilter === 2
-                                ? 'bg-emerald-500 text-black font-extrabold shadow'
-                                : 'text-zinc-400 hover:text-white'
-                            }`}
-                          >
-                            نیم‌فصل ۲ (برگشت)
-                          </button>
-                        </div>
 
                         {/* All Matches Completed Celebration Banner */}
                         {activeLeague.matches.every(m => m.isPlayed) && !activeLeague.isFinished && (
@@ -945,16 +825,6 @@ export const App: React.FC = () => {
                                   </span>
 
                                   <div className="flex items-center gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleOpenMatchStory(m)}
-                                      className="py-0.5 px-2 rounded-lg bg-white/10 hover:bg-amber-400/20 hover:text-amber-300 text-[10px] text-zinc-400 flex items-center gap-1 transition-colors"
-                                      title="ساخت استوری این مسابقه"
-                                    >
-                                      <Share2 className="w-3 h-3" />
-                                      <span>استوری</span>
-                                    </button>
-
                                     {m.isPlayed ? (
                                       <span className="text-emerald-400 font-bold flex items-center gap-1 text-xs">
                                         <CheckCircle2 className="w-3.5 h-3.5" />
@@ -1037,8 +907,6 @@ export const App: React.FC = () => {
                         </div>
                       </>
                     )}
-                  </>
-                )}
               </div>
             </div>
           )}
@@ -1052,50 +920,18 @@ export const App: React.FC = () => {
                     <Medal className="w-5 h-5 text-emerald-400" />
                     <span>
                       {activeLeague?.mode === 'cup'
-                        ? 'نمودار درختی مسابقات جام حذفی'
+                        ? `مسابقات و نتایج ${activeLeague?.name || 'جام حذفی'}`
                         : `جدول رده‌بندی ${activeLeague?.name || 'لیگ'}`}
                     </span>
                   </h3>
-
-                  {activeLeague?.mode !== 'cup' && standings.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        soundEngine.playClick();
-                        setStoryPosterParams({
-                          posterType: 'table',
-                          title: 'LEAGUE STANDINGS',
-                          leagueName: activeLeague?.name,
-                          standings: standings,
-                        });
-                        setIsStoryPosterOpen(true);
-                      }}
-                      className="py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-black font-extrabold text-xs flex items-center gap-1 shadow active:scale-95 transition-all cursor-pointer"
-                    >
-                      <Share2 className="w-3.5 h-3.5" />
-                      <span>پوستر استوری جدول</span>
-                    </button>
-                  )}
                 </div>
 
-                {activeLeague?.mode === 'cup' ? (
-                  <div className="space-y-4 animate-fadeIn">
-                    <KnockoutBracket
-                      activeLeague={activeLeague}
-                      isAdmin={isAdmin}
-                      onEditMatch={(mId) => {
-                        setScoreEditMatchId(mId);
-                        setScoreInput1(0);
-                        setScoreInput2(0);
-                      }}
-                    />
-                  </div>
-                ) : standings.length === 0 ? (
+                {standings.length === 0 ? (
                   <div className="py-12 text-center space-y-2">
                     <Trophy className="w-8 h-8 mx-auto text-zinc-500" />
                     <p className="text-sm text-zinc-300 font-medium">هنوز مسابقه‌ای در جدول ثبت نشده است.</p>
                     <p className="text-xs text-zinc-400">
-                      برای شروع با زدن دکمه + در بالا، لیگ را ایجاد و قرعه‌کشی کنید.
+                      برای شروع با زدن دکمه + در بالا، مسابقات را ایجاد و قرعه‌کشی کنید.
                     </p>
                   </div>
                 ) : (
@@ -1247,27 +1083,6 @@ export const App: React.FC = () => {
                             >
                               <Trophy className="w-3.5 h-3.5" />
                               <span>جشن قهرمانی</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                soundEngine.playClick();
-                                setStoryPosterParams({
-                                  title: 'CHAMPION OF LEAGUE',
-                                  player1Name: archived.championName,
-                                  player1Team: archived.championTeam,
-                                  player2Name: 'WINNER',
-                                  player2Team: 'GOLD TROPHY',
-                                  isPlayed: true,
-                                  leagueName: archived.name,
-                                });
-                                setIsStoryPosterOpen(true);
-                              }}
-                              className="py-1 px-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-zinc-200 text-xs font-bold flex items-center gap-1.5 transition-all"
-                            >
-                              <Share2 className="w-3.5 h-3.5" />
-                              <span>استوری</span>
                             </button>
 
                             <TeamLogo teamName={archived.championTeam} className="w-9 h-9 shrink-0" />
@@ -1548,25 +1363,6 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* Modal 8: Instagram / Telegram Story Poster Generator */}
-      {storyPosterParams && (
-        <StoryPosterModal
-          isOpen={isStoryPosterOpen}
-          onClose={() => setIsStoryPosterOpen(false)}
-          posterType={storyPosterParams.posterType}
-          standings={storyPosterParams.standings}
-          title={storyPosterParams.title}
-          player1Name={storyPosterParams.player1Name}
-          player1Team={storyPosterParams.player1Team}
-          player2Name={storyPosterParams.player2Name}
-          player2Team={storyPosterParams.player2Team}
-          score1={storyPosterParams.score1}
-          score2={storyPosterParams.score2}
-          isPlayed={storyPosterParams.isPlayed}
-          leagueName={storyPosterParams.leagueName}
-        />
-      )}
-
       {/* Modal 9: Championship Confetti Celebration & 3D Trophy */}
       {celebrationData && (
         <ChampionshipCelebration
@@ -1576,18 +1372,6 @@ export const App: React.FC = () => {
           championTeam={celebrationData.championTeam}
           leagueName={celebrationData.leagueName}
           avatarUrl={celebrationData.avatarUrl}
-          onOpenStoryPoster={() => {
-            setStoryPosterParams({
-              title: 'CHAMPION OF LEAGUE',
-              player1Name: celebrationData.championName,
-              player1Team: celebrationData.championTeam,
-              player2Name: 'GOLD TROPHY',
-              player2Team: 'CHAMPION',
-              isPlayed: true,
-              leagueName: celebrationData.leagueName,
-            });
-            setIsStoryPosterOpen(true);
-          }}
         />
       )}
 
