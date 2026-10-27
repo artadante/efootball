@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, X, Shield, KeyRound, Crown, UserPlus, LogOut } from 'lucide-react';
+import { User, X, Shield, KeyRound, Crown, LogOut } from 'lucide-react';
 
 interface ProfileButtonProps {
   userName?: string;
@@ -9,7 +9,6 @@ interface ProfileButtonProps {
   isAdmin?: boolean;
   onAdminLogin?: (pin: string) => boolean | void;
   onAdminLogout?: () => void;
-  onAddPlayer?: () => void;
 }
 
 export const ProfileButton: React.FC<ProfileButtonProps> = ({
@@ -20,7 +19,6 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
   isAdmin = false,
   onAdminLogin,
   onAdminLogout,
-  onAddPlayer,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [pinInput, setPinInput] = useState('');
@@ -144,25 +142,11 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                     <span>دسترسی مدیر لیگ فعال است</span>
                   </div>
                   <p className="text-[11px] text-zinc-300">
-                    شما دسترسی کامل به ثبت نتایج مسابقات، حذف و افزودن بازیکنان جدید دارید.
+                    شما دسترسی کامل به ثبت نتایج مسابقات و مدیریت بازی‌ها دارید.
                   </p>
                   
                   {/* Admin Actions */}
                   <div className="pt-2 flex flex-col gap-2">
-                    {onAddPlayer && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsOpen(false);
-                          onAddPlayer();
-                        }}
-                        className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow"
-                      >
-                        <UserPlus className="w-4 h-4" />
-                        <span>افزودن بازیکن جدید</span>
-                      </button>
-                    )}
-
                     {onAdminLogout && (
                       <button
                         type="button"
@@ -196,7 +180,7 @@ export const ProfileButton: React.FC<ProfileButtonProps> = ({
                           setPinInput(e.target.value);
                           setLoginError('');
                         }}
-                        placeholder="رمز ورود ادمین (پیش‌فرض: 1234)"
+                        placeholder="رمز عبور مدیر"
                         className="w-full py-2 px-3 pl-8 rounded-xl bg-emerald-950/70 border border-white/15 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400"
                       />
                       <KeyRound className="w-3.5 h-3.5 text-zinc-400 absolute left-2.5 top-2.5" />

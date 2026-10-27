@@ -11,12 +11,11 @@ import {
   Medal,
   Cloud,
   Database,
-  UserPlus,
   ShieldAlert,
   Trash2,
-  Users
+  Trophy
 } from 'lucide-react';
-import { supabase, isSupabaseConfigured, DbStanding, DbPlayer } from './lib/supabase';
+import { supabase, isSupabaseConfigured, DbStanding } from './lib/supabase';
 
 interface StandingRow {
   rank: number;
@@ -41,17 +40,9 @@ interface MatchRecord {
   date: string;
 }
 
-interface Player {
-  id: string;
-  name: string;
-  favoriteTeam: string;
-  rating: number;
-}
-
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('league');
   const [isAddMatchModalOpen, setIsAddMatchModalOpen] = useState(false);
-  const [isAddPlayerModalOpen, setIsAddPlayerModalOpen] = useState(false);
   const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState(false);
   const [showPwaTip, setShowPwaTip] = useState(true);
 
@@ -59,32 +50,30 @@ export const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
     return localStorage.getItem('efootball_is_admin') === 'true';
   });
-  const [adminPin] = useState<string>(() => {
-    return localStorage.getItem('efootball_admin_pin') || '1234';
-  });
+  const adminPin = 'arta6996';
   const [unlockPinInput, setUnlockPinInput] = useState('');
   const [unlockError, setUnlockError] = useState('');
 
-  // Clean state (no hardcoded fake players or matches)
-  const [players, setPlayers] = useState<Player[]>(() => {
-    const saved = localStorage.getItem('efootball_local_players');
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  // Clean state (no hardcoded fake players)
   const [standings, setStandings] = useState<StandingRow[]>([]);
   const [matches, setMatches] = useState<MatchRecord[]>(() => {
     const saved = localStorage.getItem('efootball_local_matches');
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Calculate standings from matches and players
+  // Calculate standings directly from matches
   useEffect(() => {
-    if (players.length === 0) {
+    if (matches.length === 0) {
       setStandings([]);
       return;
     }
 
-    const calculated: StandingRow[] = players.map(player => {
+    // Get unique players from matches
+    const playerNames = Array.from(
+      new Set(matches.flatMap(m => [m.player1, m.player2]))
+    );
+
+    const calculated: StandingRow[] = playerNames.map(playerName => {
       let played = 0;
       let won = 0;
       let drawn = 0;
@@ -94,7 +83,7 @@ export const App: React.FC = () => {
       let points = 0;
 
       matches.forEach(m => {
-        if (m.player1 === player.name) {
+        if (m.player1 === playerName) {
           played += 1;
           goalsFor += m.score1;
           goalsAgainst += m.score2;
@@ -107,7 +96,7 @@ export const App: React.FC = () => {
           } else {
             lost += 1;
           }
-        } else if (m.player2 === player.name) {
+        } else if (m.player2 === playerName) {
           played += 1;
           goalsFor += m.score2;
           goalsAgainst += m.score1;
@@ -125,7 +114,7 @@ export const App: React.FC = () => {
 
       return {
         rank: 1,
-        name: player.name,
+        name: playerName,
         played,
         won,
         drawn,
@@ -147,7 +136,7 @@ export const App: React.FC = () => {
 
     const ranked = calculated.map((row, idx) => ({ ...row, rank: idx + 1 }));
     setStandings(ranked);
-  }, [players, matches]);
+  }, [matches]);
 
   // Load from Supabase if credentials are provided
   useEffect(() => {
@@ -156,18 +145,6 @@ export const App: React.FC = () => {
 
     const fetchLiveSupabaseData = async () => {
       try {
-        // Fetch players
-        const { data: playersData } = await client.from('players').select('*');
-        if (playersData && playersData.length > 0) {
-          const mappedPlayers: Player[] = (playersData as DbPlayer[]).map(p => ({
-            id: p.id,
-            name: p.name,
-            favoriteTeam: p.favorite_team,
-            rating: p.rating,
-          }));
-          setPlayers(mappedPlayers);
-        }
-
         // Fetch standings view
         const { data: standingsData } = await client.from('league_standings').select('*');
         if (standingsData && standingsData.length > 0) {
@@ -212,13 +189,10 @@ export const App: React.FC = () => {
 
     fetchLiveSupabaseData();
 
-    // Subscribe to realtime matches & players changes
+    // Subscribe to realtime matches changes
     const channel = client
       .channel('schema-db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, () => {
-        fetchLiveSupabaseData();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, () => {
         fetchLiveSupabaseData();
       })
       .subscribe();
@@ -244,89 +218,52 @@ export const App: React.FC = () => {
     localStorage.removeItem('efootball_is_admin');
   };
 
-  // Add new player form
-  const [newPlayerName, setNewPlayerName] = useState('');
-  const [newPlayerTeam, setNewPlayerTeam] = useState('رئال مادرید 🇪🇸');
-
-  const handleAddPlayerSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = newPlayerName.trim();
-    if (!trimmed) return;
-
-    if (players.some(p => p.name.toLowerCase() === trimmed.toLowerCase())) {
-      alert('این بازیکن از قبل در لیست وجود دارد.');
-      return;
-    }
-
-    const newP: Player = {
-      id: Date.now().toString(),
-      name: trimmed,
-      favoriteTeam: newPlayerTeam,
-      rating: 1200,
-    };
-
-    const updated = [...players, newP];
-    setPlayers(updated);
-    localStorage.setItem('efootball_local_players', JSON.stringify(updated));
-    setNewPlayerName('');
-    setIsAddPlayerModalOpen(false);
-
-    // Write to Supabase if connected
-    if (isSupabaseConfigured && supabase) {
-      try {
-        await supabase.from('players').insert([{
-          name: trimmed,
-          favorite_team: newPlayerTeam,
-          rating: 1200,
-        }]);
-      } catch (err) {
-        console.error('Failed to insert player to Supabase', err);
-      }
-    }
-  };
-
-  // New match form state
+  // Match form state
   const [p1, setP1] = useState('');
   const [p2, setP2] = useState('');
-  const [s1, setS1] = useState(0);
-  const [s2, setS2] = useState(0);
+  const [s1, setS1] = useState<number | string>('');
+  const [s2, setS2] = useState<number | string>('');
 
   const handleOpenAddMatch = () => {
     if (!isAdmin) {
-      // Prompt for admin pin
       setUnlockPinInput('');
       setUnlockError('');
       setIsAdminAuthModalOpen(true);
       return;
     }
 
-    if (players.length < 2) {
-      alert('برای ثبت مسابقه حداقل ۲ بازیکن باید در سیستم تعریف شده باشند.');
-      setIsAddPlayerModalOpen(true);
-      return;
-    }
-
-    setP1(players[0].name);
-    setP2(players[1].name);
-    setS1(0);
-    setS2(0);
+    setP1('');
+    setP2('');
+    setS1('');
+    setS2('');
     setIsAddMatchModalOpen(true);
   };
 
   const handleCreateMatch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (p1 === p2) {
-      alert('لطفاً دو بازیکن متفاوت انتخاب کنید.');
+    const p1Trimmed = p1.trim();
+    const p2Trimmed = p2.trim();
+
+    if (!p1Trimmed || !p2Trimmed) {
+      alert('لطفاً نام هر دو بازیکن را وارد کنید.');
       return;
     }
 
+    if (p1Trimmed.toLowerCase() === p2Trimmed.toLowerCase()) {
+      alert('نام دو بازیکن نمی‌تواند یکسان باشد.');
+      return;
+    }
+
+    const numScore1 = Number(s1) || 0;
+    const numScore2 = Number(s2) || 0;
+
     const newRecord: MatchRecord = {
       id: Date.now().toString(),
-      player1: p1,
+      player1: p1Trimmed,
       team1: 'انتخابی',
-      score1: Number(s1),
-      score2: Number(s2),
-      player2: p2,
+      score1: numScore1,
+      score2: numScore2,
+      player2: p2Trimmed,
       team2: 'انتخابی',
       date: 'هم‌اکنون',
     };
@@ -339,8 +276,18 @@ export const App: React.FC = () => {
     // If Supabase is connected, write to Postgres
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data: p1Data } = await supabase.from('players').select('id').eq('name', p1).single();
-        const { data: p2Data } = await supabase.from('players').select('id').eq('name', p2).single();
+        // Ensure players exist or upsert them
+        let { data: p1Data } = await supabase.from('players').select('id').eq('name', p1Trimmed).maybeSingle();
+        if (!p1Data) {
+          const { data: inserted1 } = await supabase.from('players').insert([{ name: p1Trimmed }]).select('id').single();
+          p1Data = inserted1;
+        }
+
+        let { data: p2Data } = await supabase.from('players').select('id').eq('name', p2Trimmed).maybeSingle();
+        if (!p2Data) {
+          const { data: inserted2 } = await supabase.from('players').insert([{ name: p2Trimmed }]).select('id').single();
+          p2Data = inserted2;
+        }
 
         if (p1Data && p2Data) {
           await supabase.from('matches').insert([{
@@ -348,8 +295,8 @@ export const App: React.FC = () => {
             player2_id: p2Data.id,
             team1: 'انتخابی',
             team2: 'انتخابی',
-            score1: Number(s1),
-            score2: Number(s2),
+            score1: numScore1,
+            score2: numScore2,
           }]);
         }
       } catch (err) {
@@ -360,7 +307,7 @@ export const App: React.FC = () => {
 
   const handleDeleteMatch = async (matchId: string) => {
     if (!isAdmin) return;
-    if (!confirm('آیا مطمئن هستید که می‌خواهید این نتیجه حذف شود؟')) return;
+    if (!confirm('آیا مطمئن هستید که می‌خواهید این مسابقه حذف شود؟')) return;
 
     const filtered = matches.filter(m => m.id !== matchId);
     setMatches(filtered);
@@ -428,18 +375,12 @@ export const App: React.FC = () => {
             isAdmin={isAdmin}
             onAdminLogin={handleAdminLogin}
             onAdminLogout={handleAdminLogout}
-            onAddPlayer={() => setIsAddPlayerModalOpen(true)}
           />
 
-          {/* Center Title Badge */}
-          <div className="text-center">
-            <h1 className="text-lg font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-green-200 to-emerald-400 drop-shadow-[0_2px_10px_rgba(34,197,94,0.3)]">
-              لیگ eFootball
-            </h1>
-            <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-400/90 font-medium mt-0.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>{isAdmin ? '👑 حالت مدیریت فعال' : 'فصل دوستانه ۱۴۰۵'}</span>
-            </div>
+          {/* Minimalist Center Icon / Badge */}
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/60 border border-white/10 backdrop-blur-md">
+            <Trophy className="w-4 h-4 text-amber-400" />
+            {isAdmin && <span className="text-[11px] font-bold text-amber-300">مدیر</span>}
           </div>
 
           {/* Cloud Database Status Indicator */}
@@ -495,37 +436,12 @@ export const App: React.FC = () => {
                     <Medal className="w-4 h-4 text-emerald-400" />
                     <span>جدول رده‌بندی لیگ</span>
                   </h3>
-                  {isAdmin && (
-                    <button
-                      type="button"
-                      onClick={() => setIsAddPlayerModalOpen(true)}
-                      className="text-[11px] font-bold text-emerald-300 hover:text-emerald-200 flex items-center gap-1 bg-emerald-500/20 px-2 py-1 rounded-lg transition-all"
-                    >
-                      <UserPlus className="w-3.5 h-3.5" />
-                      <span>افزودن بازیکن</span>
-                    </button>
-                  )}
                 </div>
 
                 {standings.length === 0 ? (
-                  <div className="py-10 text-center space-y-3">
-                    <div className="w-12 h-12 rounded-full bg-emerald-900/40 border border-emerald-500/20 mx-auto flex items-center justify-center text-emerald-400">
-                      <Users className="w-6 h-6" />
-                    </div>
-                    <p className="text-xs text-zinc-300 font-medium">هنوز بازیکنی به لیگ اضافه نشده است.</p>
-                    {isAdmin ? (
-                      <button
-                        type="button"
-                        onClick={() => setIsAddPlayerModalOpen(true)}
-                        className="py-2 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all"
-                      >
-                        ➕ افزودن اولین بازیکن لیگ
-                      </button>
-                    ) : (
-                      <p className="text-[11px] text-zinc-500">
-                        برای شروع لیگ، مدیر باید بازیکنان را اضافه کند.
-                      </p>
-                    )}
+                  <div className="py-12 text-center space-y-2">
+                    <Medal className="w-8 h-8 mx-auto text-zinc-500" />
+                    <p className="text-xs text-zinc-400 font-medium">هنوز مسابقه‌ای در جدول ثبت نشده است.</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -700,67 +616,7 @@ export const App: React.FC = () => {
         </main>
       </div>
 
-      {/* Modal 1: Add New Player (Admin Only) */}
-      {isAddPlayerModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
-        >
-          <div className="relative w-full max-w-sm rounded-3xl p-6 bg-emerald-950/95 border border-emerald-500/30 backdrop-blur-2xl shadow-2xl text-white">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <h3 className="text-base font-bold text-emerald-300 flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-emerald-400" />
-                <span>افزودن بازیکن جدید</span>
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsAddPlayerModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddPlayerSubmit} className="mt-4 space-y-4">
-              <div>
-                <label className="block text-xs text-zinc-300 mb-1 font-medium">نام بازیکن / دوست شما</label>
-                <input
-                  type="text"
-                  value={newPlayerName}
-                  onChange={(e) => setNewPlayerName(e.target.value)}
-                  placeholder="مثال: آرش، سامان، علی..."
-                  className="w-full py-2.5 px-3 rounded-xl bg-black/50 border border-white/15 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400"
-                  required
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs text-zinc-300 mb-1 font-medium">تیم مورد علاقه</label>
-                <input
-                  type="text"
-                  value={newPlayerTeam}
-                  onChange={(e) => setNewPlayerTeam(e.target.value)}
-                  placeholder="مثال: رئال مادرید 🇪🇸"
-                  className="w-full py-2.5 px-3 rounded-xl bg-black/50 border border-white/15 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400"
-                />
-              </div>
-
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-black font-bold text-sm shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:brightness-110 active:scale-95 transition-all"
-                >
-                  ثبت بازیکن در لیگ
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal 2: Visitor Prompt to Enter Admin PIN */}
+      {/* Modal 1: Visitor Prompt to Enter Admin PIN */}
       {isAdminAuthModalOpen && (
         <div
           role="dialog"
@@ -803,7 +659,7 @@ export const App: React.FC = () => {
                     setUnlockPinInput(e.target.value);
                     setUnlockError('');
                   }}
-                  placeholder="رمز مدیر (پیش‌فرض: 1234)"
+                  placeholder="رمز عبور مدیر"
                   className="w-full py-2.5 px-3 text-center rounded-xl bg-black/50 border border-white/15 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400"
                   autoFocus
                 />
@@ -816,7 +672,7 @@ export const App: React.FC = () => {
                   type="submit"
                   className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-bold text-sm shadow hover:brightness-110 active:scale-95 transition-all"
                 >
-                  تایید رمز و باز شدن پنل
+                  تایید رمز و ورود
                 </button>
               </form>
             </div>
@@ -824,7 +680,7 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* Modal 3: New Match Modal (Admin Only) */}
+      {/* Modal 2: New Match Modal (Admin Only - Simple Freeform Player Entry) */}
       {isAddMatchModalOpen && (
         <div
           role="dialog"
@@ -850,20 +706,22 @@ export const App: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 {/* Player 1 Selection */}
                 <div>
-                  <label className="block text-xs text-zinc-300 mb-1 font-medium">میزبان (بازیکن ۱)</label>
-                  <select
+                  <label className="block text-xs text-zinc-300 mb-1 font-medium">بازیکن ۱ (میزبان)</label>
+                  <input
+                    type="text"
                     value={p1}
                     onChange={(e) => setP1(e.target.value)}
-                    className="w-full py-2 px-2.5 rounded-xl bg-black/50 border border-white/15 text-xs text-white focus:outline-none focus:border-emerald-400"
-                  >
-                    {players.map(p => <option key={p.id} value={p.name} className="bg-emerald-950">{p.name}</option>)}
-                  </select>
+                    className="w-full py-2 px-2.5 rounded-xl bg-black/50 border border-white/15 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400"
+                    placeholder="نام بازیکن ۱"
+                    required
+                    autoFocus
+                  />
                   <input
                     type="number"
                     min="0"
-                    max="30"
+                    max="50"
                     value={s1}
-                    onChange={(e) => setS1(Number(e.target.value))}
+                    onChange={(e) => setS1(e.target.value)}
                     className="mt-2 w-full py-2 text-center rounded-xl bg-black/50 border border-white/15 font-mono text-lg font-bold text-emerald-400 focus:outline-none focus:border-emerald-400"
                     placeholder="گل"
                     required
@@ -872,20 +730,21 @@ export const App: React.FC = () => {
 
                 {/* Player 2 Selection */}
                 <div>
-                  <label className="block text-xs text-zinc-300 mb-1 font-medium">مهمان (بازیکن ۲)</label>
-                  <select
+                  <label className="block text-xs text-zinc-300 mb-1 font-medium">بازیکن ۲ (مهمان)</label>
+                  <input
+                    type="text"
                     value={p2}
                     onChange={(e) => setP2(e.target.value)}
-                    className="w-full py-2 px-2.5 rounded-xl bg-black/50 border border-white/15 text-xs text-white focus:outline-none focus:border-emerald-400"
-                  >
-                    {players.map(p => <option key={p.id} value={p.name} className="bg-emerald-950">{p.name}</option>)}
-                  </select>
+                    className="w-full py-2 px-2.5 rounded-xl bg-black/50 border border-white/15 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-400"
+                    placeholder="نام بازیکن ۲"
+                    required
+                  />
                   <input
                     type="number"
                     min="0"
-                    max="30"
+                    max="50"
                     value={s2}
-                    onChange={(e) => setS2(Number(e.target.value))}
+                    onChange={(e) => setS2(e.target.value)}
                     className="mt-2 w-full py-2 text-center rounded-xl bg-black/50 border border-white/15 font-mono text-lg font-bold text-emerald-400 focus:outline-none focus:border-emerald-400"
                     placeholder="گل"
                     required

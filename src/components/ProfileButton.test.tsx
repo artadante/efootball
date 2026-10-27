@@ -4,7 +4,7 @@ import { ProfileButton } from './ProfileButton';
 
 describe('ProfileButton Component', () => {
   it('renders circular button with user initials and online badge', () => {
-    render(<ProfileButton userName="مدیر لیگ" rating={1420} isAdmin={true} onAdminLogin={vi.fn()} onAdminLogout={vi.fn()} onAddPlayer={vi.fn()} />);
+    render(<ProfileButton userName="مدیر لیگ" rating={1420} isAdmin={true} onAdminLogin={vi.fn()} onAdminLogout={vi.fn()} />);
     
     const button = screen.getByRole('button', { name: /پروفایل مدیر لیگ/i });
     expect(button).toBeInTheDocument();
@@ -12,7 +12,7 @@ describe('ProfileButton Component', () => {
   });
 
   it('opens profile drawer and shows admin badge if user is admin', () => {
-    render(<ProfileButton userName="مدیر لیگ" rating={1420} isAdmin={true} onAdminLogin={vi.fn()} onAdminLogout={vi.fn()} onAddPlayer={vi.fn()} />);
+    render(<ProfileButton userName="مدیر لیگ" rating={1420} isAdmin={true} onAdminLogin={vi.fn()} onAdminLogout={vi.fn()} />);
     
     const button = screen.getByRole('button', { name: /پروفایل مدیر لیگ/i });
     fireEvent.click(button);
@@ -23,18 +23,17 @@ describe('ProfileButton Component', () => {
 
   it('allows entering admin PIN when viewer clicks admin login', () => {
     const handleLogin = vi.fn();
-    render(<ProfileButton userName="کاربر مهمان" rating={1200} isAdmin={false} onAdminLogin={handleLogin} onAdminLogout={vi.fn()} onAddPlayer={vi.fn()} />);
+    render(<ProfileButton userName="کاربر مهمان" rating={1200} isAdmin={false} onAdminLogin={handleLogin} onAdminLogout={vi.fn()} />);
     
     const button = screen.getByRole('button', { name: /پروفایل کاربر مهمان/i });
     fireEvent.click(button);
 
-    // Should show login form
-    const pinInput = screen.getByPlaceholderText(/رمز ورود ادمین/i);
+    const pinInput = screen.getByPlaceholderText(/رمز عبور مدیر/i);
     expect(pinInput).toBeInTheDocument();
 
-    fireEvent.change(pinInput, { target: { value: '1234' } });
+    fireEvent.change(pinInput, { target: { value: 'arta6996' } });
     fireEvent.click(screen.getByRole('button', { name: /ورود مدیر/i }));
 
-    expect(handleLogin).toHaveBeenCalledWith('1234');
+    expect(handleLogin).toHaveBeenCalledWith('arta6996');
   });
 });
