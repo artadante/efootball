@@ -153,4 +153,32 @@ describe('MatchPredictionModal Component', () => {
     fireEvent.click(screen.getByText(/نتیجه تساوی/i));
     expect(screen.getByRole('option', { name: 'تساوی 10 - 10' })).toBeInTheDocument();
   });
+
+  it('shows error and blocks prediction if user is not logged in', () => {
+    const handleSelect = vi.fn();
+    render(
+      <MatchPredictionModal
+        isOpen={true}
+        onClose={vi.fn()}
+        matches={mockMatches}
+        players={mockPlayers}
+        currentUserName="کاربر مهمان"
+        registeredPlayers={[
+          { id: '1', name: 'پدرام', isDefault: true, createdAt: '1403/01/01' },
+        ]}
+        onSelectActiveUser={handleSelect}
+      />
+    );
+
+    // Shows login required error
+    expect(screen.getByText(/خطا: ورود به حساب کاربری الزامی است!/i)).toBeInTheDocument();
+    expect(screen.getByText(/برای پیش‌بینی وارد حساب خود شوید/i)).toBeInTheDocument();
+
+    // Click quick login to Pedram
+    const pedramBtn = screen.getByRole('button', { name: 'پدرام' });
+    fireEvent.click(pedramBtn);
+    expect(handleSelect).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'پدرام' })
+    );
+  });
 });

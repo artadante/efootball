@@ -696,7 +696,10 @@ export const App: React.FC<AppProps> = ({ initialLoading }) => {
           onClose={() => setIsPredictionModalOpen(false)}
           matches={activeLeague.matches}
           players={activeLeague.players}
-          currentUserName={activeUser ? activeUser.name : (isAdmin ? 'آرتا' : 'کاربر مهمان')}
+          activeUser={activeUser}
+          registeredPlayers={registeredPlayers}
+          onSelectActiveUser={handleSelectActiveUser}
+          currentUserName={activeUser ? activeUser.name : (isAdmin ? 'آرتا' : '')}
         />
       )}
 
