@@ -4,16 +4,16 @@ import { LiquidBottomNav, TabType } from './components/LiquidBottomNav';
 import { ProfileButton } from './components/ProfileButton';
 import { 
   Flame, 
-  Calendar, 
   Sparkles, 
   Smartphone, 
   X, 
-  Medal,
-  Cloud,
-  Database,
-  ShieldAlert,
-  Trash2,
-  Trophy
+  Medal, 
+  ShieldAlert, 
+  Trash2, 
+  Plus, 
+  Swords, 
+  History,
+  Calendar
 } from 'lucide-react';
 import { supabase, isSupabaseConfigured, DbStanding } from './lib/supabase';
 
@@ -41,7 +41,7 @@ interface MatchRecord {
 }
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('league');
+  const [activeTab, setActiveTab] = useState<TabType>('table');
   const [isAddMatchModalOpen, setIsAddMatchModalOpen] = useState(false);
   const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState(false);
   const [showPwaTip, setShowPwaTip] = useState(true);
@@ -54,7 +54,7 @@ export const App: React.FC = () => {
   const [unlockPinInput, setUnlockPinInput] = useState('');
   const [unlockError, setUnlockError] = useState('');
 
-  // Clean state (no hardcoded fake players)
+  // Standings & matches state
   const [standings, setStandings] = useState<StandingRow[]>([]);
   const [matches, setMatches] = useState<MatchRecord[]>(() => {
     const saved = localStorage.getItem('efootball_local_matches');
@@ -68,7 +68,6 @@ export const App: React.FC = () => {
       return;
     }
 
-    // Get unique players from matches
     const playerNames = Array.from(
       new Set(matches.flatMap(m => [m.player1, m.player2]))
     );
@@ -145,7 +144,6 @@ export const App: React.FC = () => {
 
     const fetchLiveSupabaseData = async () => {
       try {
-        // Fetch standings view
         const { data: standingsData } = await client.from('league_standings').select('*');
         if (standingsData && standingsData.length > 0) {
           const mappedStandings: StandingRow[] = (standingsData as DbStanding[]).map((s, idx) => ({
@@ -162,7 +160,6 @@ export const App: React.FC = () => {
           setStandings(mappedStandings);
         }
 
-        // Fetch matches
         const { data: matchesData } = await client
           .from('matches')
           .select('id, team1, team2, score1, score2, played_at, p1:player1_id(name), p2:player2_id(name)')
@@ -189,7 +186,6 @@ export const App: React.FC = () => {
 
     fetchLiveSupabaseData();
 
-    // Subscribe to realtime matches changes
     const channel = client
       .channel('schema-db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, () => {
@@ -202,7 +198,6 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Admin login / logout handlers
   const handleAdminLogin = (pin: string) => {
     if (pin === adminPin) {
       setIsAdmin(true);
@@ -273,10 +268,8 @@ export const App: React.FC = () => {
     localStorage.setItem('efootball_local_matches', JSON.stringify(updatedMatches));
     setIsAddMatchModalOpen(false);
 
-    // If Supabase is connected, write to Postgres
     if (isSupabaseConfigured && supabase) {
       try {
-        // Ensure players exist or upsert them
         let { data: p1Data } = await supabase.from('players').select('id').eq('name', p1Trimmed).maybeSingle();
         if (!p1Data) {
           const { data: inserted1 } = await supabase.from('players').insert([{ name: p1Trimmed }]).select('id').single();
@@ -368,7 +361,7 @@ export const App: React.FC = () => {
         
         {/* Top Header Bar */}
         <header className="flex items-center justify-between py-2">
-          {/* Circular Profile Button at corner */}
+          {/* Top-Right: Circular Profile Button */}
           <ProfileButton 
             userName={isAdmin ? 'مدیر کل لیگ' : 'کاربر مهمان'} 
             rating={isAdmin ? 1500 : 1200}
@@ -377,27 +370,23 @@ export const App: React.FC = () => {
             onAdminLogout={handleAdminLogout}
           />
 
-          {/* Minimalist Center Icon / Badge */}
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/60 border border-white/10 backdrop-blur-md">
-            <Trophy className="w-4 h-4 text-amber-400" />
-            {isAdmin && <span className="text-[11px] font-bold text-amber-300">مدیر</span>}
-          </div>
+          {/* Center: Admin status badge if logged in */}
+          {isAdmin && (
+            <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-300 text-[11px] font-bold shadow-sm">
+              <span>👑 پنل مدیریت فعال</span>
+            </div>
+          )}
 
-          {/* Cloud Database Status Indicator */}
-          <div 
-            title={isSupabaseConfigured ? 'متصل به پایگاه ابری Supabase' : 'حالت لوکال (آماده اتصال به Supabase)'}
-            className={`w-10 h-10 rounded-full border backdrop-blur-md flex items-center justify-center shadow-md transition-all ${
-              isSupabaseConfigured 
-                ? 'bg-emerald-950/80 border-emerald-400/40 text-emerald-400 shadow-[0_0_12px_rgba(34,197,94,0.25)]' 
-                : 'bg-emerald-950/60 border-white/10 text-zinc-400'
-            }`}
+          {/* Top-Left: '+' Button for registering match */}
+          <button
+            type="button"
+            onClick={handleOpenAddMatch}
+            aria-label="ثبت مسابقه"
+            className="w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-emerald-600 via-green-500 to-emerald-400 text-black flex items-center justify-center shadow-[0_0_18px_rgba(34,197,94,0.4)] active:scale-95 hover:scale-105 transition-all focus:outline-none"
+            title="ثبت مسابقه جدید"
           >
-            {isSupabaseConfigured ? (
-              <Cloud className="w-5 h-5 text-emerald-400 animate-pulse" />
-            ) : (
-              <Database className="w-4 h-4 text-zinc-400" />
-            )}
-          </div>
+            <Plus className="w-6 h-6 stroke-[2.75] text-slate-950" />
+          </button>
         </header>
 
         {/* PWA Helper Banner */}
@@ -423,13 +412,119 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* Dynamic Views Content based on active tab */}
+        {/* Dynamic Views Content based on active tab: چرخونه - بازی‌ها - جدول - تاریخچه */}
         <main className="mt-4 flex-1">
-          {/* TAB 1: LEAGUE TABLE & STANDINGS */}
-          {activeTab === 'league' && (
+          {/* TAB 1: LUCKY WHEEL (چرخونه) */}
+          {activeTab === 'wheel' && (
             <div className="space-y-4 animate-fadeIn">
-              
-              {/* Standings Table Card */}
+              <div className="p-5 rounded-3xl bg-emerald-950/60 border border-white/15 backdrop-blur-2xl shadow-xl text-center">
+                <div className="flex items-center justify-center gap-2 text-emerald-400 mb-1">
+                  <Sparkles className="w-5 h-5 text-amber-400" />
+                  <h3 className="text-base font-bold text-white">چرخونه شانس و انتخاب تیم</h3>
+                </div>
+                <p className="text-xs text-zinc-300">
+                  قبل از شروع هر بازی برای انتخاب رندوم تیم یا جریمه چرخونه رو بچرخونید!
+                </p>
+
+                {/* Rotating Wheel Circle */}
+                <div className="relative w-64 h-64 mx-auto my-6 flex items-center justify-center">
+                  <div className="absolute -top-3 z-30 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[20px] border-t-amber-400 drop-shadow-[0_2px_8px_rgba(245,158,11,0.8)]" />
+
+                  <div
+                    className="relative w-full h-full rounded-full border-4 border-amber-400/80 shadow-[0_0_35px_rgba(34,197,94,0.4)] overflow-hidden transition-all duration-[3200ms] ease-out flex items-center justify-center"
+                    style={{
+                      transform: `rotate(${wheelAngle}deg)`,
+                      background: 'conic-gradient(#064e3b 0deg 45deg, #022c22 45deg 90deg, #065f46 90deg 135deg, #047857 135deg 180deg, #064e3b 180deg 225deg, #022c22 225deg 270deg, #065f46 270deg 315deg, #047857 315deg 360deg)',
+                    }}
+                  >
+                    <div className="absolute z-20 w-14 h-14 rounded-full bg-emerald-950 border-2 border-amber-400 flex items-center justify-center shadow-lg text-amber-400 font-black text-xs">
+                      eFootball
+                    </div>
+
+                    {teamsWheel.map((team, idx) => {
+                      const angle = idx * 45 + 22.5;
+                      return (
+                        <div
+                          key={team}
+                          className="absolute text-[10px] font-bold text-emerald-100 select-none text-center truncate max-w-[85px]"
+                          style={{
+                            transform: `rotate(${angle}deg) translate(80px) rotate(90deg)`,
+                          }}
+                        >
+                          {team.split(' ')[0]}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {selectedWheelPrize && (
+                  <div className="p-3 mb-4 rounded-2xl bg-amber-400/15 border border-amber-400/40 text-amber-300 text-sm font-extrabold animate-bounce">
+                    🎉 تیم انتخاب‌شده: {selectedWheelPrize}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleSpinWheel}
+                  disabled={isSpinning}
+                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-500 text-black font-extrabold text-sm shadow-[0_0_25px_rgba(34,197,94,0.5)] hover:scale-[1.02] active:scale-95 disabled:opacity-50 transition-all"
+                >
+                  {isSpinning ? 'در حال چرخیدن...' : 'بچرخون! 🎡'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: MATCHES / FIXTURES (بازی‌ها) */}
+          {activeTab === 'matches' && (
+            <div className="space-y-4 animate-fadeIn">
+              <div className="rounded-3xl p-4 bg-emerald-950/50 border border-white/15 backdrop-blur-2xl shadow-xl">
+                <div className="flex items-center justify-between mb-3 px-1">
+                  <h3 className="font-bold text-sm text-emerald-300 flex items-center gap-2">
+                    <Swords className="w-4 h-4 text-emerald-400" />
+                    <span>برنامه و وضعیت مسابقات</span>
+                  </h3>
+                  <span className="text-[11px] text-zinc-400 font-mono">
+                    {matches.length} مسابقه ثبت‌شده
+                  </span>
+                </div>
+
+                {matches.length === 0 ? (
+                  <div className="py-12 text-center space-y-2">
+                    <Calendar className="w-8 h-8 mx-auto text-zinc-500" />
+                    <p className="text-xs text-zinc-400 font-medium">
+                      هنوز مسابقه‌ای ثبت نشده است.
+                    </p>
+                    <p className="text-[11px] text-zinc-500">
+                      برای ثبت مسابقه جدید، از دکمه + در بالای صفحه استفاده کنید.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Latest Featured Match */}
+                    <div className="p-3.5 rounded-2xl bg-black/40 border border-emerald-500/20 backdrop-blur-md">
+                      <div className="flex items-center justify-between text-[11px] text-emerald-400 font-bold mb-2">
+                        <span>آخرین بازی انجام‌شده</span>
+                        <span className="text-zinc-400 font-normal">{matches[0].date}</span>
+                      </div>
+                      <div className="flex items-center justify-between py-1">
+                        <span className="font-extrabold text-white text-sm">{matches[0].player1}</span>
+                        <span className="px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 font-mono font-black text-base">
+                          {matches[0].score1} - {matches[0].score2}
+                        </span>
+                        <span className="font-extrabold text-white text-sm">{matches[0].player2}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: LEAGUE TABLE & STANDINGS (جدول) */}
+          {activeTab === 'table' && (
+            <div className="space-y-4 animate-fadeIn">
               <div className="rounded-3xl p-4 bg-emerald-950/50 border border-white/15 backdrop-blur-2xl shadow-xl">
                 <div className="flex items-center justify-between mb-3 px-1">
                   <h3 className="font-bold text-sm text-emerald-300 flex items-center gap-2">
@@ -494,123 +589,71 @@ export const App: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 2: LUCKY WHEEL (چرخونه) */}
-          {activeTab === 'wheel' && (
+          {/* TAB 4: MATCH HISTORY (تاریخچه - با طراحی هماهنگ با باکس جدول لیگ) */}
+          {activeTab === 'history' && (
             <div className="space-y-4 animate-fadeIn">
-              <div className="p-5 rounded-3xl bg-emerald-950/60 border border-white/15 backdrop-blur-2xl shadow-xl text-center">
-                <div className="flex items-center justify-center gap-2 text-emerald-400 mb-1">
-                  <Sparkles className="w-5 h-5 text-amber-400" />
-                  <h3 className="text-base font-bold text-white">چرخونه شانس و انتخاب تیم</h3>
+              <div className="rounded-3xl p-4 bg-emerald-950/50 border border-white/15 backdrop-blur-2xl shadow-xl">
+                <div className="flex items-center justify-between mb-3 px-1">
+                  <h3 className="font-bold text-sm text-emerald-300 flex items-center gap-2">
+                    <History className="w-4 h-4 text-emerald-400" />
+                    <span>تاریخچه مسابقات</span>
+                  </h3>
+                  <span className="text-[11px] text-zinc-400 font-mono">
+                    ({matches.length} بازی ثبت‌شده)
+                  </span>
                 </div>
-                <p className="text-xs text-zinc-300">
-                  قبل از شروع هر بازی برای انتخاب رندوم تیم یا جریمه چرخونه رو بچرخونید!
-                </p>
 
-                {/* Rotating Wheel Circle */}
-                <div className="relative w-64 h-64 mx-auto my-6 flex items-center justify-center">
-                  <div className="absolute -top-3 z-30 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[20px] border-t-amber-400 drop-shadow-[0_2px_8px_rgba(245,158,11,0.8)]" />
-
-                  <div
-                    className="relative w-full h-full rounded-full border-4 border-amber-400/80 shadow-[0_0_35px_rgba(34,197,94,0.4)] overflow-hidden transition-all duration-[3200ms] ease-out flex items-center justify-center"
-                    style={{
-                      transform: `rotate(${wheelAngle}deg)`,
-                      background: 'conic-gradient(#064e3b 0deg 45deg, #022c22 45deg 90deg, #065f46 90deg 135deg, #047857 135deg 180deg, #064e3b 180deg 225deg, #022c22 225deg 270deg, #065f46 270deg 315deg, #047857 315deg 360deg)',
-                    }}
-                  >
-                    <div className="absolute z-20 w-14 h-14 rounded-full bg-emerald-950 border-2 border-amber-400 flex items-center justify-center shadow-lg text-amber-400 font-black text-xs">
-                      eFootball
-                    </div>
-
-                    {teamsWheel.map((team, idx) => {
-                      const angle = idx * 45 + 22.5;
-                      return (
-                        <div
-                          key={team}
-                          className="absolute text-[10px] font-bold text-emerald-100 select-none text-center truncate max-w-[85px]"
-                          style={{
-                            transform: `rotate(${angle}deg) translate(80px) rotate(90deg)`,
-                          }}
-                        >
-                          {team.split(' ')[0]}
-                        </div>
-                      );
-                    })}
+                {matches.length === 0 ? (
+                  <div className="py-12 text-center space-y-2">
+                    <History className="w-8 h-8 mx-auto text-zinc-500" />
+                    <p className="text-xs text-zinc-400 font-medium">هنوز هیچ مسابقه‌ای ثبت نشده است.</p>
                   </div>
-                </div>
-
-                {selectedWheelPrize && (
-                  <div className="p-3 mb-4 rounded-2xl bg-amber-400/15 border border-amber-400/40 text-amber-300 text-sm font-extrabold animate-bounce">
-                    🎉 تیم انتخاب‌شده: {selectedWheelPrize}
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-center text-xs">
+                      <thead>
+                        <tr className="text-zinc-400 border-b border-white/10 pb-2 font-medium">
+                          <th className="py-2 text-start px-2">میزبان</th>
+                          <th className="py-2">نتیجه</th>
+                          <th className="py-2 text-end px-2">مهمان</th>
+                          <th className="py-2 text-center">زمان</th>
+                          {isAdmin && <th className="py-2 text-end">حذف</th>}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {matches.map((m) => (
+                          <tr key={m.id} className="hover:bg-white/5 transition-colors">
+                            <td className="py-3 px-2 text-start font-bold text-white">
+                              {m.player1}
+                            </td>
+                            <td className="py-3 font-mono font-black text-sm text-emerald-400 whitespace-nowrap">
+                              {m.score1} - {m.score2}
+                            </td>
+                            <td className="py-3 px-2 text-end font-bold text-white">
+                              {m.player2}
+                            </td>
+                            <td className="py-3 text-[11px] text-zinc-400 font-medium whitespace-nowrap">
+                              {m.date}
+                            </td>
+                            {isAdmin && (
+                              <td className="py-3 text-end">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteMatch(m.id)}
+                                  className="text-zinc-500 hover:text-rose-400 p-1 transition-colors"
+                                  title="حذف مسابقه"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </td>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
-
-                <button
-                  type="button"
-                  onClick={handleSpinWheel}
-                  disabled={isSpinning}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-500 text-black font-extrabold text-sm shadow-[0_0_25px_rgba(34,197,94,0.5)] hover:scale-[1.02] active:scale-95 disabled:opacity-50 transition-all"
-                >
-                  {isSpinning ? 'در حال چرخیدن...' : 'بچرخون! 🎡'}
-                </button>
               </div>
-            </div>
-          )}
-
-          {/* TAB 3: MATCH HISTORY (تاریخچه) */}
-          {activeTab === 'history' && (
-            <div className="space-y-3 animate-fadeIn">
-              <div className="flex items-center justify-between px-1">
-                <h3 className="font-bold text-sm text-emerald-300">
-                  تاریخچه مسابقات ثبت‌شده ({matches.length})
-                </h3>
-                <span className="text-xs text-zinc-400">آخرین نتایج</span>
-              </div>
-
-              {matches.length === 0 ? (
-                <div className="py-12 rounded-3xl bg-emerald-950/40 border border-white/10 text-center space-y-2">
-                  <Calendar className="w-8 h-8 mx-auto text-zinc-500" />
-                  <p className="text-xs text-zinc-400">هنوز هیچ مسابقه‌ای ثبت نشده است.</p>
-                </div>
-              ) : (
-                matches.map((m) => (
-                  <div
-                    key={m.id}
-                    className="p-4 rounded-2xl bg-emerald-950/60 border border-white/10 backdrop-blur-xl shadow-lg flex items-center justify-between hover:border-emerald-500/30 transition-all relative group"
-                  >
-                    {/* Player 1 */}
-                    <div className="flex-1 text-center">
-                      <span className="block font-bold text-sm text-white">{m.player1}</span>
-                      <span className="text-[10px] text-zinc-400">{m.team1}</span>
-                    </div>
-
-                    {/* Score Badge */}
-                    <div className="px-3 py-1.5 rounded-xl bg-black/60 border border-white/10 mx-2 text-center min-w-[70px]">
-                      <span className="text-base font-black text-emerald-400 font-mono tracking-wider">
-                        {m.score1} - {m.score2}
-                      </span>
-                      <span className="block text-[9px] text-zinc-400 mt-0.5">{m.date}</span>
-                    </div>
-
-                    {/* Player 2 */}
-                    <div className="flex-1 text-center">
-                      <span className="block font-bold text-sm text-white">{m.player2}</span>
-                      <span className="text-[10px] text-zinc-400">{m.team2}</span>
-                    </div>
-
-                    {/* Admin Delete Action */}
-                    {isAdmin && (
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteMatch(m.id)}
-                        className="text-zinc-500 hover:text-rose-400 p-1.5 transition-colors"
-                        title="حذف مسابقه"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                ))
-              )}
             </div>
           )}
         </main>
@@ -765,11 +808,10 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* 2. Liquid Glass Bottom Navigation Bar */}
+      {/* 2. Liquid Glass Bottom Navigation Bar (چرخونه - بازی‌ها - جدول - تاریخچه) */}
       <LiquidBottomNav
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onAddClick={handleOpenAddMatch}
       />
     </div>
   );
